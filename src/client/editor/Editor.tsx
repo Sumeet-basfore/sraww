@@ -7,6 +7,7 @@ import { errorMessage } from '../lib/errors.ts';
 import { loadPrefs, roughnessFor, savePrefs, type DrawingStyle, type Prefs } from '../lib/prefs.ts';
 import type { ExcalidrawScene } from '../../shared/diagram.ts';
 import { createAutosave, type Autosave, type SaveStatus } from './autosave.ts';
+import { GeneratePanel } from '../ai/GeneratePanel.tsx';
 import { exportScene, type ExportFormat } from './export.ts';
 import { SaveIndicator } from './SaveIndicator.tsx';
 import { sceneFingerprint, toSavedScene } from './scene.ts';
@@ -39,6 +40,7 @@ export function Editor({ name, onExit }: EditorProps) {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
   const [prefs, setPrefs] = useState<Prefs>(loadPrefs);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [panelOpen, setPanelOpen] = useState(false);
   const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
 
   useEffect(() => {
@@ -155,6 +157,15 @@ export function Editor({ name, onExit }: EditorProps) {
             </button>
           ))}
         </div>
+        <button
+          type="button"
+          className="button ghost"
+          aria-expanded={panelOpen}
+          disabled={load.kind !== 'ready'}
+          onClick={() => setPanelOpen((open) => !open)}
+        >
+          ✦ Generate
+        </button>
         <select
           className="export-select"
           aria-label="Export drawing"
@@ -205,6 +216,9 @@ export function Editor({ name, onExit }: EditorProps) {
               load.autosave.update(toSavedScene(elements, appState, files))
             }
           />
+        )}
+        {panelOpen && load.kind === 'ready' && (
+          <GeneratePanel getApi={() => apiRef.current} onClose={() => setPanelOpen(false)} />
         )}
       </div>
     </div>

@@ -45,3 +45,9 @@ export async function exportToSvg(): Promise<SVGSVGElement> {
 export function serializeAsJSON(elements: unknown, appState: unknown, files: unknown): string {
   return JSON.stringify({ type: 'excalidraw', elements, appState, files });
 }
+
+export const CaptureUpdateAction = { IMMEDIATELY: 'IMMEDIATELY' } as const;
+
+export function convertToExcalidrawElements(skeleton: unknown[] | null): unknown[] {
+  return (skeleton ?? []).map((el) => ({ ...(el as object), converted: true }));
+}

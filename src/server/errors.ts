@@ -1,6 +1,16 @@
 import type { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
+import { AiError, type AiErrorCode } from './ai/ai-error.ts';
 import { DiagramError, type DiagramCode } from './storage/diagram-store.ts';
+
+const AI_STATUS: Record<AiErrorCode, number> = {
+  NOT_INSTALLED: 503,
+  NOT_LOGGED_IN: 503,
+  TIMEOUT: 504,
+  OUTPUT_TOO_LARGE: 502,
+  FAILED: 502,
+  INVALID_OUTPUT: 502,
+};
 
 const DIAGRAM_STATUS: Record<DiagramCode, number> = {
   INVALID_NAME: 400,
@@ -21,6 +31,10 @@ export function errorHandler(
 ): void {
   if (err instanceof DiagramError) {
     res.status(DIAGRAM_STATUS[err.code]).json({ error: err.message, code: err.code });
+    return;
+  }
+  if (err instanceof AiError) {
+    res.status(AI_STATUS[err.code]).json({ error: err.message, code: err.code });
     return;
   }
   if (err instanceof ZodError) {

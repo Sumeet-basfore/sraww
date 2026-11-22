@@ -1,4 +1,5 @@
 import type { ExcalidrawScene } from '../../shared/diagram.ts';
+import type { DiagramGraph } from '../../shared/ai-schemas.ts';
 
 export interface DiagramSummary {
   name: string;
@@ -60,5 +61,31 @@ export const diagramApi = {
   },
   remove(name: string): Promise<void> {
     return request(diagramPath(name), { method: 'DELETE' });
+  },
+};
+
+export type ProviderId = 'claude' | 'codex';
+
+export interface ProviderStatus {
+  id: ProviderId;
+  installed: boolean;
+  loggedIn: boolean;
+  detail: string;
+}
+
+export interface AiStatus {
+  defaultProvider: ProviderId;
+  providers: ProviderStatus[];
+}
+
+export const aiApi = {
+  status(): Promise<AiStatus> {
+    return request<AiStatus>('/ai/status');
+  },
+  generate(
+    prompt: string,
+    provider?: ProviderId,
+  ): Promise<{ provider: ProviderId; graph: DiagramGraph }> {
+    return request('/ai/generate', { method: 'POST', body: JSON.stringify({ prompt, provider }) });
   },
 };
