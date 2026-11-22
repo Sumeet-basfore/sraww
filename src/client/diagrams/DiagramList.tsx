@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { diagramApi, type DiagramSummary } from '../lib/api.ts';
 import { errorMessage } from '../lib/errors.ts';
+import { IMPORT_ACCEPT, readDrawingFile, uniqueName } from './import.ts';
 
 interface DiagramListProps {
   onOpen: (name: string) => void;
@@ -11,6 +12,7 @@ export function DiagramList({ onOpen }: DiagramListProps) {
   const [error, setError] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
   const [busy, setBusy] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -45,6 +47,26 @@ export function DiagramList({ onOpen }: DiagramListProps) {
     try {
       await diagramApi.create(name);
       setNewName('');
+      onOpen(name);
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleImport(event: ChangeEvent<HTMLInputElement>): Promise<void> {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file || !items) return;
+    setBusy(true);
+    try {
+      const drawing = await readDrawingFile(file);
+      const name = uniqueName(
+        drawing.name,
+        items.map((item) => item.name),
+      );
+      await diagramApi.create(name, drawing.scene);
       onOpen(name);
     } catch (err) {
       setError(errorMessage(err));
@@ -93,6 +115,25 @@ export function DiagramList({ onOpen }: DiagramListProps) {
           Create
         </button>
       </form>
+
+      <div className="import-row">
+        <button
+          type="button"
+          className="button ghost"
+          disabled={busy || items === null}
+          onClick={() => fileInput.current?.click()}
+        >
+          Import a .excalidraw file
+        </button>
+        <input
+          ref={fileInput}
+          type="file"
+          accept={IMPORT_ACCEPT}
+          onChange={(e) => void handleImport(e)}
+          hidden
+          aria-label="Choose a drawing to import"
+        />
+      </div>
 
       {error && (
         <p role="alert" className="banner error">

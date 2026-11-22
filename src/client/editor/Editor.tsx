@@ -7,6 +7,7 @@ import { errorMessage } from '../lib/errors.ts';
 import { loadPrefs, roughnessFor, savePrefs, type DrawingStyle, type Prefs } from '../lib/prefs.ts';
 import type { ExcalidrawScene } from '../../shared/diagram.ts';
 import { createAutosave, type Autosave, type SaveStatus } from './autosave.ts';
+import { exportScene, type ExportFormat } from './export.ts';
 import { SaveIndicator } from './SaveIndicator.tsx';
 import { sceneFingerprint, toSavedScene } from './scene.ts';
 
@@ -37,6 +38,7 @@ export function Editor({ name, onExit }: EditorProps) {
   const [load, setLoad] = useState<LoadState>({ kind: 'loading' });
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
   const [prefs, setPrefs] = useState<Prefs>(loadPrefs);
+  const [exportError, setExportError] = useState<string | null>(null);
   const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
 
   useEffect(() => {
@@ -99,6 +101,25 @@ export function Editor({ name, onExit }: EditorProps) {
     apiRef.current?.updateScene({ appState: { currentItemRoughness: roughnessFor(style) } });
   }
 
+  async function handleExport(format: ExportFormat): Promise<void> {
+    const api = apiRef.current;
+    if (!api) return;
+    setExportError(null);
+    try {
+      await exportScene(
+        format,
+        {
+          elements: api.getSceneElements(),
+          appState: api.getAppState(),
+          files: api.getFiles(),
+        },
+        name,
+      );
+    } catch (err) {
+      setExportError(`Export failed. ${errorMessage(err)}`);
+    }
+  }
+
   function toggleTheme(): void {
     const next = {
       ...prefs,
@@ -134,10 +155,31 @@ export function Editor({ name, onExit }: EditorProps) {
             </button>
           ))}
         </div>
+        <select
+          className="export-select"
+          aria-label="Export drawing"
+          value=""
+          disabled={load.kind !== 'ready'}
+          onChange={(e) => {
+            const format = e.target.value as ExportFormat;
+            if (format) void handleExport(format);
+          }}
+        >
+          <option value="">Export…</option>
+          <option value="png">PNG image</option>
+          <option value="svg">SVG image</option>
+          <option value="excalidraw">Excalidraw file</option>
+        </select>
         <button type="button" className="button ghost" onClick={toggleTheme}>
           {prefs.theme === 'dark' ? 'Light' : 'Dark'} mode
         </button>
       </header>
+
+      {exportError && (
+        <p role="alert" className="banner error export-error">
+          {exportError}
+        </p>
+      )}
 
       <div className="editor-canvas">
         {load.kind === 'loading' && <p className="muted pad">Opening {name}…</p>}

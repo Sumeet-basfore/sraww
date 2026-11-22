@@ -29,3 +29,19 @@ export function restore(data: { elements?: unknown; appState?: unknown; files?: 
     files: (data?.files as Record<string, unknown>) ?? {},
   };
 }
+
+export function getNonDeletedElements<T extends { isDeleted?: boolean }>(els: readonly T[]): T[] {
+  return els.filter((e) => !e.isDeleted);
+}
+
+export async function exportToBlob(): Promise<Blob> {
+  return new Blob(['png'], { type: 'image/png' });
+}
+
+export async function exportToSvg(): Promise<SVGSVGElement> {
+  return document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+}
+
+export function serializeAsJSON(elements: unknown, appState: unknown, files: unknown): string {
+  return JSON.stringify({ type: 'excalidraw', elements, appState, files });
+}

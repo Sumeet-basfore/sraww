@@ -74,4 +74,28 @@ describe('DiagramList', () => {
     expect(await screen.findByText(/No diagrams yet/i)).toBeInTheDocument();
     expect(fetchMock.mock.calls[1]?.[1]).toMatchObject({ method: 'DELETE' });
   });
+
+  it('imports a drawing under a free name when the name is taken', async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        json(200, {
+          diagrams: [{ name: 'Sketch', updatedAt: '2026-01-01T00:00:00Z', sizeBytes: 1 }],
+        }),
+      )
+      .mockResolvedValueOnce(json(201, { name: 'Sketch (2)' }))
+      .mockResolvedValue(json(200, { diagrams: [] }));
+    const onOpen = vi.fn();
+    render(<DiagramList onOpen={onOpen} />);
+    const user = userEvent.setup();
+    await screen.findByRole('button', { name: 'Delete' });
+    const input = screen.getByLabelText('Choose a drawing to import');
+    const file = new File(
+      [JSON.stringify({ type: 'excalidraw', elements: [] })],
+      'Sketch.excalidraw',
+    );
+    await user.upload(input, file);
+    await waitFor(() => expect(onOpen).toHaveBeenCalledWith('Sketch (2)'));
+    const createCall = fetchMock.mock.calls[1];
+    expect(JSON.parse(createCall?.[1]?.body as string).name).toBe('Sketch (2)');
+  });
 });
