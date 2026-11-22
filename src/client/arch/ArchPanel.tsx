@@ -52,6 +52,7 @@ function NodeDetails({ model, node }: { model: ArchModel; node: ArchNode }) {
   return (
     <section className="node-details" aria-label="Selected folder">
       <h3>{node.label}</h3>
+      {node.description && <p className="small">{node.description}</p>}
       <p className="small muted">
         {node.kind === 'external' ? 'Package' : `${node.files} file${node.files === 1 ? '' : 's'}`}
       </p>
@@ -165,7 +166,7 @@ export function ArchPanel({ name, getApi, onClose }: ArchPanelProps) {
     setNotice(null);
     try {
       await action();
-      setNotice(done);
+      if (done) setNotice(done);
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -204,6 +205,19 @@ export function ArchPanel({ name, getApi, onClose }: ArchPanelProps) {
       await archApi.resetLayout(name);
       await redraw(model, null);
     }, 'Layout reset to the automatic arrangement.');
+  }
+
+  function nameWithAi(): Promise<void> {
+    return run(async () => {
+      const api = getApi();
+      if (!api) throw new Error('The drawing is not ready yet.');
+      await archApi.saveLayout(name, capturePositions(api.getSceneElementsIncludingDeleted()));
+      const { applied } = await archApi.nameWithAi(name);
+      const latest = await archApi.model(name);
+      await redraw(latest.model, latest.layout);
+      setModel(latest.model);
+      setNotice(`Named ${applied} folder(s) with AI. Links were not changed.`);
+    }, '');
   }
 
   async function copyFiles(node: ArchNode): Promise<void> {
@@ -273,6 +287,14 @@ export function ArchPanel({ name, getApi, onClose }: ArchPanelProps) {
           onClick={() => void resetLayout()}
         >
           Reset layout
+        </button>
+        <button
+          type="button"
+          className="button ghost small"
+          disabled={busy || !model}
+          onClick={() => void nameWithAi()}
+        >
+          Name with AI
         </button>
       </div>
 

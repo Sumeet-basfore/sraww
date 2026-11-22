@@ -21,6 +21,8 @@ export const archNodeSchema = z.object({
   group: z.string().max(200).nullable(),
   files: z.number().int().nonnegative(),
   members: z.array(z.string().max(300)).max(ARCH_LIMITS.maxMembers),
+  /** Optional one-line description, written by AI naming. Never used for structure. */
+  description: z.string().max(240).nullish(),
 });
 
 export const archEdgeSchema = z.object({

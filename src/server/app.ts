@@ -34,7 +34,7 @@ export function createApp(
   app.use('/api/diagrams', createDiagramRouter(store));
   app.use(
     '/api/arch',
-    createArchRouter(createArchStore(store.dir), listArchProjects(config.ARCH_PROJECTS)),
+    createArchRouter(createArchStore(store.dir), listArchProjects(config.ARCH_PROJECTS), ai),
   );
   app.use('/api/ai', createAiRouter(ai));
 

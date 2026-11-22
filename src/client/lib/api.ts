@@ -126,6 +126,9 @@ export const archApi = {
       body: JSON.stringify({ version: 1, positions }),
     });
   },
+  nameWithAi(name: string): Promise<{ model: ArchModel; applied: number }> {
+    return request(`/arch/models/${encodeURIComponent(name)}/name`, { method: 'POST' });
+  },
   resetLayout(name: string): Promise<void> {
     return request(`/arch/models/${encodeURIComponent(name)}/layout`, { method: 'DELETE' });
   },

@@ -20,6 +20,14 @@ const CHAT_REPLY = {
   ],
 };
 
+const NAMING_REPLY = {
+  components: [
+    { id: 'src', label: 'Source code', description: 'Application code.' },
+    { id: 'ext:express', label: 'Should be ignored', description: 'x' },
+    { id: 'not-a-folder', label: 'Ghost', description: 'x' },
+  ],
+};
+
 const entryName = path.basename(process.argv[1]);
 const firstDash = entryName.indexOf('-');
 const cli = entryName.slice(0, firstDash);
@@ -46,6 +54,9 @@ function runClaude() {
   switch (behaviour) {
     case 'ok':
       process.stdout.write(claudeEnvelope(GRAPH));
+      return;
+    case 'naming':
+      process.stdout.write(claudeEnvelope(NAMING_REPLY));
       return;
     case 'chat':
       process.stdout.write(claudeEnvelope(CHAT_REPLY));
