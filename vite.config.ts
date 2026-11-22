@@ -15,5 +15,7 @@ export default defineConfig({
   build: {
     outDir: 'dist/client',
     emptyOutDir: true,
+    // The editor chunk contains Excalidraw and is lazy-loaded, so its size is expected.
+    chunkSizeWarningLimit: 1500,
   },
 });

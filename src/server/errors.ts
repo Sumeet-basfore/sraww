@@ -13,7 +13,12 @@ const DIAGRAM_STATUS: Record<DiagramCode, number> = {
  * Turns every thrown error into a JSON response. Known errors keep their message;
  * anything unexpected is logged on the server and hidden from the client.
  */
-export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction): void {
+export function errorHandler(
+  err: unknown,
+  _req: Request,
+  res: Response,
+  _next: NextFunction,
+): void {
   if (err instanceof DiagramError) {
     res.status(DIAGRAM_STATUS[err.code]).json({ error: err.message, code: err.code });
     return;

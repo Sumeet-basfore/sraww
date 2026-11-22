@@ -35,7 +35,10 @@ function parseScene(input: unknown): ExcalidrawScene {
   if (!parsed.success) {
     const first = parsed.error.issues[0];
     const where = first?.path.length ? `${first.path.join('.')}: ` : '';
-    throw new DiagramError('INVALID_CONTENT', `Not a valid Excalidraw scene. ${where}${first?.message ?? ''}`);
+    throw new DiagramError(
+      'INVALID_CONTENT',
+      `Not a valid Excalidraw scene. ${where}${first?.message ?? ''}`,
+    );
   }
   return parsed.data;
 }
@@ -86,7 +89,8 @@ export function createDiagramStore(dir: string) {
     try {
       text = await readFile(file, 'utf8');
     } catch (err) {
-      if (isErrno(err, 'ENOENT')) throw new DiagramError('NOT_FOUND', `Diagram "${name}" not found.`);
+      if (isErrno(err, 'ENOENT'))
+        throw new DiagramError('NOT_FOUND', `Diagram "${name}" not found.`);
       throw err;
     }
     let json: unknown;
@@ -124,9 +128,13 @@ export function createDiagramStore(dir: string) {
     const valid = parseScene(scene);
     await mkdir(root, { recursive: true });
     try {
-      await writeFile(file, `${JSON.stringify(valid, null, 2)}\n`, { encoding: 'utf8', flag: 'wx' });
+      await writeFile(file, `${JSON.stringify(valid, null, 2)}\n`, {
+        encoding: 'utf8',
+        flag: 'wx',
+      });
     } catch (err) {
-      if (isErrno(err, 'EEXIST')) throw new DiagramError('EXISTS', `Diagram "${name}" already exists.`);
+      if (isErrno(err, 'EEXIST'))
+        throw new DiagramError('EXISTS', `Diagram "${name}" already exists.`);
       throw err;
     }
   }
@@ -141,7 +149,8 @@ export function createDiagramStore(dir: string) {
   async function renameDiagram(from: string, to: string): Promise<void> {
     const source = fileFor(from);
     const target = fileFor(to);
-    if (!(await exists(source))) throw new DiagramError('NOT_FOUND', `Diagram "${from}" not found.`);
+    if (!(await exists(source)))
+      throw new DiagramError('NOT_FOUND', `Diagram "${from}" not found.`);
     if (await exists(target)) throw new DiagramError('EXISTS', `Diagram "${to}" already exists.`);
     await rename(source, target);
   }
@@ -156,7 +165,8 @@ export function createDiagramStore(dir: string) {
     try {
       await rm(file);
     } catch (err) {
-      if (isErrno(err, 'ENOENT')) throw new DiagramError('NOT_FOUND', `Diagram "${name}" not found.`);
+      if (isErrno(err, 'ENOENT'))
+        throw new DiagramError('NOT_FOUND', `Diagram "${name}" not found.`);
       throw err;
     }
   }
