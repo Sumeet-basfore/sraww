@@ -13,6 +13,20 @@ import { createDiagramRouter } from './routes/diagrams.ts';
 import { createDiagramStore, type DiagramStore } from './storage/diagram-store.ts';
 
 export const JSON_BODY_LIMIT = '10mb';
+
+/** Only this origin may load scripts, styles, fonts, images or connections. Nothing is framed. */
+export const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  "worker-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "frame-ancestors 'none'",
+].join('; ');
 export const CLIENT_BUILD_DIR = path.resolve('dist/client');
 
 /** Builds the Express app. Dependencies are injectable so tests can use temporary folders and fake CLIs. */
@@ -25,6 +39,13 @@ export function createApp(
   const app = express();
   app.disable('x-powered-by');
   app.use(localOnlyGuard);
+  app.use((_req, res, next) => {
+    res.setHeader('Content-Security-Policy', CONTENT_SECURITY_POLICY);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    next();
+  });
   app.use(express.json({ limit: JSON_BODY_LIMIT }));
 
   app.get('/api/health', (_req, res) => {
