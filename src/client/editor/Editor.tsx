@@ -221,13 +221,13 @@ export function Editor({ name, onExit }: EditorProps) {
             }
           />
         )}
-        {panel !== null && load.kind === 'ready' && (
-          panel === 'generate' ? (
+        {panel !== null &&
+          load.kind === 'ready' &&
+          (panel === 'generate' ? (
             <GeneratePanel getApi={() => apiRef.current} onClose={() => setPanel(null)} />
           ) : (
             <ChatPanel getApi={() => apiRef.current} onClose={() => setPanel(null)} />
-          )
-        )}
+          ))}
       </div>
     </div>
   );

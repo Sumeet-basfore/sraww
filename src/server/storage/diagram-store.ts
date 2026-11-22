@@ -171,7 +171,7 @@ export function createDiagramStore(dir: string) {
     }
   }
 
-  return { list, read, create, write, rename: renameDiagram, duplicate, remove };
+  return { dir: root, list, read, create, write, rename: renameDiagram, duplicate, remove };
 }
 
 export type DiagramStore = ReturnType<typeof createDiagramStore>;

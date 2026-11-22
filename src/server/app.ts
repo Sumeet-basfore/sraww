@@ -5,7 +5,9 @@ import type { AppConfig } from './config.ts';
 import { createAiServices, type AiServices } from './ai/services.ts';
 import { errorHandler } from './errors.ts';
 import { localOnlyGuard } from './guard.ts';
+import { createArchRouter } from './routes/arch.ts';
 import { createAiRouter } from './routes/ai.ts';
+import { createArchStore } from './storage/arch-store.ts';
 import { createDiagramRouter } from './routes/diagrams.ts';
 import { createDiagramStore, type DiagramStore } from './storage/diagram-store.ts';
 
@@ -29,6 +31,7 @@ export function createApp(
   });
 
   app.use('/api/diagrams', createDiagramRouter(store));
+  app.use('/api/arch', createArchRouter(createArchStore(store.dir)));
   app.use('/api/ai', createAiRouter(ai));
 
   app.use('/api', (_req, res) => {
