@@ -1,7 +1,16 @@
 import type { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
 import { AiError, type AiErrorCode } from './ai/ai-error.ts';
+import { ArchBuildError } from './arch/build-model.ts';
+import { ScanError } from './arch/collect-files.ts';
 import { DiagramError, type DiagramCode } from './storage/diagram-store.ts';
+
+const SCAN_STATUS: Record<ScanError['code'], number> = {
+  NO_SOURCE_FILES: 422,
+  TOO_MANY_FILES: 422,
+  TIMEOUT: 504,
+  FAILED: 502,
+};
 
 const AI_STATUS: Record<AiErrorCode, number> = {
   NOT_INSTALLED: 503,
@@ -31,6 +40,14 @@ export function errorHandler(
 ): void {
   if (err instanceof DiagramError) {
     res.status(DIAGRAM_STATUS[err.code]).json({ error: err.message, code: err.code });
+    return;
+  }
+  if (err instanceof ScanError) {
+    res.status(SCAN_STATUS[err.code]).json({ error: err.message, code: err.code });
+    return;
+  }
+  if (err instanceof ArchBuildError) {
+    res.status(422).json({ error: err.message, code: 'TOO_LARGE' });
     return;
   }
   if (err instanceof AiError) {

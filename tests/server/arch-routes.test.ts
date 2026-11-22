@@ -32,7 +32,7 @@ const MODEL: ArchModel = {
 describe('architecture routes', () => {
   it('returns 404 when no model exists for the name', async () => {
     const app = createApp(loadConfig({}), createDiagramStore(dir), path.join(dir, 'none'));
-    const res = await request(app).get('/api/arch/demo').set('Host', HOST);
+    const res = await request(app).get('/api/arch/models/demo').set('Host', HOST);
     expect(res.status).toBe(404);
   });
 
@@ -40,24 +40,24 @@ describe('architecture routes', () => {
     await createArchStore(dir).writeModel('demo', MODEL);
     const app = createApp(loadConfig({}), createDiagramStore(dir), path.join(dir, 'none'));
 
-    const first = await request(app).get('/api/arch/demo').set('Host', HOST);
+    const first = await request(app).get('/api/arch/models/demo').set('Host', HOST);
     expect(first.body.model).toEqual(MODEL);
     expect(first.body.layout).toBeNull();
 
     const put = await request(app)
-      .put('/api/arch/demo/layout')
+      .put('/api/arch/models/demo/layout')
       .set('Host', HOST)
       .send({ version: 1, positions: { 'src/a': { x: 5, y: 6 } } });
     expect(put.status).toBe(200);
 
-    const second = await request(app).get('/api/arch/demo').set('Host', HOST);
+    const second = await request(app).get('/api/arch/models/demo').set('Host', HOST);
     expect(second.body.layout.positions['src/a']).toEqual({ x: 5, y: 6 });
   });
 
   it('rejects a layout with non-numeric positions', async () => {
     const app = createApp(loadConfig({}), createDiagramStore(dir), path.join(dir, 'none'));
     const res = await request(app)
-      .put('/api/arch/demo/layout')
+      .put('/api/arch/models/demo/layout')
       .set('Host', HOST)
       .send({ version: 1, positions: { a: { x: 'left', y: 1 } } });
     expect(res.status).toBe(400);
@@ -67,7 +67,7 @@ describe('architecture routes', () => {
     const store = createArchStore(dir);
     await store.writeLayout('demo', { version: 1, positions: {} });
     const app = createApp(loadConfig({}), createDiagramStore(dir), path.join(dir, 'none'));
-    const res = await request(app).delete('/api/arch/demo/layout').set('Host', HOST);
+    const res = await request(app).delete('/api/arch/models/demo/layout').set('Host', HOST);
     expect(res.status).toBe(204);
     expect(await store.readLayout('demo')).toBeNull();
   });

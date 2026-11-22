@@ -8,6 +8,7 @@ import { localOnlyGuard } from './guard.ts';
 import { createArchRouter } from './routes/arch.ts';
 import { createAiRouter } from './routes/ai.ts';
 import { createArchStore } from './storage/arch-store.ts';
+import { listArchProjects } from './arch/projects.ts';
 import { createDiagramRouter } from './routes/diagrams.ts';
 import { createDiagramStore, type DiagramStore } from './storage/diagram-store.ts';
 
@@ -31,7 +32,10 @@ export function createApp(
   });
 
   app.use('/api/diagrams', createDiagramRouter(store));
-  app.use('/api/arch', createArchRouter(createArchStore(store.dir)));
+  app.use(
+    '/api/arch',
+    createArchRouter(createArchStore(store.dir), listArchProjects(config.ARCH_PROJECTS)),
+  );
   app.use('/api/ai', createAiRouter(ai));
 
   app.use('/api', (_req, res) => {
