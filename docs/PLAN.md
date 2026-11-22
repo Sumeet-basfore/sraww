@@ -12,26 +12,27 @@ Status: **PLAN ONLY — not started.** Build begins when you reply `approve`.
 
 ## 0. Decisions (defaults — change any before approval)
 
-| # | Decision | Default I chose | Why |
-|---|----------|-----------------|-----|
-| D1 | Where the code lives | This repo (`/home/sumeet/.t3/projects/sraww`) | It's the T3 project you'll push from. `CLAUDE.md` says new projects go under `personal-repo/projects/`; tell me if you want that instead. |
-| D2 | Editor engine | `@excalidraw/excalidraw` **pinned to an exact 0.18.x** | Official embeddable editor, MIT. Pinned because the embed API can change between versions. |
-| D3 | Frontend | Vite + React + TypeScript | Excalidraw is a React component; Vite needs no SSR. |
-| D4 | Backend | Node + Express 5, TypeScript, `zod` validation | Tiny local server for file I/O and AI calls. |
-| D5 | AI providers | Local **Claude Code CLI** (Claude Pro) and **Codex CLI** (ChatGPT Plus), spawned by the server | You want your existing subscriptions, not API keys. See §2b. |
-| D6 | First code-extraction language | TypeScript/JavaScript | Covers most of your likely projects; more languages come after. **Tell me your main languages.** |
-| D7 | Commit trailers | No `Co-Authored-By` trailer | Your `CLAUDE.md` says not to add one unless the project's `.claude/settings.json` sets `attribution.commit`. The attribution reminder I was given defers to `CLAUDE.md`, so I'm following it. Say if you want the trailer. |
-| D8 | Package manager | npm | Already installed (v12); no extra tooling. |
-| D9 | Node version | `engines: node >=22` | Node 26 is installed; 22 is a safe floor. |
-| D10 | Push | **No `git push`** until you give the GitHub report | You asked to push later yourself. |
-| D11 | API keys | **None.** No API-key env vars, no provider SDKs | Subscriptions only. |
-| D12 | Models | Each CLI's default; optional overrides `CLAUDE_MODEL` / `CODEX_MODEL` | Avoids hardcoding model IDs that go stale. |
+| #   | Decision                       | Default I chose                                                                                | Why                                                                                                                                                                                                                        |
+| --- | ------------------------------ | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | Where the code lives           | This repo (`/home/sumeet/.t3/projects/sraww`)                                                  | It's the T3 project you'll push from. `CLAUDE.md` says new projects go under `personal-repo/projects/`; tell me if you want that instead.                                                                                  |
+| D2  | Editor engine                  | `@excalidraw/excalidraw` **pinned to an exact 0.18.x**                                         | Official embeddable editor, MIT. Pinned because the embed API can change between versions.                                                                                                                                 |
+| D3  | Frontend                       | Vite + React + TypeScript                                                                      | Excalidraw is a React component; Vite needs no SSR.                                                                                                                                                                        |
+| D4  | Backend                        | Node + Express 5, TypeScript, `zod` validation                                                 | Tiny local server for file I/O and AI calls.                                                                                                                                                                               |
+| D5  | AI providers                   | Local **Claude Code CLI** (Claude Pro) and **Codex CLI** (ChatGPT Plus), spawned by the server | You want your existing subscriptions, not API keys. See §2b.                                                                                                                                                               |
+| D6  | First code-extraction language | TypeScript/JavaScript                                                                          | Covers most of your likely projects; more languages come after. **Tell me your main languages.**                                                                                                                           |
+| D7  | Commit trailers                | No `Co-Authored-By` trailer                                                                    | Your `CLAUDE.md` says not to add one unless the project's `.claude/settings.json` sets `attribution.commit`. The attribution reminder I was given defers to `CLAUDE.md`, so I'm following it. Say if you want the trailer. |
+| D8  | Package manager                | npm                                                                                            | Already installed (v12); no extra tooling.                                                                                                                                                                                 |
+| D9  | Node version                   | `engines: node >=22`                                                                           | Node 26 is installed; 22 is a safe floor.                                                                                                                                                                                  |
+| D10 | Push                           | **No `git push`** until you give the GitHub report                                             | You asked to push later yourself.                                                                                                                                                                                          |
+| D11 | API keys                       | **None.** No API-key env vars, no provider SDKs                                                | Subscriptions only.                                                                                                                                                                                                        |
+| D12 | Models                         | Each CLI's default; optional overrides `CLAUDE_MODEL` / `CODEX_MODEL`                          | Avoids hardcoding model IDs that go stale.                                                                                                                                                                                 |
 
 ---
 
 ## 1. Product scope
 
 ### In scope (v1)
+
 - Create, open, rename, duplicate, delete diagrams (stored as `.excalidraw` JSON files).
 - Autosave with a visible "saved / unsaved" state.
 - Hand-drawn (default) and clean ("architect") drawing styles, dark mode.
@@ -40,6 +41,7 @@ Status: **PLAN ONLY — not started.** Build begins when you reply `approve`.
 - **Architecture:** scan a folder → build a component/dependency model → render a laid-out diagram → regenerate and diff against the last scan → click a node to see its file path.
 
 ### Out of scope (v1)
+
 - Real-time collaboration, accounts, sync, sharing links.
 - Mobile layout (desktop browser only).
 - Multi-language extraction beyond TS/JS (added as later phases, not v1).
@@ -57,6 +59,7 @@ Browser (React + Excalidraw)  ──HTTP (127.0.0.1)──  Local server (Expres
 ```
 
 Key principles:
+
 - **The server owns all file access and runs the AI CLIs.** The browser never picks arbitrary paths and never talks to an AI service directly. The app stores no credentials; each CLI keeps its own login.
 - **The AI never chooses coordinates.** It outputs a graph (nodes and edges). Code does layout (ELK). This avoids overlapping boxes and tangled arrows.
 - **Architecture model is the source of truth; the Excalidraw scene is a rendering of it.** Node positions the user drags are stored in a sidecar layout file so a re-scan doesn't scramble the diagram.
@@ -90,10 +93,12 @@ interface AiProvider {
 ```
 
 Invocation (flags were checked against the installed CLIs; re-check at build time):
+
 - **Claude:** `claude -p --output-format json --json-schema <schema> --tools ""` with the prompt on stdin. `--tools ""` disables every built-in tool, so the model cannot read or write files. `--model` only when `CLAUDE_MODEL` is set.
 - **Codex:** `codex exec --sandbox read-only --ephemeral --skip-git-repo-check --output-schema <schema-file> -o <out-file> -C <empty-dir>` with the prompt on stdin. The app reads `<out-file>`. `--model` only when `CODEX_MODEL` is set.
 
 Safety rules for spawning:
+
 - Use `spawn` with an argument array. Never build a shell string.
 - Working directory is an empty folder `data/ai-workdir/`. The CLI can't see your projects unless the app puts the needed text into the prompt.
 - Tools are off (Claude) or the sandbox is read-only (Codex).
@@ -105,6 +110,7 @@ Safety rules for spawning:
 Provider choice: `AI_PROVIDER` (default `claude`), with a per-request switch in the UI. A status panel shows whether each CLI is installed and logged in. A missing or logged-out CLI disables its option and shows why.
 
 Limits and caveats (important):
+
 - Calls use your subscription's **usage limits**, not per-token billing. Heavy use can hit a limit. The app shows the CLI's own message when that happens.
 - Each call starts a new process, so expect a few seconds of latency per request. Keep prompts compact.
 - I have not verified each provider's current terms for scripted use of consumer plans. Check them before relying on this heavily.
@@ -150,6 +156,7 @@ Rules carried over from your `CLAUDE.md` and `rules/ecc`: files under 500 lines,
 Every phase ends with: tests green → `npm run typecheck && npm run lint && npm test && npm run build` pass → a self-review against the checklist in §6 → commit.
 
 ### Phase 0 — Scaffold and tooling
+
 - `package.json` with scripts: `dev` (client + server together), `build`, `start`, `test`, `test:e2e`, `lint`, `typecheck`.
 - TypeScript (strict), ESLint, Prettier, Vitest (+ Testing Library), Playwright for e2e.
 - `.gitignore`: `node_modules`, `dist`, `data/`, `.env`, coverage output.
@@ -159,6 +166,7 @@ Every phase ends with: tests green → `npm run typecheck && npm run lint && npm
 - **Commit:** `chore: scaffold vite react ts app with express server and tooling`
 
 ### Phase 1 — Local diagram storage API
+
 - `diagram-store.ts`: list, read, create, rename, duplicate, delete `.excalidraw` files in `DIAGRAMS_DIR`.
 - Name validation: `^[a-zA-Z0-9][a-zA-Z0-9 _-]{0,80}$`. Reject `..`, slashes, absolute paths. Resolve the final path and check it stays inside `DIAGRAMS_DIR`.
 - Atomic writes: write to a temp file, then rename, so a crash can't corrupt a diagram.
@@ -170,6 +178,7 @@ Every phase ends with: tests green → `npm run typecheck && npm run lint && npm
 - **Commit:** `feat(server): add local diagram storage api with safe paths and atomic saves`
 
 ### Phase 2 — Editor shell
+
 - Embed `@excalidraw/excalidraw` (pinned). Import its CSS. Client-only mount. Self-host fonts: copy `dist/prod` fonts into `public/` and set `window.EXCALIDRAW_ASSET_PATH` (so the app works offline).
 - Diagram list screen (create / open / rename / duplicate / delete with confirm).
 - Editor screen with a top bar: diagram name, back button, saved/unsaved indicator.
@@ -184,12 +193,14 @@ Every phase ends with: tests green → `npm run typecheck && npm run lint && npm
   - `feat(client): add drawing style and dark mode toggles`
 
 ### Phase 3 — Export and import
+
 - Export PNG, SVG, and `.excalidraw` download (Excalidraw built-ins wired to the top bar).
 - Import an `.excalidraw` file from disk into the library (validated with the Phase 1 schema).
 - Tests: import rejects non-Excalidraw JSON; import of a valid file creates a diagram.
 - **Commit:** `feat: add png svg and excalidraw export plus file import`
 
 ### Phase 4 — AI: generate a diagram from a prompt
+
 - `ai/provider.ts` and `ai/providers/*-cli.ts`: the two CLI adapters from §2b. The health check runs `claude auth status` and `codex login status`. If a CLI is missing or logged out, its option is disabled in the UI with the reason shown. That's not a crash.
 - Structured output: each request passes a JSON Schema to the CLI (`--json-schema` for Claude, `--output-schema` for Codex), and the reply is validated again on our side. The schema describes the skeleton graph: `nodes[{id, label, shape, color?}]`, `edges[{from, to, label?}]`, `groups[]`. Validated with `zod` (`ai-schemas.ts`) before use.
 - Post-validation: drop edges whose `from`/`to` aren't real node ids; cap nodes (e.g. 200); sanitize labels (length limit, strip control chars).
@@ -199,6 +210,7 @@ Every phase ends with: tests green → `npm run typecheck && npm run lint && npm
 - **Commit:** `feat(ai): generate editable diagrams from prompts via local claude and codex clis`
 
 ### Phase 5 — AI: chat that edits the current diagram
+
 - Server builds a compact **scene summary** (element ids, types, labels, positions, connections) — not the whole raw JSON — so token use stays low.
 - Chat tools the model can call: `add_nodes`, `add_edges`, `update_labels`, `delete_elements`, `group`, `auto_layout` (layout of a subset). Each is validated and applied as a list of ops (`apply-ops.ts`), not by letting the model write raw Excalidraw JSON.
 - Only operations on ids in the summary are allowed; unknown ids are rejected with a message the model can act on.
@@ -210,6 +222,7 @@ Every phase ends with: tests green → `npm run typecheck && npm run lint && npm
   - `feat(ai): add chat panel to edit the current diagram`
 
 ### Phase 6 — Architecture model (types, schema, renderer)
+
 - `shared/arch-model.ts` (zod):
   - `ArchModel = { version, sourceRoot, generatedAt, nodes[], edges[], groups[] }`
   - `ArchNode = { id (stable, from path), label, kind ('module'|'component'|'service'|'external'|'store'), path, group?, description? }`
@@ -222,6 +235,7 @@ Every phase ends with: tests green → `npm run typecheck && npm run lint && npm
 - **Commit:** `feat(arch): add architecture model schema and excalidraw renderer with elk layout`
 
 ### Phase 7 — Scanner for TypeScript/JavaScript
+
 - `arch/scan-ts.ts`: run `dependency-cruiser` programmatically on the target folder with a fixed config (exclude `node_modules`, `dist`, `.git`, build outputs). Output: module-level import edges.
 - Safety: the scanner only reads; target path must be an absolute directory the user registers in settings (allow-list), not any path sent by the browser.
 - Caps: max files (e.g. 5 000) and a timeout, with a clear message if the repo is too big.
@@ -230,6 +244,7 @@ Every phase ends with: tests green → `npm run typecheck && npm run lint && npm
 - **Commit:** `feat(arch): scan typescript and javascript imports into an architecture model`
 
 ### Phase 8 — Architecture UI and AI-assisted naming
+
 - New diagram type "Architecture": pick a project folder (registered once), click **Scan**, diagram appears.
 - Optional **AI naming** (opt-in button, uses the Phase 4 provider): sends folder names, top-level exports and edges (not file contents) to Claude, asks for component names, one-line descriptions, and boundary labels. Output validated; it only fills labels and descriptions, never adds or removes edges.
 - **Diff**: each scan compares with the last saved model → added / removed nodes and edges shown in a side panel, colored in the diagram.
@@ -242,6 +257,7 @@ Every phase ends with: tests green → `npm run typecheck && npm run lint && npm
   - `feat(ai): add opt-in ai naming for architecture components`
 
 ### Phase 9 — Hardening, e2e, docs
+
 - Playwright e2e: create diagram → draw → reload → persisted; scan fixture repo → node count matches; AI tests run against fake CLI scripts (no real model calls in tests).
 - Security pass: server bound to 127.0.0.1; reject requests whose `Host` header isn't localhost (DNS-rebinding guard); CSP for the client; no `dangerouslySetInnerHTML`; labels from AI are rendered as text only.
 - Error UX: every failure shows a message; no silent catches.
@@ -250,6 +266,7 @@ Every phase ends with: tests green → `npm run typecheck && npm run lint && npm
 - **Commits:** `test: add playwright e2e coverage for core flows`, `docs: document setup usage and security model`
 
 ### Later (not in v1, listed so we don't forget)
+
 - Python import scanning (`pydeps` or `ast`), Go (`go list -deps`), docker-compose / Kubernetes manifests as infra nodes.
 - Ollama provider for offline AI (a third adapter, using the interface in §2b).
 - Obsidian/markdown export of architecture notes.
@@ -280,18 +297,18 @@ Every phase ends with: tests green → `npm run typecheck && npm run lint && npm
 
 ## 7. Risks and how I'll handle them
 
-| Risk | Mitigation |
-|------|-----------|
-| Excalidraw embed API differs from docs | Pin exact version; verify names against installed `.d.ts` in Phase 2 |
-| LLM invents node/edge ids or bloats output | Strict zod schema via tool use; drop bad refs; caps on counts and label length |
-| LLM names are wrong or misleading | AI naming only fills labels; user reviews; it never changes structure |
-| Re-scan scrambles a diagram the user arranged | Stable node ids + saved layout positions |
-| Huge repos make the diagram unreadable | Group by folder by default; cap node count; collapse groups |
-| Scanner reads sensitive files | Reads only import graph; never sends file contents to the AI in the extraction path; folder allow-list |
-| Subscription usage limits hit | Show the CLI's limit message; compact prompts (scene summaries, not raw files); no auto-run on scan; AI actions are manual buttons |
-| CLI output format changes between versions | Fixture-based tests; schema validation on our side; show the raw error on failure |
-| Prompt injection from repo names or diagram text | Input quoted as data; tools off for Claude; read-only Codex sandbox in an empty working dir |
-| Excalidraw bundle size | Dynamic import of the editor; check build size in Phase 9 |
+| Risk                                             | Mitigation                                                                                                                         |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Excalidraw embed API differs from docs           | Pin exact version; verify names against installed `.d.ts` in Phase 2                                                               |
+| LLM invents node/edge ids or bloats output       | Strict zod schema via tool use; drop bad refs; caps on counts and label length                                                     |
+| LLM names are wrong or misleading                | AI naming only fills labels; user reviews; it never changes structure                                                              |
+| Re-scan scrambles a diagram the user arranged    | Stable node ids + saved layout positions                                                                                           |
+| Huge repos make the diagram unreadable           | Group by folder by default; cap node count; collapse groups                                                                        |
+| Scanner reads sensitive files                    | Reads only import graph; never sends file contents to the AI in the extraction path; folder allow-list                             |
+| Subscription usage limits hit                    | Show the CLI's limit message; compact prompts (scene summaries, not raw files); no auto-run on scan; AI actions are manual buttons |
+| CLI output format changes between versions       | Fixture-based tests; schema validation on our side; show the raw error on failure                                                  |
+| Prompt injection from repo names or diagram text | Input quoted as data; tools off for Claude; read-only Codex sandbox in an empty working dir                                        |
+| Excalidraw bundle size                           | Dynamic import of the editor; check build size in Phase 9                                                                          |
 
 ---
 
