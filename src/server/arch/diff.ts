@@ -1,13 +1,6 @@
-import type { ArchModel } from '../../shared/arch-model.ts';
+import type { ArchDiff, ArchModel } from '../../shared/arch-model.ts';
 
-export interface ModelDiff {
-  /** False on the first scan, when there is nothing to compare with. */
-  hasBaseline: boolean;
-  addedNodes: string[];
-  removedNodes: string[];
-  addedEdges: string[];
-  removedEdges: string[];
-}
+export type ModelDiff = ArchDiff;
 
 const edgeKey = (from: string, to: string): string => `${from} → ${to}`;
 

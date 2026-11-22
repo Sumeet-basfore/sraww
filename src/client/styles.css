@@ -586,3 +586,102 @@ input:focus-visible,
   justify-content: space-between;
   gap: 8px;
 }
+
+/* Architecture */
+.arch-new {
+  margin: 8px 0 24px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.arch-new h2 {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.arch-new-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.arch-new-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 180px;
+}
+
+.arch-new-form select,
+.arch-new-form input {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+}
+
+.arch-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 0;
+}
+
+.arch-stats div {
+  padding: 10px;
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.arch-stats dt {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.arch-stats dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+}
+
+.arch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.panel-sub {
+  margin: 10px 0 2px;
+}
+
+.plain-list {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.plain-list code {
+  word-break: break-all;
+}
+
+.node-details h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.banner.notice {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: color-mix(in oklch, var(--accent) 10%, var(--surface));
+}

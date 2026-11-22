@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { DiagramList } from './diagrams/DiagramList.tsx';
-import { editorHash } from './lib/route.ts';
+import { architectureHash, editorHash } from './lib/route.ts';
 import { loadPrefs } from './lib/prefs.ts';
 import { useRoute } from './lib/useRoute.ts';
 
@@ -18,17 +18,30 @@ export function App() {
     document.documentElement.dataset.theme = loadPrefs().theme;
   }, []);
 
+  if (route.view === 'list') {
+    return (
+      <div className="app">
+        <main className="page">
+          <DiagramList
+            onOpen={(name) => goTo(editorHash(name))}
+            onOpenArchitecture={(name) => goTo(architectureHash(name))}
+          />
+        </main>
+      </div>
+    );
+  }
+
+  const isArchitecture = route.view === 'architecture';
   return (
     <div className="app">
-      {route.view === 'editor' ? (
-        <Suspense fallback={<p className="pad muted">Loading editor…</p>}>
-          <Editor key={route.name} name={route.name} onExit={() => goTo('#/')} />
-        </Suspense>
-      ) : (
-        <main className="page">
-          <DiagramList onOpen={(name) => goTo(editorHash(name))} />
-        </main>
-      )}
+      <Suspense fallback={<p className="pad muted">Loading editor…</p>}>
+        <Editor
+          key={`${route.view}:${route.name}`}
+          name={route.name}
+          mode={isArchitecture ? 'architecture' : 'diagram'}
+          onExit={() => goTo('#/')}
+        />
+      </Suspense>
     </div>
   );
 }

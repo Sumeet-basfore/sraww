@@ -1,6 +1,7 @@
 import type { ExcalidrawScene } from '../../shared/diagram.ts';
 import type { DiagramGraph } from '../../shared/ai-schemas.ts';
 import type { ChatOp, ChatRequest } from '../../shared/chat-schemas.ts';
+import type { ArchDiff, ArchLayout, ArchModel } from '../../shared/arch-model.ts';
 
 export interface ChatResponse {
   provider: ProviderId;
@@ -98,5 +99,34 @@ export const aiApi = {
   },
   chat(body: ChatRequest): Promise<ChatResponse> {
     return request('/ai/chat', { method: 'POST', body: JSON.stringify(body) });
+  },
+};
+
+export interface ArchProjectInfo {
+  id: string;
+  label: string;
+}
+
+export const archApi = {
+  projects(): Promise<{ projects: ArchProjectInfo[] }> {
+    return request('/arch/projects');
+  },
+  model(name: string): Promise<{ model: ArchModel; layout: ArchLayout | null }> {
+    return request(`/arch/models/${encodeURIComponent(name)}`);
+  },
+  scan(
+    projectId: string,
+    name: string,
+  ): Promise<{ model: ArchModel; layout: ArchLayout | null; diff: ArchDiff }> {
+    return request('/arch/scan', { method: 'POST', body: JSON.stringify({ projectId, name }) });
+  },
+  saveLayout(name: string, positions: ArchLayout['positions']): Promise<void> {
+    return request(`/arch/models/${encodeURIComponent(name)}/layout`, {
+      method: 'PUT',
+      body: JSON.stringify({ version: 1, positions }),
+    });
+  },
+  resetLayout(name: string): Promise<void> {
+    return request(`/arch/models/${encodeURIComponent(name)}/layout`, { method: 'DELETE' });
   },
 };

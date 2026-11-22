@@ -17,6 +17,7 @@ export interface RawEdge {
 }
 
 export interface BuildInput {
+  projectId?: string;
   /** Every scanned file, as a path relative to the project root with forward slashes. */
   files: readonly string[];
   edges: readonly RawEdge[];
@@ -133,6 +134,7 @@ export function buildArchModel(input: BuildInput): ArchModel {
 
   return {
     version: 1,
+    ...(input.projectId ? { projectId: input.projectId } : {}),
     sourceLabel: input.sourceLabel,
     generatedAt: input.generatedAt,
     nodes: [...componentNodes, ...externalNodes],

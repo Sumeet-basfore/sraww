@@ -4,6 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DiagramList } from '../../src/client/diagrams/DiagramList.tsx';
 
+// The map form has its own tests; here it is stubbed so only the diagram list is exercised.
+vi.mock('../../src/client/arch/ArchNewForm.tsx', () => ({ ArchNewForm: () => null }));
+
+// The map form has its own tests; here it is stubbed so only the diagram list is exercised.
+
 const fetchMock = vi.fn();
 
 function json(status: number, body?: unknown): Response {
@@ -27,7 +32,7 @@ afterEach(() => {
 describe('DiagramList', () => {
   it('shows the server error when the list cannot be loaded', async () => {
     fetchMock.mockResolvedValueOnce(json(500, { error: 'disk unavailable' }));
-    render(<DiagramList onOpen={() => undefined} />);
+    render(<DiagramList onOpen={() => undefined} onOpenArchitecture={() => undefined} />);
     expect(await screen.findByRole('alert')).toHaveTextContent('disk unavailable');
   });
 
@@ -37,7 +42,7 @@ describe('DiagramList', () => {
       .mockResolvedValueOnce(json(201, { name: 'Flow' })) // create
       .mockResolvedValue(json(200, { diagrams: [] }));
     const onOpen = vi.fn();
-    render(<DiagramList onOpen={onOpen} />);
+    render(<DiagramList onOpen={onOpen} onOpenArchitecture={() => undefined} />);
     const user = userEvent.setup();
     await user.type(await screen.findByPlaceholderText('Name a new diagram'), '  Flow  ');
     await user.click(screen.getByRole('button', { name: 'Create' }));
@@ -51,7 +56,7 @@ describe('DiagramList', () => {
       json(200, { diagrams: [{ name: 'keep', updatedAt: '2026-01-01T00:00:00Z', sizeBytes: 1 }] }),
     );
     vi.spyOn(window, 'confirm').mockReturnValue(false);
-    render(<DiagramList onOpen={() => undefined} />);
+    render(<DiagramList onOpen={() => undefined} onOpenArchitecture={() => undefined} />);
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', { name: 'Delete' }));
     expect(window.confirm).toHaveBeenCalled();
@@ -68,7 +73,7 @@ describe('DiagramList', () => {
       .mockResolvedValueOnce(json(204))
       .mockResolvedValueOnce(json(200, { diagrams: [] }));
     vi.spyOn(window, 'confirm').mockReturnValue(true);
-    render(<DiagramList onOpen={() => undefined} />);
+    render(<DiagramList onOpen={() => undefined} onOpenArchitecture={() => undefined} />);
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', { name: 'Delete' }));
     expect(await screen.findByText(/No diagrams yet/i)).toBeInTheDocument();
@@ -85,7 +90,7 @@ describe('DiagramList', () => {
       .mockResolvedValueOnce(json(201, { name: 'Sketch (2)' }))
       .mockResolvedValue(json(200, { diagrams: [] }));
     const onOpen = vi.fn();
-    render(<DiagramList onOpen={onOpen} />);
+    render(<DiagramList onOpen={onOpen} onOpenArchitecture={() => undefined} />);
     const user = userEvent.setup();
     await screen.findByRole('button', { name: 'Delete' });
     const input = screen.getByLabelText('Choose a drawing to import');

@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { diagramApi, type DiagramSummary } from '../lib/api.ts';
 import { errorMessage } from '../lib/errors.ts';
+import { ArchNewForm } from '../arch/ArchNewForm.tsx';
 import { IMPORT_ACCEPT, readDrawingFile, uniqueName } from './import.ts';
 
 interface DiagramListProps {
   onOpen: (name: string) => void;
+  onOpenArchitecture: (name: string) => void;
 }
 
-export function DiagramList({ onOpen }: DiagramListProps) {
+export function DiagramList({ onOpen, onOpenArchitecture }: DiagramListProps) {
   const [items, setItems] = useState<DiagramSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
@@ -140,6 +142,11 @@ export function DiagramList({ onOpen }: DiagramListProps) {
           {error}
         </p>
       )}
+
+      <ArchNewForm
+        existingNames={(items ?? []).map((item) => item.name)}
+        onOpen={onOpenArchitecture}
+      />
 
       {items === null && !error && <p className="muted">Loading…</p>}
 

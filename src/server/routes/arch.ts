@@ -56,6 +56,7 @@ export function createArchRouter(store: ArchStore, projects: readonly ArchProjec
     const edges = await scanImports(project.root, files, SCAN_TIMEOUT_MS);
     const previous = await store.readModel(body.name).catch(() => null);
     const model = buildArchModel({
+      projectId: project.id,
       files,
       edges,
       sourceLabel: project.label,

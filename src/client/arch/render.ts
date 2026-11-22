@@ -68,6 +68,22 @@ export function groupFrames(model: ArchModel, boxes: ReadonlyMap<string, Box>): 
   return frames;
 }
 
+/** The point where the line from a box centre towards `toward` leaves the box. */
+export function anchorOn(box: Box, toward: { x: number; y: number }): { x: number; y: number } {
+  const cx = box.x + box.width / 2;
+  const cy = box.y + box.height / 2;
+  const dx = toward.x - cx;
+  const dy = toward.y - cy;
+  if (dx === 0 && dy === 0) return { x: cx, y: cy };
+  const halfW = box.width / 2;
+  const halfH = box.height / 2;
+  const t = Math.min(
+    dx === 0 ? Infinity : halfW / Math.abs(dx),
+    dy === 0 ? Infinity : halfH / Math.abs(dy),
+  );
+  return { x: cx + dx * t, y: cy + dy * t };
+}
+
 function arrowWidth(count: number): number {
   return Math.min(4, 1 + Math.log2(Math.max(1, count)));
 }
@@ -125,18 +141,30 @@ export function archSkeleton(
 
   const arrows = model.edges
     .filter((edge) => boxes.has(edge.from) && boxes.has(edge.to))
-    .map((edge): ExcalidrawElementSkeleton => ({
-      type: 'arrow',
-      id: elementIds.edge(edge.from, edge.to),
-      x: 0,
-      y: 0,
-      start: { id: elementIds.node(edge.from) },
-      end: { id: elementIds.node(edge.to) },
-      strokeWidth: arrowWidth(edge.count),
-      strokeColor: '#6b7280',
-      roughness: 0,
-      ...(edge.count > 1 ? { label: { text: String(edge.count), fontSize: 12 } } : {}),
-    }));
+    .map((edge): ExcalidrawElementSkeleton => {
+      const fromBox = boxes.get(edge.from) as Box;
+      const toBox = boxes.get(edge.to) as Box;
+      const toCenter = { x: toBox.x + toBox.width / 2, y: toBox.y + toBox.height / 2 };
+      const fromCenter = { x: fromBox.x + fromBox.width / 2, y: fromBox.y + fromBox.height / 2 };
+      const a = anchorOn(fromBox, toCenter);
+      const b = anchorOn(toBox, fromCenter);
+      return {
+        type: 'arrow',
+        id: elementIds.edge(edge.from, edge.to),
+        x: a.x,
+        y: a.y,
+        points: [
+          [0, 0],
+          [b.x - a.x, b.y - a.y],
+        ],
+        start: { id: elementIds.node(edge.from) },
+        end: { id: elementIds.node(edge.to) },
+        strokeWidth: arrowWidth(edge.count),
+        strokeColor: '#6b7280',
+        roughness: 0,
+        ...(edge.count > 1 ? { label: { text: String(edge.count), fontSize: 12 } } : {}),
+      };
+    });
 
   return [...frames, ...nodes, ...arrows];
 }

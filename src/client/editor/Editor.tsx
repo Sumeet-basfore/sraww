@@ -7,6 +7,7 @@ import { errorMessage } from '../lib/errors.ts';
 import { loadPrefs, roughnessFor, savePrefs, type DrawingStyle, type Prefs } from '../lib/prefs.ts';
 import type { ExcalidrawScene } from '../../shared/diagram.ts';
 import { createAutosave, type Autosave, type SaveStatus } from './autosave.ts';
+import { ArchPanel } from '../arch/ArchPanel.tsx';
 import { ChatPanel } from '../ai/ChatPanel.tsx';
 import { GeneratePanel } from '../ai/GeneratePanel.tsx';
 import { exportScene, type ExportFormat } from './export.ts';
@@ -24,6 +25,8 @@ type LoadState =
 interface EditorProps {
   name: string;
   onExit: () => void;
+  /** 'architecture' opens the map with its side panel. */
+  mode?: 'diagram' | 'architecture';
 }
 
 /** The server validated the file; restore() performs Excalidraw's own normalization. */
@@ -36,12 +39,14 @@ function restoreScene(scene: ExcalidrawScene, style: DrawingStyle): RestoredScen
   };
 }
 
-export function Editor({ name, onExit }: EditorProps) {
+export function Editor({ name, onExit, mode = 'diagram' }: EditorProps) {
   const [load, setLoad] = useState<LoadState>({ kind: 'loading' });
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
   const [prefs, setPrefs] = useState<Prefs>(loadPrefs);
   const [exportError, setExportError] = useState<string | null>(null);
-  const [panel, setPanel] = useState<'generate' | 'chat' | null>(null);
+  const [panel, setPanel] = useState<'arch' | 'generate' | 'chat' | null>(
+    mode === 'architecture' ? 'arch' : null,
+  );
   const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
 
   useEffect(() => {
@@ -158,6 +163,17 @@ export function Editor({ name, onExit }: EditorProps) {
             </button>
           ))}
         </div>
+        {mode === 'architecture' && (
+          <button
+            type="button"
+            className="button ghost"
+            aria-expanded={panel === 'arch'}
+            disabled={load.kind !== 'ready'}
+            onClick={() => setPanel((open) => (open === 'arch' ? null : 'arch'))}
+          >
+            Architecture
+          </button>
+        )}
         {(['generate', 'chat'] as const).map((which) => (
           <button
             key={which}
@@ -223,7 +239,9 @@ export function Editor({ name, onExit }: EditorProps) {
         )}
         {panel !== null &&
           load.kind === 'ready' &&
-          (panel === 'generate' ? (
+          (panel === 'arch' ? (
+            <ArchPanel name={name} getApi={() => apiRef.current} onClose={() => setPanel(null)} />
+          ) : panel === 'generate' ? (
             <GeneratePanel getApi={() => apiRef.current} onClose={() => setPanel(null)} />
           ) : (
             <ChatPanel getApi={() => apiRef.current} onClose={() => setPanel(null)} />

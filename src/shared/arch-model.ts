@@ -38,6 +38,8 @@ export const archGroupSchema = z.object({
 /** Architecture model: folders as components, packages as externals, and how they depend on each other. */
 export const archModelSchema = z.object({
   version: z.literal(1),
+  /** The allowed project this model was scanned from, so a re-scan knows where to read. */
+  projectId: z.string().max(100).optional(),
   sourceLabel: z.string().max(200),
   generatedAt: z.string(),
   nodes: z.array(archNodeSchema).max(ARCH_LIMITS.maxComponents * 2),
@@ -59,3 +61,12 @@ export const archLayoutSchema = z.object({
 });
 
 export type ArchLayout = z.infer<typeof archLayoutSchema>;
+
+/** What changed between two scans. `hasBaseline` is false on the first scan. */
+export interface ArchDiff {
+  hasBaseline: boolean;
+  addedNodes: string[];
+  removedNodes: string[];
+  addedEdges: string[];
+  removedEdges: string[];
+}

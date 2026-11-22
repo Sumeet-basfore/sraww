@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { defineConfig } from '@playwright/test';
 
 const PORT = 4390;
@@ -20,6 +21,7 @@ export default defineConfig({
     env: {
       PORT: String(PORT),
       DIAGRAMS_DIR: './data/e2e-diagrams',
+      ARCH_PROJECTS: path.resolve('tests/fixtures/sample-project'),
     },
   },
   projects: [{ name: 'chromium', use: { browserName: 'chromium' } }],

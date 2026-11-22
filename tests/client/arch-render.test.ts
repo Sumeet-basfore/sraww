@@ -105,3 +105,20 @@ describe('renderArchitecture', () => {
     expect(skeleton.length).toBeGreaterThan(0);
   });
 });
+
+describe('anchorOn', () => {
+  it('returns the point where the line to a target leaves the box', async () => {
+    const { anchorOn } = await import('../../src/client/arch/render.ts');
+    const point = anchorOn({ x: 0, y: 0, width: 100, height: 50 }, { x: 300, y: 25 });
+    expect(point.x).toBeCloseTo(100);
+    expect(point.y).toBeCloseTo(25);
+  });
+
+  it('uses the box centre when the target is that centre', async () => {
+    const { anchorOn } = await import('../../src/client/arch/render.ts');
+    expect(anchorOn({ x: 0, y: 0, width: 100, height: 50 }, { x: 50, y: 25 })).toEqual({
+      x: 50,
+      y: 25,
+    });
+  });
+});
