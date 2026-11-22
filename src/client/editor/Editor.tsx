@@ -7,6 +7,7 @@ import { errorMessage } from '../lib/errors.ts';
 import { loadPrefs, roughnessFor, savePrefs, type DrawingStyle, type Prefs } from '../lib/prefs.ts';
 import type { ExcalidrawScene } from '../../shared/diagram.ts';
 import { createAutosave, type Autosave, type SaveStatus } from './autosave.ts';
+import { ChatPanel } from '../ai/ChatPanel.tsx';
 import { GeneratePanel } from '../ai/GeneratePanel.tsx';
 import { exportScene, type ExportFormat } from './export.ts';
 import { SaveIndicator } from './SaveIndicator.tsx';
@@ -40,7 +41,7 @@ export function Editor({ name, onExit }: EditorProps) {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
   const [prefs, setPrefs] = useState<Prefs>(loadPrefs);
   const [exportError, setExportError] = useState<string | null>(null);
-  const [panelOpen, setPanelOpen] = useState(false);
+  const [panel, setPanel] = useState<'generate' | 'chat' | null>(null);
   const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
 
   useEffect(() => {
@@ -157,15 +158,18 @@ export function Editor({ name, onExit }: EditorProps) {
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          className="button ghost"
-          aria-expanded={panelOpen}
-          disabled={load.kind !== 'ready'}
-          onClick={() => setPanelOpen((open) => !open)}
-        >
-          ✦ Generate
-        </button>
+        {(['generate', 'chat'] as const).map((which) => (
+          <button
+            key={which}
+            type="button"
+            className="button ghost"
+            aria-expanded={panel === which}
+            disabled={load.kind !== 'ready'}
+            onClick={() => setPanel((open) => (open === which ? null : which))}
+          >
+            {which === 'generate' ? '✦ Generate' : 'Chat'}
+          </button>
+        ))}
         <select
           className="export-select"
           aria-label="Export drawing"
@@ -217,8 +221,12 @@ export function Editor({ name, onExit }: EditorProps) {
             }
           />
         )}
-        {panelOpen && load.kind === 'ready' && (
-          <GeneratePanel getApi={() => apiRef.current} onClose={() => setPanelOpen(false)} />
+        {panel !== null && load.kind === 'ready' && (
+          panel === 'generate' ? (
+            <GeneratePanel getApi={() => apiRef.current} onClose={() => setPanel(null)} />
+          ) : (
+            <ChatPanel getApi={() => apiRef.current} onClose={() => setPanel(null)} />
+          )
         )}
       </div>
     </div>

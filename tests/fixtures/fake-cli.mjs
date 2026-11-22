@@ -11,6 +11,15 @@ const GRAPH = {
   edges: [{ from: 'api', to: 'db', label: 'reads' }],
 };
 
+const CHAT_REPLY = {
+  reply: 'Added a cache.',
+  ops: [
+    { type: 'addNodes', nodes: [{ id: 'cache', label: 'Cache' }] },
+    { type: 'addEdges', edges: [{ from: 'api', to: 'cache' }] },
+    { type: 'deleteElements', ids: ['ghost'] },
+  ],
+};
+
 const entryName = path.basename(process.argv[1]);
 const firstDash = entryName.indexOf('-');
 const cli = entryName.slice(0, firstDash);
@@ -37,6 +46,9 @@ function runClaude() {
   switch (behaviour) {
     case 'ok':
       process.stdout.write(claudeEnvelope(GRAPH));
+      return;
+    case 'chat':
+      process.stdout.write(claudeEnvelope(CHAT_REPLY));
       return;
     case 'invalid':
       process.stdout.write(claudeEnvelope({ nodes: 'not a list' }));

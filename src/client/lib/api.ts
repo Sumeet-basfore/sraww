@@ -1,5 +1,13 @@
 import type { ExcalidrawScene } from '../../shared/diagram.ts';
 import type { DiagramGraph } from '../../shared/ai-schemas.ts';
+import type { ChatOp, ChatRequest } from '../../shared/chat-schemas.ts';
+
+export interface ChatResponse {
+  provider: ProviderId;
+  reply: string;
+  ops: ChatOp[];
+  rejected: string[];
+}
 
 export interface DiagramSummary {
   name: string;
@@ -87,5 +95,8 @@ export const aiApi = {
     provider?: ProviderId,
   ): Promise<{ provider: ProviderId; graph: DiagramGraph }> {
     return request('/ai/generate', { method: 'POST', body: JSON.stringify({ prompt, provider }) });
+  },
+  chat(body: ChatRequest): Promise<ChatResponse> {
+    return request('/ai/chat', { method: 'POST', body: JSON.stringify(body) });
   },
 };

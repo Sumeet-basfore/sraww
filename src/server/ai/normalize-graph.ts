@@ -7,7 +7,8 @@ import {
 
 const CONTROL_CHARS = /\p{Cc}/gu;
 
-function cleanLabel(text: string): string {
+/** Strips control characters, collapses whitespace and limits the length of a label. */
+export function cleanLabel(text: string): string {
   return text
     .replace(CONTROL_CHARS, ' ')
     .replace(/\s+/g, ' ')

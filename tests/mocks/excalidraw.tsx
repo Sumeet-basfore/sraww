@@ -51,3 +51,7 @@ export const CaptureUpdateAction = { IMMEDIATELY: 'IMMEDIATELY' } as const;
 export function convertToExcalidrawElements(skeleton: unknown[] | null): unknown[] {
   return (skeleton ?? []).map((el) => ({ ...(el as object), converted: true }));
 }
+
+export function newElementWith(el: object, updates: object): object {
+  return { ...el, ...updates, version: ((el as { version?: number }).version ?? 0) + 1 };
+}

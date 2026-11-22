@@ -6,9 +6,9 @@ const GRAPH_RULES = [
   'Every edge endpoint must be a node id you defined. Do not include coordinates or any text outside the JSON.',
 ].join('\n');
 
-/** Removes anything that could close the request delimiter early. */
+/** Removes anything that could close a data delimiter early (request, message or diagram tags). */
 export function quoteAsData(text: string): string {
-  return text.replace(/<\/?request>/gi, '');
+  return text.replace(/<\/?(request|message|diagram)>/gi, '');
 }
 
 export function buildGeneratePrompt(request: string): string {
