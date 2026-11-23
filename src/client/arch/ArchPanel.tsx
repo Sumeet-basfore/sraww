@@ -7,6 +7,7 @@ import { errorMessage } from '../lib/errors.ts';
 import { capturePositions } from './layout-capture.ts';
 import { elementIds } from './render.ts';
 import { architectureElements } from './to-scene.ts';
+import { FindingsSection } from './FindingsSection.tsx';
 
 const LIST_LIMIT = 12;
 
@@ -260,6 +261,12 @@ export function ArchPanel({ name, getApi, onClose }: ArchPanelProps) {
               <dd>{packages}</dd>
             </div>
           </dl>
+          <FindingsSection
+            name={name}
+            getApi={getApi}
+            selectedIds={selectedIds}
+            onSelection={setSelectedIds}
+          />
         </>
       )}
 

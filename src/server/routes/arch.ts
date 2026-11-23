@@ -9,6 +9,7 @@ import type { ArchStore } from '../storage/arch-store.ts';
 import { DiagramError } from '../storage/diagram-store.ts';
 import type { AiServices } from '../ai/services.ts';
 import { applyNames, buildNamingPrompt, namingReplySchema } from '../arch/naming.ts';
+import { computeFindings } from '../arch/findings.ts';
 
 export const MAX_SCAN_FILES = 5000;
 export const SCAN_TIMEOUT_MS = 120_000;
@@ -36,6 +37,14 @@ export function createArchRouter(
     const model = await store.readModel(name);
     if (!model) throw new DiagramError('NOT_FOUND', `No architecture model for "${name}".`);
     res.json({ model, layout: await store.readLayout(name) });
+  });
+
+  router.get('/models/:name/findings', async (req, res) => {
+    const model = await store.readModel(req.params.name);
+    if (!model) {
+      throw new DiagramError('NOT_FOUND', `No architecture model for "${req.params.name}".`);
+    }
+    res.json({ findings: computeFindings(model) });
   });
 
   router.put('/models/:name/layout', async (req, res) => {

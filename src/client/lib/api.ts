@@ -2,6 +2,7 @@ import type { ExcalidrawScene } from '../../shared/diagram.ts';
 import type { DiagramGraph } from '../../shared/ai-schemas.ts';
 import type { ChatOp, ChatRequest } from '../../shared/chat-schemas.ts';
 import type { ArchDiff, ArchLayout, ArchModel } from '../../shared/arch-model.ts';
+import type { ArchFinding } from '../../shared/arch-findings.ts';
 import type {
   LoginFlow,
   ProviderId,
@@ -211,6 +212,9 @@ export const archApi = {
   },
   model(name: string): Promise<{ model: ArchModel; layout: ArchLayout | null }> {
     return request(`/arch/models/${encodeURIComponent(name)}`);
+  },
+  findings(name: string): Promise<{ findings: ArchFinding[] }> {
+    return request(`/arch/models/${encodeURIComponent(name)}/findings`);
   },
   scan(
     projectId: string,
