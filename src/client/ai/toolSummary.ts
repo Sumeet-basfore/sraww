@@ -1,4 +1,17 @@
-import type { ProviderView, ProvidersView } from '../../shared/ai-account.ts';
+import {
+  EFFORT_LEVELS,
+  type Effort,
+  type ModelOption,
+  type ProviderView,
+  type ProvidersView,
+} from '../../shared/ai-account.ts';
+
+/** Efforts a choice can use: the model's own list, or every level when the CLI picks the model. */
+export function effortsFor(models: ModelOption[], modelId: string | null): Effort[] {
+  const chosen = modelId ? models.find((m) => m.id === modelId) : undefined;
+  if (chosen) return chosen.efforts;
+  return EFFORT_LEVELS.filter((level) => models.some((m) => m.efforts.includes(level)));
+}
 
 /** The tool chosen for Generate and Chat, or null while unknown. */
 export function defaultView(data: ProvidersView): ProviderView | null {

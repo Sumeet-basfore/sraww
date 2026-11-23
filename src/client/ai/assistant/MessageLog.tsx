@@ -31,17 +31,6 @@ export function MessageLog({ entries, busy, onAdd, onReplace }: MessageLogProps)
     end.current?.scrollIntoView?.({ block: 'end' });
   }, [entries.length]);
 
-  if (entries.length === 0) {
-    return (
-      <ol className="assistant-log" aria-live="polite">
-        <li className="assistant-empty muted">
-          Ask for a change to this drawing, or switch to “New diagram” to draw one from a
-          description. Select shapes and press “Explain selection” to understand them.
-        </li>
-      </ol>
-    );
-  }
-
   return (
     <ol className="assistant-log" aria-live="polite">
       {entries.map((entry) => (

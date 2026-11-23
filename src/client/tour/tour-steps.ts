@@ -28,7 +28,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
   },
   {
     title: 'The assistant',
-    body: 'The assistant sits at the bottom of a drawing. In “Edit this drawing” it changes the drawing when you ask, and in “New diagram” it proposes a whole diagram that you can add or replace. Press + to ask it to explain the shapes you have selected.',
+    body: 'The assistant sits at the bottom of a drawing. In “Edit this drawing” it changes the drawing when you ask, and in “New diagram” it proposes a whole diagram that you can add or replace. Select shapes and press “Explain selection” to ask what they do.',
     where: 'Bottom of an open drawing',
   },
   {
