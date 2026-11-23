@@ -80,7 +80,7 @@ test('generates a diagram from a prompt and adds it to the drawing', async ({ pa
 
   // The assistant is docked under the drawing; “New diagram” is its generate mode.
   await page.getByRole('combobox', { name: 'What the assistant does' }).selectOption('new');
-  await expect(page.locator('.composer-tool-name')).toHaveText('Claude Code');
+  await expect(page.getByRole('combobox', { name: 'AI tool' })).toHaveValue('claude');
 
   await page.getByLabel('Message the assistant').fill('An API that reads from a database');
   await page.getByRole('button', { name: 'Generate diagram' }).click();
@@ -147,4 +147,41 @@ test('chat adds shapes and a glued arrow to the drawing', async ({ page, request
   const arrows = (await liveElements(request, 'e2e chat')).filter((el) => el.type === 'arrow');
   expect(arrows[0]?.startBinding).toBeTruthy();
   expect(arrows[0]?.endBinding).toBeTruthy();
+});
+
+test('message box has a visible keyboard focus indicator', async ({ page }) => {
+  await page.route('**/api/ai/providers', (route) => route.fulfill({ json: STATUS }));
+
+  await page.goto('/');
+  await page.getByPlaceholder('Name a new drawing').fill('e2e keyboard focus');
+  await page.getByRole('button', { name: 'Create' }).click();
+  await expect(page.locator('.excalidraw')).toBeVisible({ timeout: 30_000 });
+
+  const messageBox = page.getByLabel('Message the assistant');
+  // Wait until the tool is ready, so the composer controls are enabled and in the tab order.
+  await expect(messageBox).toBeEnabled();
+
+  // Tab order inside the form is: message box, Explain selection, mode select. Starting from the
+  // mode select, two Shift+Tab presses reach the message box.
+  await page.getByRole('combobox', { name: 'What the assistant does' }).focus();
+  await page.keyboard.press('Shift+Tab');
+  await page.keyboard.press('Shift+Tab');
+
+  await expect(messageBox).toBeFocused();
+  await expect
+    .poll(() =>
+      messageBox.evaluate((el) => {
+        const style = getComputedStyle(el);
+        return {
+          outline: style.outlineStyle,
+          width: style.outlineWidth,
+          color: style.outlineColor,
+        };
+      }),
+    )
+    .toEqual({
+      outline: 'solid',
+      width: '2px',
+      color: expect.stringMatching(/^(?!rgba\(0, 0, 0, 0\)).+/),
+    });
 });

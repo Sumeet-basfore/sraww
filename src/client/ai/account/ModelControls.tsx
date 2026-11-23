@@ -1,23 +1,11 @@
 import { useState } from 'react';
-import {
-  EFFORT_LEVELS,
-  type Effort,
-  type ModelOption,
-  type ProviderSelection,
-  type ProviderView,
-} from '../../../shared/ai-account.ts';
+import type { Effort, ProviderSelection, ProviderView } from '../../../shared/ai-account.ts';
+import { effortsFor } from '../toolSummary.ts';
 
 interface ModelControlsProps {
   view: ProviderView;
   busy: boolean;
   onSave: (selection: ProviderSelection) => void;
-}
-
-/** Efforts a choice can use: the model's own list, or every level when the CLI picks the model. */
-function effortsFor(models: ModelOption[], modelId: string | null): Effort[] {
-  const chosen = modelId ? models.find((m) => m.id === modelId) : undefined;
-  if (chosen) return chosen.efforts;
-  return EFFORT_LEVELS.filter((level) => models.some((m) => m.efforts.includes(level)));
 }
 
 /** Model and effort for one tool. Drafts stay local until Save, so nothing changes by accident. */

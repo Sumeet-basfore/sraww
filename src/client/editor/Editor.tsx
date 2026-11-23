@@ -62,7 +62,6 @@ export function Editor({ name, onExit, mode = 'diagram', onShowTour }: EditorPro
   const [actionError, setActionError] = useState<string | null>(null);
   const [panel, setPanel] = useState<'arch' | null>(mode === 'architecture' ? 'arch' : null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [assistantOpen, setAssistantOpen] = useState(false);
   const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const drawingInput = useRef<HTMLInputElement>(null);
@@ -393,13 +392,7 @@ export function Editor({ name, onExit, mode = 'diagram', onShowTour }: EditorPro
           <ArchPanel name={name} getApi={() => apiRef.current} onClose={() => setPanel(null)} />
         )}
       </div>
-      {load.kind === 'ready' && (
-        <Assistant
-          getApi={() => apiRef.current}
-          open={assistantOpen}
-          onToggle={() => setAssistantOpen((open) => !open)}
-        />
-      )}
+      {load.kind === 'ready' && <Assistant getApi={() => apiRef.current} />}
     </div>
   );
 }

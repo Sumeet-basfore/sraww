@@ -134,20 +134,44 @@ export const libraryApi = {
   },
 };
 
+// Above the worst case of the server's CLI checks: one 20 s probe for the provider list, and up to
+// two 20 s probes for a Codex save (its model list, then its status). A slow but working server is
+// therefore never cut off before it answers.
+const PROVIDERS_TIMEOUT_MS = 45_000;
+
 const providerPath = (provider: ProviderId, rest = ''): string =>
   `/ai/providers/${provider}${rest}`;
 
 export const aiApi = {
-  providers(): Promise<ProvidersView> {
-    return request<ProvidersView>('/ai/providers');
+  async providers(): Promise<ProvidersView> {
+    // The server checks each CLI, so allow a generous time. A hung request must still end, so the
+    // composer can show an error and offer Retry instead of staying disabled.
+    const body = await request<unknown>('/ai/providers', {
+      signal: AbortSignal.timeout(PROVIDERS_TIMEOUT_MS),
+    });
+    // An empty or malformed reply is an error, not a ready state with no data.
+    if (
+      typeof body !== 'object' ||
+      body === null ||
+      !Array.isArray((body as { providers?: unknown }).providers)
+    ) {
+      throw new Error('The AI tools returned an unexpected response.');
+    }
+    return body as ProvidersView;
   },
+  // A stalled save must end too, or the assistant would stay disabled while it waits.
   setDefault(provider: ProviderId): Promise<{ defaultProvider: ProviderId }> {
-    return request('/ai/default', { method: 'PUT', body: JSON.stringify({ provider }) });
+    return request('/ai/default', {
+      method: 'PUT',
+      body: JSON.stringify({ provider }),
+      signal: AbortSignal.timeout(PROVIDERS_TIMEOUT_MS),
+    });
   },
   saveSelection(provider: ProviderId, selection: ProviderSelection): Promise<ProviderView> {
     return request(providerPath(provider, '/selection'), {
       method: 'PUT',
       body: JSON.stringify(selection),
+      signal: AbortSignal.timeout(PROVIDERS_TIMEOUT_MS),
     });
   },
   startLogin(provider: ProviderId): Promise<{ login: LoginFlow | null }> {
