@@ -6,9 +6,18 @@ import { libraryPayloadSchema, type LibraryPayload } from '../../shared/library.
 /** The file name cannot collide with a drawing: drawings always end in .excalidraw. */
 const FILE_NAME = 'library.json';
 
+/** Shown to the user, so it says what to do. Status 422 with a message the client may display. */
+function damaged(): Error & { status: number; expose: boolean } {
+  return Object.assign(
+    new Error('The saved library file is damaged. Move library.json aside to start a new library.'),
+    { status: 422, expose: true },
+  );
+}
+
 /**
  * Keeps the Excalidraw library as one JSON file in the diagrams folder. A missing file means an
- * empty library. A file that does not validate is treated as empty, and the next save replaces it.
+ * empty library. A file that exists but does not validate is an error: it is never treated as
+ * empty, because the next save would overwrite it.
  */
 export function createLibraryStore(dir: string) {
   const root = path.resolve(dir);
@@ -26,10 +35,11 @@ export function createLibraryStore(dir: string) {
     try {
       json = JSON.parse(text);
     } catch {
-      return [];
+      throw damaged();
     }
     const parsed = libraryPayloadSchema.safeParse(json);
-    return parsed.success ? parsed.data.items : [];
+    if (!parsed.success) throw damaged();
+    return parsed.data.items;
   }
 
   async function write(input: unknown): Promise<LibraryPayload['items']> {

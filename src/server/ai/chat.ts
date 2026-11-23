@@ -17,7 +17,7 @@ const CHAT_RULES = [
   'You help the user edit a diagram. The diagram is given as JSON under <diagram>: its shapes (id, kind, label) and its arrows (id, from, to, label; from or to may be null when an arrow is not connected).',
   'Answer with a JSON object: "reply" (a short plain-text answer for the user) and "ops" (a list of edits, possibly empty).',
   'Allowed ops:',
-  '- {"type":"addNodes","nodes":[{"id","label","shape"?,"color"?,"group"?}]}: new shapes. Their ids must be new, not used in the diagram. shape is "rectangle", "rounded", "ellipse", "diamond" or "note"; color is "neutral", "blue", "green", "amber", "red" or "violet".',
+  '- {"type":"addNodes","nodes":[{"id","label","shape"?,"color"?}]}: new shapes. Their ids must be new, not used in the diagram. shape is "rectangle", "rounded", "ellipse", "diamond" or "note"; color is "neutral", "blue", "green", "amber", "red" or "violet".',
   '- {"type":"addEdges","edges":[{"from","to","label"?,"style"?,"arrow"?}]}: new arrows. from and to must be ids of existing shapes or shapes added earlier in the same ops list. style is "solid" or "dashed"; arrow is "end", "both" or "none".',
   '- {"type":"updateNodes","updates":[{"id","label"?,"color"?}]}: change the text or colour of existing shapes. Each id must be a shape in the diagram. To change a shape\'s form, delete it and add a new one.',
   '- {"type":"deleteElements","ids":[...]}: ids of existing shapes to remove. Arrows attached to them are removed too.',
@@ -90,6 +90,7 @@ export function validateChatReply(reply: ChatReply, sceneIds: ReadonlySet<string
         }
         return [id];
       });
+      ids.forEach((id) => existing.delete(id));
       if (ids.length > 0) ops.push({ type: 'deleteElements', ids });
     }
   }

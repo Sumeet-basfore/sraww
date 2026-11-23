@@ -55,3 +55,19 @@ export function convertToExcalidrawElements(skeleton: unknown[] | null): unknown
 export function newElementWith(el: object, updates: object): object {
   return { ...el, ...updates, version: ((el as { version?: number }).version ?? 0) + 1 };
 }
+
+/** A stable stand-in for Excalidraw's library hash: equal items give equal hashes. */
+export function getLibraryItemsHash(items: unknown): number {
+  const text = JSON.stringify(items);
+  let hash = 0;
+  for (let i = 0; i < text.length; i += 1) hash = (hash * 31 + text.charCodeAt(i)) | 0;
+  return hash;
+}
+
+export function loadLibraryFromBlob(): Promise<unknown[]> {
+  return Promise.resolve([]);
+}
+
+export function serializeLibraryAsJSON(items: unknown): string {
+  return JSON.stringify({ type: 'excalidrawlib', version: 2, libraryItems: items });
+}

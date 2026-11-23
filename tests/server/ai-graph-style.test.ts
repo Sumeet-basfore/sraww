@@ -70,3 +70,18 @@ describe('updateNodes chat operation', () => {
     expect(chatOpSchema.safeParse({ type: 'updateNodes', updates: [] }).success).toBe(false);
   });
 });
+
+describe('a shape deleted earlier in the same reply', () => {
+  it('cannot be changed later in that reply', () => {
+    const reply = chatReplySchema.parse({
+      reply: 'Done.',
+      ops: [
+        { type: 'deleteElements', ids: ['api'] },
+        { type: 'updateNodes', updates: [{ id: 'api', label: 'Gone' }] },
+      ],
+    });
+    const out = validateChatReply(reply, new Set(['api']));
+    expect(out.ops.map((op) => op.type)).toEqual(['deleteElements']);
+    expect(out.rejected[0]).toMatch(/Cannot change "api"/);
+  });
+});

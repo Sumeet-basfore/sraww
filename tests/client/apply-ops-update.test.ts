@@ -81,3 +81,40 @@ describe('applyChatOps relabel keeps text inside its shape', () => {
     expect(text.x).toBeGreaterThanOrEqual(0);
   });
 });
+
+describe('applyChatOps relabel and recolour together', () => {
+  it('applies a label and a colour in one update', () => {
+    const out = applyChatOps(
+      [api(), label()],
+      [{ type: 'updateNodes', updates: [{ id: 'api', label: 'Gateway', color: 'red' }] }],
+    );
+    expect(out.find((el) => el.id === 'api')).toMatchObject({ strokeColor: PALETTE.red.stroke });
+    expect(out.find((el) => el.id === 'api-text')).toMatchObject({ text: 'Gateway' });
+  });
+
+  it('never makes a relabelled label narrower than a usable width', () => {
+    const narrow: EditableElement = { ...api(), width: 30 };
+    const out = applyChatOps(
+      [narrow, label()],
+      [{ type: 'updateNodes', updates: [{ id: 'api', label: 'Gateway' }] }],
+    );
+    expect(out.find((el) => el.id === 'api-text')!.width).toBeGreaterThanOrEqual(40);
+  });
+
+  it('gives a note the chosen colour in its text', () => {
+    const note: EditableElement = {
+      id: 'note',
+      type: 'text',
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 30,
+      text: 'Read first',
+    };
+    const out = applyChatOps(
+      [note],
+      [{ type: 'updateNodes', updates: [{ id: 'note', color: 'green' }] }],
+    );
+    expect(out.find((el) => el.id === 'note')).toMatchObject({ strokeColor: PALETTE.green.stroke });
+  });
+});

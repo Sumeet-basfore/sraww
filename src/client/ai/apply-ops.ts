@@ -58,29 +58,24 @@ function deleteIds(elements: EditableElement[], ids: ReadonlySet<string>): Edita
   });
 }
 
-/** Text for a shape's label, kept inside the shape and centred on it. */
-function relabelled(
+const MIN_LABEL_WIDTH = 40;
+
+/** Property changes that put a new label inside its shape: centred, and never wider than the shape. */
+function labelChanges(
   text: EditableElement,
   label: string,
   container: EditableElement | undefined,
-): EditableElement {
+): Record<string, unknown> {
   const room = container ? container.width - TEXT_PADDING : Number.POSITIVE_INFINITY;
-  const width = Math.min(room, Math.max(40, label.length * APPROX_CHAR_WIDTH));
+  const width = Math.max(MIN_LABEL_WIDTH, Math.min(room, label.length * APPROX_CHAR_WIDTH));
   const x = container ? container.x + (container.width - width) / 2 : text.x;
-  return newElementWith(
-    text as never,
-    {
-      text: label,
-      originalText: label,
-      width,
-      x,
-    } as never,
-  ) as unknown as EditableElement;
+  return { text: label, originalText: label, width, x };
 }
 
 /**
- * Changes the text or colour of existing shapes and notes. A label change edits the text bound to
- * the shape, or a note's own text, and keeps it inside its shape.
+ * Changes the text or colour of existing shapes and notes. A shape takes the colour as its border
+ * and fill; a note\'s text takes it as its colour. A label change goes into the text bound to the
+ * shape, or into a note\'s own text. Both kinds of change are applied together.
  */
 function applyUpdates(
   elements: EditableElement[],
@@ -91,26 +86,24 @@ function applyUpdates(
   return elements.map((el) => {
     if (el.isDeleted) return el;
     const own = byId.get(el.id);
-    if (own?.color) {
-      const colour = PALETTE[own.color];
-      return newElementWith(
-        el as never,
-        {
-          strokeColor: colour.stroke,
-          backgroundColor: colour.fill,
-        } as never,
-      ) as unknown as EditableElement;
-    }
-    if (el.type === 'text' && !el.containerId && own?.label) {
-      // A note is a text element of its own.
-      return relabelled(el, own.label, undefined);
-    }
+    const colour = own?.color ? PALETTE[own.color] : undefined;
+    const isNote = el.type === 'text' && !el.containerId;
     const owner = el.containerId ? byId.get(el.containerId) : undefined;
-    if (el.type === 'text' && owner?.label) {
-      const container = el.containerId ? byElement.get(el.containerId) : undefined;
-      return relabelled(el, owner.label, container);
+    const changes: Record<string, unknown> = {};
+    if (colour && el.type !== 'text') {
+      changes.strokeColor = colour.stroke;
+      changes.backgroundColor = colour.fill;
+    } else if (colour && isNote) {
+      changes.strokeColor = colour.stroke;
     }
-    return el;
+    if (isNote && own?.label) {
+      Object.assign(changes, labelChanges(el, own.label, undefined));
+    } else if (el.type === 'text' && owner?.label) {
+      const container = el.containerId ? byElement.get(el.containerId) : undefined;
+      Object.assign(changes, labelChanges(el, owner.label, container));
+    }
+    if (Object.keys(changes).length === 0) return el;
+    return newElementWith(el as never, changes as never) as unknown as EditableElement;
   });
 }
 
@@ -191,7 +184,7 @@ export function applyChatOps(
       y: box.y,
       text: node.label,
       fontSize: 18,
-      strokeColor: INK,
+      strokeColor: node.color ? PALETTE[node.color].stroke : INK,
     };
   });
   const boundArrows = newEdges

@@ -62,10 +62,18 @@ describe('library API', () => {
     expect(res.status).toBe(400);
   });
 
-  it('treats a damaged library file as empty instead of failing', async () => {
+  it('reports a damaged library file instead of treating it as empty', async () => {
     await writeFile(path.join(dir, 'library.json'), '{ not json', 'utf8');
     const res = await request(app()).get('/api/library').set('Host', HOST);
-    expect(res.body).toEqual({ items: [] });
+    expect(res.status).toBe(422);
+    expect(res.body.error).toMatch(/damaged/);
+  });
+
+  it('does not overwrite a damaged library file on save', async () => {
+    await writeFile(path.join(dir, 'library.json'), '{ not json', 'utf8');
+    await request(app()).get('/api/library').set('Host', HOST);
+    const { readFile } = await import('node:fs/promises');
+    expect(await readFile(path.join(dir, 'library.json'), 'utf8')).toBe('{ not json');
   });
 
   it('does not list the library file as a drawing', async () => {

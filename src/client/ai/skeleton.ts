@@ -9,6 +9,7 @@ import {
   FRAME_STROKE,
   INK,
   isNote,
+  PALETTE,
   shapeStyle,
 } from './style.ts';
 
@@ -66,7 +67,7 @@ export function graphToSkeleton(graph: DiagramGraph, layout: Layout): Excalidraw
           y: box.y,
           text: node.label,
           fontSize: 18,
-          strokeColor: INK,
+          strokeColor: node.color ? PALETTE[node.color].stroke : INK,
         } as ExcalidrawElementSkeleton,
       ];
     }

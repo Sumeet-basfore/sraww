@@ -79,7 +79,27 @@ export function Editor({ name, onExit, mode = 'diagram' }: EditorProps) {
 
   useEffect(() => {
     const element = canvasRef.current;
-    return element ? attachWheelZoom(element) : undefined;
+    if (!element) return undefined;
+    const detachWheel = attachWheelZoom(element);
+    // Excalidraw would load a dropped .excalidraw file over this drawing. Catch those drops here,
+    // in the capture phase, and import them as new drawings or into the library instead.
+    function onDrop(event: DragEvent): void {
+      const file = event.dataTransfer?.files[0];
+      if (!file) return;
+      const name = file.name.toLowerCase();
+      const isLibrary = name.endsWith('.excalidrawlib');
+      const isDrawing = name.endsWith('.excalidraw') || name.endsWith('.json');
+      if (!isLibrary && !isDrawing) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (isLibrary) void importLibraryRef.current(file);
+      else void importDrawingRef.current(file);
+    }
+    element.addEventListener('drop', onDrop, true);
+    return () => {
+      detachWheel();
+      element.removeEventListener('drop', onDrop, true);
+    };
   }, []);
 
   useEffect(() => {
@@ -201,10 +221,20 @@ export function Editor({ name, onExit, mode = 'diagram' }: EditorProps) {
 
   /** Adds the saved library to Excalidraw's own library, which it keeps in this browser. */
   async function seedLibrary(api: ExcalidrawImperativeAPI): Promise<void> {
-    const saved = (await librarySyncRef.current?.initial()) ?? [];
-    if (saved.length === 0) return;
-    await api.updateLibrary({ libraryItems: saved as never, merge: true, prompt: false });
+    try {
+      const saved = (await librarySyncRef.current?.initial()) ?? [];
+      if (saved.length === 0) return;
+      await api.updateLibrary({ libraryItems: saved as never, merge: true, prompt: false });
+    } catch (err) {
+      setActionError(`The library could not be added to the editor. ${errorMessage(err)}`);
+    }
   }
+
+  // The drop handler is attached once, so it calls the latest import functions through refs.
+  const importDrawingRef = useRef<(file: File) => Promise<void>>(async () => undefined);
+  const importLibraryRef = useRef<(file: File) => Promise<void>>(async () => undefined);
+  importDrawingRef.current = importDrawing;
+  importLibraryRef.current = importLibrary;
 
   function toggleTheme(): void {
     const next = {
