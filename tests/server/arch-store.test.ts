@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createArchStore } from '../../src/server/storage/arch-store.ts';
 import { DiagramError } from '../../src/server/storage/diagram-store.ts';
 import type { ArchModel } from '../../src/shared/arch-model.ts';
+import type { ReviewSidecar } from '../../src/server/arch/review.ts';
 
 let dir: string;
 const MODEL: ArchModel = {
@@ -23,6 +24,24 @@ const MODEL: ArchModel = {
   ],
   edges: [],
   groups: [{ id: 'src', label: 'src', members: ['src/a'] }],
+};
+
+const REVIEW: ReviewSidecar = {
+  version: 1,
+  generatedAt: '2026-01-02T00:00:00.000Z',
+  modelGeneratedAt: MODEL.generatedAt,
+  provider: 'claude',
+  review: {
+    summary: 'Separate responsibilities by feature.',
+    findings: [
+      {
+        severity: 'medium',
+        title: 'Split the server boundary',
+        evidence: ['src/a'],
+        suggestion: 'Split `src/a` by feature.',
+      },
+    ],
+  },
 };
 
 beforeEach(async () => {
@@ -61,6 +80,34 @@ describe('arch store', () => {
     });
     await store.removeLayout('demo');
     expect(await store.readLayout('demo')).toBeNull();
+  });
+
+  it('returns null when a review has not been saved', async () => {
+    expect(await createArchStore(dir).readReview('missing')).toBeNull();
+  });
+
+  it('round-trips a review sidecar', async () => {
+    const store = createArchStore(dir);
+    await store.writeReview('demo', REVIEW);
+    expect(await store.readReview('demo')).toEqual(REVIEW);
+  });
+
+  it('treats corrupt review JSON as invalid content', async () => {
+    const { writeFile } = await import('node:fs/promises');
+    await writeFile(path.join(dir, 'demo.arch-review.json'), '{', 'utf8');
+    const error = await createArchStore(dir)
+      .readReview('demo')
+      .catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(DiagramError);
+    expect(error).toMatchObject({ code: 'INVALID_CONTENT' });
+  });
+
+  it('reuses name validation for review operations', async () => {
+    const store = createArchStore(dir);
+    const error = await store.readReview('../escape').catch((e: unknown) => e);
+    expect(error).toMatchObject({ code: 'INVALID_NAME' });
+    const writeError = await store.writeReview('../escape', REVIEW).catch((e: unknown) => e);
+    expect(writeError).toMatchObject({ code: 'INVALID_NAME' });
   });
 
   it('treats a damaged layout file as no layout rather than failing', async () => {

@@ -8,6 +8,7 @@ import {
   type ArchLayout,
   type ArchModel,
 } from '../../shared/arch-model.ts';
+import { reviewSidecarSchema, type ReviewSidecar } from '../arch/review.ts';
 import { DiagramError } from './diagram-store.ts';
 
 function isMissing(err: unknown): boolean {
@@ -90,11 +91,30 @@ export function createArchStore(dir: string) {
     await writeJson(fileFor(name, '.arch-layout.json'), parsed.data);
   }
 
+  async function readReview(name: string): Promise<ReviewSidecar | null> {
+    const raw = await readJson(fileFor(name, '.arch-review.json'), 'architecture review');
+    if (raw === null) return null;
+    const parsed = reviewSidecarSchema.safeParse(raw);
+    if (!parsed.success) {
+      throw new DiagramError('INVALID_CONTENT', 'The saved architecture review is not valid.');
+    }
+    return parsed.data;
+  }
+
+  async function writeReview(name: string, review: unknown): Promise<ReviewSidecar> {
+    const parsed = reviewSidecarSchema.safeParse(review);
+    if (!parsed.success) {
+      throw new DiagramError('INVALID_CONTENT', 'Not a valid architecture review.');
+    }
+    await writeJson(fileFor(name, '.arch-review.json'), parsed.data);
+    return parsed.data;
+  }
+
   async function removeLayout(name: string): Promise<void> {
     await rm(fileFor(name, '.arch-layout.json'), { force: true });
   }
 
-  return { readModel, writeModel, readLayout, writeLayout, removeLayout };
+  return { readModel, writeModel, readLayout, writeLayout, removeLayout, readReview, writeReview };
 }
 
 export type ArchStore = ReturnType<typeof createArchStore>;
