@@ -1,34 +1,35 @@
 import { useState } from 'react';
 import { aiApi } from '../../lib/api.ts';
 import { errorMessage } from '../../lib/errors.ts';
-import type { ProviderId, ProviderSelection, ProviderView } from '../../../shared/ai-account.ts';
+import type { ProviderId, ProviderSelection } from '../../../shared/ai-account.ts';
 import { useAiProviders } from '../useAiProviders.ts';
+import { Logo } from '../../brand/Logo.tsx';
 import { AccountCard } from './AccountCard.tsx';
 import { ModelControls } from './ModelControls.tsx';
 import { SignInSection } from './SignInSection.tsx';
+import './ai-tools.css';
 
 interface AiAccountPageProps {
   onBack: () => void;
+  onShowTour: () => void;
 }
 
-function toolStatus(view: ProviderView): string {
-  if (!view.installed) return 'Not installed';
-  return view.loggedIn ? (view.account?.email ?? 'Signed in') : 'Not signed in';
+function providerStatus(view: { installed: boolean; loggedIn: boolean }): string {
+  return `${view.installed ? 'Installed' : 'Not installed'} · ${view.loggedIn ? 'Signed in' : 'Sign-in needed'}`;
 }
 
-/** Settings for the AI tools: which one answers Generate and Chat, its account, model and effort. */
-export function AiAccountPage({ onBack }: AiAccountPageProps) {
+/** Settings for the AI tools: account, model and effort for both supported providers. */
+export function AiAccountPage({ onBack, onShowTour }: AiAccountPageProps) {
   const { state, reload } = useAiProviders();
-  const [pickedId, setPickedId] = useState<ProviderId | null>(null);
+  const [pickedDefaultId, setPickedDefaultId] = useState<ProviderId | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const data = state.status === 'ready' ? state.data : null;
-  const selectedId = pickedId ?? data?.defaultProvider ?? null;
-  const current = data?.providers.find((p) => p.id === selectedId) ?? null;
+  const selectedDefaultId = pickedDefaultId ?? data?.defaultProvider;
 
-  async function perform(action: () => Promise<unknown>, done: string): Promise<void> {
+  async function perform(action: () => Promise<unknown>, done: string): Promise<boolean> {
     setBusy(true);
     setError(null);
     setNotice(null);
@@ -36,8 +37,10 @@ export function AiAccountPage({ onBack }: AiAccountPageProps) {
       await action();
       await reload();
       setNotice(done);
+      return true;
     } catch (err) {
       setError(errorMessage(err));
+      return false;
     } finally {
       setBusy(false);
     }
@@ -47,17 +50,35 @@ export function AiAccountPage({ onBack }: AiAccountPageProps) {
     void perform(() => aiApi.saveSelection(id, selection), 'Saved.');
   }
 
-  function makeDefault(id: ProviderId, label: string): void {
-    void perform(() => aiApi.setDefault(id), `${label} now answers Generate and Chat.`);
+  async function makeDefault(id: ProviderId, label: string): Promise<void> {
+    setPickedDefaultId(id);
+    const saved = await perform(
+      () => aiApi.setDefault(id),
+      `${label} now answers Generate and Chat.`,
+    );
+    if (!saved) setPickedDefaultId(null);
   }
 
   return (
     <div className="app">
       <main className="ai-page">
-        <header className="ai-page-header">
-          <button type="button" className="link-button" onClick={onBack}>
-            ← Drawings
-          </button>
+        <header className="masthead ai-masthead">
+          <Logo className="brand-lockup" />
+          <nav className="masthead-links" aria-label="Main navigation">
+            <a className="link-button" href="#/" onClick={onBack}>
+              ← Drawings
+            </a>
+            <button type="button" className="link-button" onClick={onShowTour}>
+              Take the tour
+            </button>
+            <a className="link-button ai-current-link" href="#/ai" aria-current="page">
+              AI tools
+            </a>
+          </nav>
+        </header>
+
+        <header className="ai-title-block">
+          <p className="ai-eyebrow">Accounts &amp; preferences</p>
           <h1>AI tools</h1>
           <p className="lede">
             Generate and Chat use the account you are signed in to in each tool. Sign-in stays with
@@ -67,60 +88,75 @@ export function AiAccountPage({ onBack }: AiAccountPageProps) {
 
         {state.status === 'loading' && <p className="muted">Checking your accounts…</p>}
         {state.status === 'error' && (
-          <p role="alert" className="banner error">
-            {state.message}
-          </p>
+          <div className="ai-load-error" role="alert">
+            <p>{state.message}</p>
+            <button type="button" className="button" onClick={() => void reload()}>
+              Retry
+            </button>
+          </div>
+        )}
+        {state.status === 'ready' && state.refreshError && (
+          <div className="ai-load-error" role="alert">
+            <p>{state.refreshError}</p>
+            <button type="button" className="button" onClick={() => void reload()}>
+              Retry
+            </button>
+          </div>
         )}
 
-        {data && current && (
-          <div className="ai-layout">
-            <nav className="tool-list" aria-label="AI tools">
+        {data && (
+          <>
+            <section className="default-tool-panel" aria-label="Default tool settings">
+              <div className="default-tool-copy">
+                <h2>Default tool</h2>
+                <p>Generate and Chat use the selected tool.</p>
+              </div>
+              <fieldset className="default-tool-group" disabled={busy}>
+                <legend className="visually-hidden">Default tool</legend>
+                <div className="default-tool-options">
+                  {data.providers.map((view) => (
+                    <label className="default-tool-label" key={view.id}>
+                      <input
+                        type="radio"
+                        name="default-tool"
+                        value={view.id}
+                        checked={view.id === selectedDefaultId}
+                        disabled={!view.loggedIn}
+                        onChange={() => void makeDefault(view.id, view.label)}
+                      />
+                      <span className="default-tool-option">
+                        <span className="default-tool-name">{view.label}</span>
+                        <span
+                          className={`default-tool-status ${view.loggedIn ? 'ready' : 'needs-signin'}`}
+                        >
+                          {providerStatus(view)}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            </section>
+
+            <section className="ai-provider-grid" aria-label="AI tool accounts">
               {data.providers.map((view) => (
-                <button
+                <article
+                  className="ai-provider-card"
                   key={view.id}
-                  type="button"
-                  className="tool-option"
-                  aria-pressed={view.id === selectedId}
-                  onClick={() => setPickedId(view.id)}
+                  aria-labelledby={`provider-${view.id}-title`}
                 >
-                  <span className="tool-option-name">{view.label}</span>
-                  <span className="tool-option-status">{toolStatus(view)}</span>
-                  {view.id === data.defaultProvider && <span className="tag">Default</span>}
-                </button>
+                  <AccountCard view={view} titleId={`provider-${view.id}-title`} />
+                  <SignInSection key={`signin:${view.id}`} view={view} onChanged={reload} />
+                  <ModelControls
+                    key={`${view.id}:${view.selection.model}:${view.selection.effort}`}
+                    view={view}
+                    busy={busy}
+                    onSave={(selection) => saveSelection(view.id, selection)}
+                  />
+                </article>
               ))}
-            </nav>
-
-            <div className="tool-detail">
-              <AccountCard view={current} />
-              <ModelControls
-                key={`${current.id}:${current.selection.model}:${current.selection.effort}`}
-                view={current}
-                busy={busy}
-                onSave={(selection) => saveSelection(current.id, selection)}
-              />
-              <SignInSection key={current.id} view={current} onChanged={reload} />
-
-              {current.id !== data.defaultProvider && (
-                <section className="tool-settings">
-                  <h3>Default tool</h3>
-                  <p className="muted">
-                    Generate and Chat use the default tool. Make {current.label} the default to
-                    switch.
-                  </p>
-                  <div className="form-actions">
-                    <button
-                      type="button"
-                      className="button"
-                      disabled={busy || !current.loggedIn}
-                      onClick={() => makeDefault(current.id, current.label)}
-                    >
-                      Use {current.label} for Generate and Chat
-                    </button>
-                  </div>
-                </section>
-              )}
-            </div>
-          </div>
+            </section>
+          </>
         )}
 
         {notice && (

@@ -1,22 +1,26 @@
 import type { ProviderView } from '../../../shared/ai-account.ts';
 
-function statusOf(view: ProviderView): { tone: 'ok' | 'warn' | 'off'; text: string } {
-  if (!view.installed) return { tone: 'off', text: 'Not installed' };
-  if (view.loggedIn) return { tone: 'ok', text: 'Signed in' };
-  return { tone: 'warn', text: 'Not signed in' };
-}
-
 /** Who the tool is signed in as, and on which plan. Shows only what the CLI reports. */
-export function AccountCard({ view }: { view: ProviderView }) {
-  const status = statusOf(view);
+export function AccountCard({ view, titleId }: { view: ProviderView; titleId: string }) {
   const account = view.account;
   return (
-    <section className="account-card" aria-labelledby="tool-title">
-      <p className={`status-line ${status.tone}`}>
-        <span className="status-dot" aria-hidden="true" />
-        {status.text}
+    <section className="account-card">
+      <div className="provider-statuses" aria-label="Tool status">
+        <span className={`provider-status ${view.installed ? 'installed' : 'not-installed'}`}>
+          <span className="status-dot" aria-hidden="true" />
+          {view.installed ? 'Installed' : 'Not installed'}
+        </span>
+        <span className={`provider-status ${view.loggedIn ? 'signed-in' : 'sign-in-needed'}`}>
+          <span className="status-dot" aria-hidden="true" />
+          {view.loggedIn ? 'Signed in' : 'Sign-in needed'}
+        </span>
+      </div>
+      <h2 id={titleId}>{view.label}</h2>
+      <p className="provider-description">
+        {view.id === 'claude'
+          ? 'Claude Code account and model settings reported by its CLI.'
+          : 'Codex account and model settings reported by its CLI.'}
       </p>
-      <h2 id="tool-title">{view.label}</h2>
       {account ? (
         <dl className="facts">
           <div>

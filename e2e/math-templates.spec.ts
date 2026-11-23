@@ -2,7 +2,7 @@ import { rm } from 'node:fs/promises';
 import path from 'node:path';
 import { expect, test } from './fixtures.ts';
 
-const DIAGRAMS_DIR = path.resolve('data/e2e-diagrams');
+const DIAGRAMS_DIR = path.resolve(process.env.E2E_DATA_DIR ?? '/tmp/sraww-e2e', 'diagrams');
 const NAME = 'math template table';
 
 test.beforeAll(async () => {

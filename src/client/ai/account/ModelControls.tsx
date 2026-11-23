@@ -24,14 +24,15 @@ export function ModelControls({ view, busy, onSave }: ModelControlsProps) {
   }
 
   const cliModel = view.cliDefault.model;
+  const titleId = `model-title-${view.id}`;
   const hint =
     view.id === 'codex'
       ? `Codex is set to ${cliModel ?? 'its default model'}${view.cliDefault.effort ? ` at ${view.cliDefault.effort} effort` : ''} in your own Codex settings. Changes here apply only to sraww.`
       : 'Aliases follow the latest version of each model. Choose CLI default to let Claude Code decide.';
 
   return (
-    <section className="tool-settings" aria-labelledby="model-title">
-      <h3 id="model-title">Model and effort</h3>
+    <section className="tool-settings" aria-labelledby={titleId}>
+      <h3 id={titleId}>Model and effort</h3>
 
       <label className="field">
         <span>Model</span>

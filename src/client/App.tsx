@@ -36,7 +36,7 @@ function Pages({ route, onShowTour }: PagesProps) {
   }
 
   if (route.view === 'ai') {
-    return <AiAccountPage onBack={() => goTo('#/')} />;
+    return <AiAccountPage onBack={() => goTo('#/')} onShowTour={onShowTour} />;
   }
 
   const isArchitecture = route.view === 'architecture';

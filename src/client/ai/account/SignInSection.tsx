@@ -21,6 +21,8 @@ export function SignInSection({ view, onChanged }: SignInSectionProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inProgress = flow !== null && !isTerminal(flow.status);
+  const titleId = `signin-title-${view.id}`;
+  const codeId = `signin-code-${view.id}`;
 
   // While a sign-in is running, check on it every few seconds until it finishes.
   useEffect(() => {
@@ -68,8 +70,8 @@ export function SignInSection({ view, onChanged }: SignInSectionProps) {
 
   if (!view.installed) {
     return (
-      <section className="tool-settings" aria-labelledby="signin-title">
-        <h3 id="signin-title">Sign in</h3>
+      <section className="tool-settings" aria-labelledby={titleId}>
+        <h3 id={titleId}>Sign in</h3>
         <p className="muted">{view.detail}</p>
       </section>
     );
@@ -80,8 +82,8 @@ export function SignInSection({ view, onChanged }: SignInSectionProps) {
   const actionLabel = view.loggedIn ? 'Sign in with another account' : 'Sign in';
 
   return (
-    <section className="tool-settings" aria-labelledby="signin-title">
-      <h3 id="signin-title">{title}</h3>
+    <section className="tool-settings" aria-labelledby={titleId}>
+      <h3 id={titleId}>{title}</h3>
 
       {!inProgress && !flow && (
         <p className="muted">
@@ -112,11 +114,11 @@ export function SignInSection({ view, onChanged }: SignInSectionProps) {
             <li>
               Paste the code the page gives you:
               <form className="code-form" onSubmit={submitCode}>
-                <label className="visually-hidden" htmlFor="signin-code">
+                <label className="visually-hidden" htmlFor={codeId}>
                   Sign-in code
                 </label>
                 <input
-                  id="signin-code"
+                  id={codeId}
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   autoComplete="off"
@@ -164,7 +166,7 @@ export function SignInSection({ view, onChanged }: SignInSectionProps) {
             disabled={busy}
             onClick={() => void run(() => aiApi.startLogin(view.id))}
           >
-            {actionLabel}
+            {flow?.status === 'failed' ? 'Retry sign-in' : actionLabel}
           </button>
         )}
       </div>

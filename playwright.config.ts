@@ -2,6 +2,7 @@ import path from 'node:path';
 import { defineConfig } from '@playwright/test';
 
 const PORT = 4390;
+const E2E_DATA_DIR = process.env.E2E_DATA_DIR ?? '/tmp/sraww-e2e';
 
 export default defineConfig({
   testDir: 'e2e',
@@ -20,8 +21,8 @@ export default defineConfig({
     timeout: 180_000,
     env: {
       PORT: String(PORT),
-      DIAGRAMS_DIR: './data/e2e-diagrams',
-      PROJECTS_DIR: './data/e2e-projects',
+      DIAGRAMS_DIR: path.join(E2E_DATA_DIR, 'diagrams'),
+      PROJECTS_DIR: path.join(E2E_DATA_DIR, 'projects'),
       ARCH_PROJECTS: path.resolve('tests/fixtures/sample-project'),
     },
   },

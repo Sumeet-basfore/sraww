@@ -3,7 +3,7 @@ import path from 'node:path';
 import { zipSync } from 'fflate';
 import { expect, test } from './fixtures.ts';
 
-const PROJECTS_DIR = path.resolve('data/e2e-projects');
+const PROJECTS_DIR = path.resolve(process.env.E2E_DATA_DIR ?? '/tmp/sraww-e2e', 'projects');
 const encoder = new TextEncoder();
 
 test.beforeAll(async () => {
