@@ -7,12 +7,35 @@ interface TourProps {
   onClose: () => void;
 }
 
+/** Tab and Shift+Tab move between the dialog's buttons and wrap at either end. */
+function keepFocusInside(event: KeyboardEvent, container: HTMLElement | null): void {
+  if (!container) return;
+  const buttons = Array.from(
+    container.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'),
+  );
+  const first = buttons[0];
+  const last = buttons[buttons.length - 1];
+  if (!first || !last) return;
+  const active = document.activeElement;
+  if (!(active instanceof Node) || !container.contains(active)) {
+    event.preventDefault();
+    first.focus();
+  } else if (event.shiftKey && active === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && active === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
 /**
  * A first-visit walkthrough of the whole site. It is a modal dialog: Escape, Skip or Finish close it,
  * and any of those marks it as seen so it does not open again on its own.
  */
 export function Tour({ open, onClose }: TourProps) {
   const [index, setIndex] = useState(0);
+  const dialog = useRef<HTMLDivElement>(null);
   const primary = useRef<HTMLButtonElement>(null);
   const step = TOUR_STEPS[index];
   const isLast = index === TOUR_STEPS.length - 1;
@@ -22,6 +45,13 @@ export function Tour({ open, onClose }: TourProps) {
     if (open) setIndex(0);
   }, [open]);
 
+  // Remember what had focus before the tour opened, and give it back when the tour closes.
+  useEffect(() => {
+    if (!open) return undefined;
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    return () => opener?.focus();
+  }, [open]);
+
   useEffect(() => {
     if (open) primary.current?.focus();
   }, [open, index]);
@@ -29,9 +59,12 @@ export function Tour({ open, onClose }: TourProps) {
   useEffect(() => {
     if (!open) return undefined;
     function onKey(event: KeyboardEvent): void {
-      if (event.key !== 'Escape') return;
-      markTourSeen();
-      onClose();
+      if (event.key === 'Escape') {
+        markTourSeen();
+        onClose();
+        return;
+      }
+      if (event.key === 'Tab') keepFocusInside(event, dialog.current);
     }
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -52,6 +85,7 @@ export function Tour({ open, onClose }: TourProps) {
   return (
     <div className="tour-backdrop">
       <div
+        ref={dialog}
         className="tour-dialog"
         role="dialog"
         aria-modal="true"

@@ -69,7 +69,7 @@ The server listens on `127.0.0.1` only and rejects requests whose Host or Origin
 
 **AI tools.** Open **AI tools** from the start page. It shows the account each tool is signed in to (the email, plan and workspace the CLI reports), the model and effort it uses, and which tool the assistant uses. Pick a model and effort and press **Save**. If a tool is signed out, press **Sign in**. Codex shows a link and a code to enter on its sign-in page. Claude Code shows a link, and you paste the code it gives you back into sraww. sraww never sees your password.
 
-**Code projects.** On the start page, under **Code projects**, upload a project folder or a zip file. Tick the privacy notice first. Dependency and build folders, credential and lock files, binaries and secret-looking files are left out, and the list shows each file left out and why. Uploads are saved under `PROJECTS_DIR`, and **Delete** removes one. [PRIVACY.md](PRIVACY.md#code-upload) sets out exactly what is kept and what is ever sent.
+**Code projects.** On the start page, under **Code projects**, upload a project folder or a zip file. Tick the privacy notice first. Dependency and build folders are skipped without being listed. Credential and lock files, binaries and text that matches known credential formats are left out, and the list shows each one and why. Uploads are saved under `PROJECTS_DIR`, and **Delete** removes one. [PRIVACY.md](PRIVACY.md#code-upload) sets out exactly what is kept and what is ever sent.
 
 **Walkthrough.** The first visit opens a short tour of the whole site. Press **Take the tour** on the start page, or **Tour** in a drawing, to open it again. Escape or **Skip tour** closes it.
 
@@ -113,7 +113,7 @@ The full privacy policy is in [PRIVACY.md](PRIVACY.md). In short: nothing is sen
 - The AI CLIs run without a shell, with only `PATH` and `HOME` in their environment, in an empty working folder, with tools disabled (Claude) or a read-only sandbox (Codex).
 - Model output is validated against schemas, capped in size, and drawn as text only. Project content is passed to the model as quoted data.
 - The architecture scanner reads only folders listed in `ARCH_PROJECTS` and uploaded projects, skips `node_modules`, build and hidden folders, and never follows packages.
-- Uploaded projects are checked on the server as well as in the browser. Credential, key, lock, binary and secret-looking files are never kept.
+- Uploaded projects are checked on the server as well as in the browser. Credential, key, lock and binary files are never kept, and text that matches known credential formats is left out. Plain-text passwords are not detected.
 
 ## Known limits
 

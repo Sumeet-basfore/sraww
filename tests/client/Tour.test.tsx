@@ -92,3 +92,29 @@ describe('tour-state', () => {
     expect(hasSeenTour()).toBe(true);
   });
 });
+
+describe('Tour focus', () => {
+  it('keeps Tab inside the dialog, wrapping from the last button to the first', async () => {
+    render(<Tour open onClose={() => undefined} />);
+    const user = userEvent.setup();
+    // Focus starts on Next, the last button in the dialog.
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'Skip tour' })).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveFocus();
+  });
+
+  it('gives focus back to the element that opened the tour when it closes', async () => {
+    const opener = document.createElement('button');
+    opener.textContent = 'Take the tour';
+    document.body.appendChild(opener);
+    opener.focus();
+
+    const { rerender } = render(<Tour open onClose={() => undefined} />);
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveFocus();
+    rerender(<Tour open={false} onClose={() => undefined} />);
+    expect(opener).toHaveFocus();
+    opener.remove();
+  });
+});

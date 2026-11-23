@@ -90,7 +90,8 @@ export function ProjectsSection({ onChanged }: ProjectsSectionProps) {
   }
 
   async function remove(project: ProjectSummary): Promise<void> {
-    if (!window.confirm(`Delete “${project.name}” and every file uploaded with it?`)) return;
+    const question = `Delete “${project.name}” and every file uploaded with it? Architecture maps made from it are kept; delete them from the drawing list.`;
+    if (!window.confirm(question)) return;
     setError(null);
     try {
       await projectsApi.remove(project.id);
@@ -114,10 +115,11 @@ export function ProjectsSection({ onChanged }: ProjectsSectionProps) {
     <section className="projects" aria-labelledby="projects-title">
       <h2 id="projects-title">Code projects</h2>
       <p className="muted">
-        Upload a project folder or a zip file to draw its structure. Dependency folders, build
-        output, credential files, secrets and binary files are left out, and each one is listed with
-        its reason. The code stays in your data folder. An AI tool sees only folder paths and file
-        names, and only when you press “Name with AI” on the map. File contents are never sent.
+        Upload a project folder or a zip file to draw its structure. Dependency folders and build
+        output are skipped without being listed. Credential files, secrets and binary files are left
+        out, and each one is listed with its reason. The code stays in your data folder. An AI tool
+        sees only folder paths and file names, and only when you press “Name with AI” on the map.
+        File contents are never sent.
       </p>
 
       <label className="consent">

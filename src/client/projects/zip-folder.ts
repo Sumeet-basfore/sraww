@@ -1,10 +1,10 @@
-import { zipSync, type Zippable } from 'fflate';
-import { checkPath, MAX_FILE_BYTES } from '../../shared/project-rules.ts';
+import { unzipSync, zipSync, type Zippable } from 'fflate';
+import { isInsideExcludedFolder, MAX_FILE_BYTES } from '../../shared/project-rules.ts';
 
 /**
- * Packs a folder chosen in the browser into one zip, leaving out what the server would reject.
- * Package and build folders are skipped before their files are read, so a large node_modules
- * never has to be loaded. The server checks everything again.
+ * Packs a folder chosen in the browser into one zip. The browser skips the contents of package,
+ * build, cache and version-control folders, and files over 1 MB, without reading them. Those are not
+ * listed anywhere. Every other file goes to the server, which lists whatever it leaves out and why.
  */
 export async function zipFolder(files: readonly File[]): Promise<Uint8Array> {
   const entries: Zippable = {};
@@ -12,14 +12,27 @@ export async function zipFolder(files: readonly File[]): Promise<Uint8Array> {
     const parts = (file.webkitRelativePath || file.name).split('/');
     // The first part is the folder the user chose; the project's paths start below it.
     const path = parts.length > 1 ? parts.slice(1).join('/') : parts.join('/');
-    if (!checkPath(path).ok) continue;
+    if (isInsideExcludedFolder(path)) continue;
     if (file.size > MAX_FILE_BYTES) continue;
     entries[path] = [new Uint8Array(await file.arrayBuffer()), { level: 6 }];
   }
   return zipSync(entries);
 }
 
-/** The zip of a single file chosen directly, for uploads that are already a zip. */
+/**
+ * Re-packs a zip chosen directly, without the package, build, cache and version-control folders and
+ * without files over 1 MB. A project zipped with its dependency folders can otherwise be too large
+ * to send. Skipped entries are never decompressed. Everything else goes to the server to be listed.
+ */
 export async function readZipFile(file: File): Promise<Uint8Array> {
-  return new Uint8Array(await file.arrayBuffer());
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const kept = unzipSync(bytes, {
+    filter: (entry) =>
+      !entry.name.endsWith('/') &&
+      !isInsideExcludedFolder(entry.name) &&
+      entry.originalSize <= MAX_FILE_BYTES,
+  });
+  const entries: Zippable = {};
+  for (const [path, data] of Object.entries(kept)) entries[path] = [data, { level: 6 }];
+  return zipSync(entries);
 }

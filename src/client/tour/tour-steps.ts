@@ -18,7 +18,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
   },
   {
     title: 'Code projects',
-    body: 'Upload a project folder or a zip file to draw its structure. Tick the privacy notice first. Dependency folders, build output, credential files and binaries are left out, and the list shows each file that was left out and why.',
+    body: 'Upload a project folder or a zip file to draw its structure. Tick the privacy notice first. Dependency folders and build output are skipped. Credential files and binaries are left out, and the list shows each one with its reason.',
     where: 'Start page, under “Code projects”',
   },
   {

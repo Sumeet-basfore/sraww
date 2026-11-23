@@ -158,6 +158,8 @@ export function Assistant({ getApi, open, onToggle }: AssistantProps) {
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>): void {
+    // During IME composition, Enter confirms a candidate; it must not send the message.
+    if (event.nativeEvent.isComposing) return;
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       void send();

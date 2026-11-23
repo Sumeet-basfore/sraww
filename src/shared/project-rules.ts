@@ -108,3 +108,13 @@ export function checkPath(rawPath: string): PathVerdict {
 export function isExcludedFolder(name: string): boolean {
   return EXCLUDED_FOLDERS.has(name);
 }
+
+/**
+ * True when a path lies inside a package, build, cache or version-control folder. The browser skips
+ * these before reading them, because they are the bulk of a project's size. Everything else is sent
+ * to the server, which lists each file it leaves out and the reason.
+ */
+export function isInsideExcludedFolder(rawPath: string): boolean {
+  const segments = rawPath.replace(/\\/g, '/').split('/');
+  return segments.slice(0, -1).some((segment) => EXCLUDED_FOLDERS.has(segment));
+}

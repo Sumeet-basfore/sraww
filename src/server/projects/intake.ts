@@ -68,13 +68,7 @@ export function readZip(bytes: Uint8Array): Intake {
     entries = unzipSync(bytes, {
       filter(file) {
         if (file.name.endsWith('/')) return false;
-        declaredBytes += file.originalSize;
-        if (declaredBytes > MAX_UPLOAD_BYTES) {
-          throw intakeError(
-            'The project is too large once it is unpacked. Choose a smaller folder.',
-            413,
-          );
-        }
+        // Excluded entries are not counted toward the limits: only the files kept are.
         const verdict = checkPath(file.name);
         if (!verdict.ok) {
           excluded.push({ path: file.name, reason: verdict.reason });
@@ -85,9 +79,16 @@ export function readZip(bytes: Uint8Array): Intake {
           return false;
         }
         kept += 1;
+        declaredBytes += file.originalSize;
         if (kept > MAX_UPLOAD_FILES) {
           throw intakeError(
             `The project has more than ${MAX_UPLOAD_FILES} files. Choose a smaller folder.`,
+            413,
+          );
+        }
+        if (declaredBytes > MAX_UPLOAD_BYTES) {
+          throw intakeError(
+            'The project is too large once it is unpacked. Choose a smaller folder.',
             413,
           );
         }
