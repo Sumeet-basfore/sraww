@@ -7,7 +7,7 @@ import { applyNames, buildNamingPrompt } from '../../src/server/arch/naming.ts';
 import { createApp } from '../../src/server/app.ts';
 import { createClaudeProvider } from '../../src/server/ai/providers/claude-cli.ts';
 import { createCodexProvider } from '../../src/server/ai/providers/codex-cli.ts';
-import type { AiServices } from '../../src/server/ai/services.ts';
+import { testServices } from '../fixtures/ai-services.ts';
 import { loadConfig } from '../../src/server/config.ts';
 import { createArchStore } from '../../src/server/storage/arch-store.ts';
 import { createDiagramStore } from '../../src/server/storage/diagram-store.ts';
@@ -104,13 +104,10 @@ describe('POST /api/arch/models/:name/name', () => {
     const store = createArchStore(dir);
     await store.writeModel('demo', MODEL);
     const workdir = path.join(dir, 'work');
-    const ai: AiServices = {
-      defaultProvider: 'claude',
-      providers: {
-        claude: createClaudeProvider({ bin: fixture('claude-naming'), workdir, timeoutMs: 10_000 }),
-        codex: createCodexProvider({ bin: fixture('codex-ok'), workdir, timeoutMs: 10_000 }),
-      },
-    };
+    const ai = testServices({
+      claude: createClaudeProvider({ bin: fixture('claude-naming'), workdir, timeoutMs: 10_000 }),
+      codex: createCodexProvider({ bin: fixture('codex-ok'), workdir, timeoutMs: 10_000 }),
+    });
     const app = createApp(loadConfig({}), createDiagramStore(dir), path.join(dir, 'none'), ai);
     const res = await request(app).post('/api/arch/models/demo/name').set('Host', HOST);
 

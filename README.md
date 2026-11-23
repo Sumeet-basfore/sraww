@@ -44,24 +44,27 @@ The server listens on `127.0.0.1` only and rejects requests whose Host or Origin
 
 ## Configuration
 
-| Variable                       | Default             | Meaning                                                              |
-| ------------------------------ | ------------------- | -------------------------------------------------------------------- |
-| `PORT`                         | `4317`              | Server port                                                          |
-| `DIAGRAMS_DIR`                 | `./data/diagrams`   | Where drawings, architecture models and layouts are saved            |
-| `AI_PROVIDER`                  | `claude`            | Default tool, `claude` or `codex`                                    |
-| `CLAUDE_BIN` / `CODEX_BIN`     | `claude` / `codex`  | Command names or paths of the CLIs                                   |
-| `CLAUDE_MODEL` / `CODEX_MODEL` | empty               | Optional model override; empty uses each CLI's default               |
-| `AI_TIMEOUT_MS`                | `120000`            | How long one AI call may run                                         |
-| `AI_WORKDIR`                   | `./data/ai-workdir` | Empty folder the CLIs run in (they cannot see your projects)         |
-| `ARCH_PROJECTS`                | empty               | Comma-separated **absolute** folders that architecture maps may read |
+| Variable                       | Default                   | Meaning                                                              |
+| ------------------------------ | ------------------------- | -------------------------------------------------------------------- |
+| `PORT`                         | `4317`                    | Server port                                                          |
+| `DIAGRAMS_DIR`                 | `./data/diagrams`         | Where drawings, architecture models and layouts are saved            |
+| `AI_PROVIDER`                  | `claude`                  | Default tool, `claude` or `codex`                                    |
+| `CLAUDE_BIN` / `CODEX_BIN`     | `claude` / `codex`        | Command names or paths of the CLIs                                   |
+| `CLAUDE_MODEL` / `CODEX_MODEL` | empty                     | Optional model override; empty uses each CLI's default               |
+| `AI_TIMEOUT_MS`                | `120000`                  | How long one AI call may run                                         |
+| `AI_WORKDIR`                   | `./data/ai-workdir`       | Empty folder the CLIs run in (they cannot see your projects)         |
+| `AI_SETTINGS_FILE`             | `./data/ai-settings.json` | Where the AI tools page saves the chosen tool, model and effort      |
+| `ARCH_PROJECTS`                | empty                     | Comma-separated **absolute** folders that architecture maps may read |
 
 ## Using it
 
 **Drawings.** Create, open, rename, duplicate, delete and import `.excalidraw` files from the start page. Edits save automatically after a short pause, and the status line shows whether everything is saved. Export a drawing as PNG, SVG or `.excalidraw` from the editor's Export menu.
 
-**AI generate.** “✦ Generate” turns a sentence into a diagram. The model returns shapes and links only; the layout is computed by ELK. You can add the result to the drawing or replace the drawing (replace asks first).
+**AI generate.** “Generate” turns a sentence into a diagram. The model returns shapes and links only; the layout is computed by ELK. You can add the result to the drawing or replace the drawing (replace asks first).
 
 **AI chat.** “Chat” edits the open drawing. The model may add shapes, add arrows and delete shapes, and every change is applied as one step, so Ctrl+Z undoes a whole reply. Requests that point at unknown shapes are dropped and the reason is shown. “Explain selection” describes the selected shapes and changes nothing.
+
+**AI tools.** Open **AI tools** from the start page. It shows the account each tool is signed in to (the email, plan and workspace the CLI reports), the model and effort it uses, and which tool answers Generate and Chat. Pick a model and effort and press **Save**. If a tool is signed out, press **Sign in**. Codex shows a link and a code to enter on its sign-in page. Claude Code shows a link, and you paste the code it gives you back into sraww. sraww never sees your password.
 
 **Architecture maps.**
 

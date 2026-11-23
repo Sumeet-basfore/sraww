@@ -8,7 +8,7 @@ import { loadConfig } from '../../src/server/config.ts';
 import { createClaudeProvider } from '../../src/server/ai/providers/claude-cli.ts';
 import { createCodexProvider } from '../../src/server/ai/providers/codex-cli.ts';
 import { buildChatPrompt, validateChatReply } from '../../src/server/ai/chat.ts';
-import type { AiServices } from '../../src/server/ai/services.ts';
+import { testServices } from '../fixtures/ai-services.ts';
 import { createDiagramStore } from '../../src/server/storage/diagram-store.ts';
 import type { ChatReply, SceneSummary } from '../../src/shared/chat-schemas.ts';
 
@@ -86,13 +86,10 @@ describe('POST /api/ai/chat', () => {
 
   it('returns the reply and only the valid edits', async () => {
     const workdir = path.join(dir, 'work');
-    const ai: AiServices = {
-      defaultProvider: 'claude',
-      providers: {
-        claude: createClaudeProvider({ bin: fixture('claude-chat'), workdir, timeoutMs: 10_000 }),
-        codex: createCodexProvider({ bin: fixture('codex-ok'), workdir, timeoutMs: 10_000 }),
-      },
-    };
+    const ai = testServices({
+      claude: createClaudeProvider({ bin: fixture('claude-chat'), workdir, timeoutMs: 10_000 }),
+      codex: createCodexProvider({ bin: fixture('codex-ok'), workdir, timeoutMs: 10_000 }),
+    });
     const app = createApp(loadConfig({}), createDiagramStore(dir), path.join(dir, 'none'), ai);
     const res = await request(app)
       .post('/api/ai/chat')
@@ -107,13 +104,10 @@ describe('POST /api/ai/chat', () => {
 
   it('rejects an empty message', async () => {
     const workdir = path.join(dir, 'work');
-    const ai: AiServices = {
-      defaultProvider: 'claude',
-      providers: {
-        claude: createClaudeProvider({ bin: fixture('claude-chat'), workdir, timeoutMs: 10_000 }),
-        codex: createCodexProvider({ bin: fixture('codex-ok'), workdir, timeoutMs: 10_000 }),
-      },
-    };
+    const ai = testServices({
+      claude: createClaudeProvider({ bin: fixture('claude-chat'), workdir, timeoutMs: 10_000 }),
+      codex: createCodexProvider({ bin: fixture('codex-ok'), workdir, timeoutMs: 10_000 }),
+    });
     const app = createApp(loadConfig({}), createDiagramStore(dir), path.join(dir, 'none'), ai);
     const res = await request(app)
       .post('/api/ai/chat')

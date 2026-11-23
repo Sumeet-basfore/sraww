@@ -2,6 +2,13 @@ import type { ExcalidrawScene } from '../../shared/diagram.ts';
 import type { DiagramGraph } from '../../shared/ai-schemas.ts';
 import type { ChatOp, ChatRequest } from '../../shared/chat-schemas.ts';
 import type { ArchDiff, ArchLayout, ArchModel } from '../../shared/arch-model.ts';
+import type {
+  LoginFlow,
+  ProviderId,
+  ProviderSelection,
+  ProviderView,
+  ProvidersView,
+} from '../../shared/ai-account.ts';
 
 export interface ChatResponse {
   provider: ProviderId;
@@ -73,23 +80,36 @@ export const diagramApi = {
   },
 };
 
-export type ProviderId = 'claude' | 'codex';
-
-export interface ProviderStatus {
-  id: ProviderId;
-  installed: boolean;
-  loggedIn: boolean;
-  detail: string;
-}
-
-export interface AiStatus {
-  defaultProvider: ProviderId;
-  providers: ProviderStatus[];
-}
+const providerPath = (provider: ProviderId, rest = ''): string =>
+  `/ai/providers/${provider}${rest}`;
 
 export const aiApi = {
-  status(): Promise<AiStatus> {
-    return request<AiStatus>('/ai/status');
+  providers(): Promise<ProvidersView> {
+    return request<ProvidersView>('/ai/providers');
+  },
+  setDefault(provider: ProviderId): Promise<{ defaultProvider: ProviderId }> {
+    return request('/ai/default', { method: 'PUT', body: JSON.stringify({ provider }) });
+  },
+  saveSelection(provider: ProviderId, selection: ProviderSelection): Promise<ProviderView> {
+    return request(providerPath(provider, '/selection'), {
+      method: 'PUT',
+      body: JSON.stringify(selection),
+    });
+  },
+  startLogin(provider: ProviderId): Promise<{ login: LoginFlow | null }> {
+    return request(providerPath(provider, '/login'), { method: 'POST' });
+  },
+  loginStatus(provider: ProviderId): Promise<{ login: LoginFlow | null }> {
+    return request(providerPath(provider, '/login'));
+  },
+  submitLoginCode(provider: ProviderId, code: string): Promise<{ login: LoginFlow | null }> {
+    return request(providerPath(provider, '/login/code'), {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+    });
+  },
+  cancelLogin(provider: ProviderId): Promise<{ login: LoginFlow | null }> {
+    return request(providerPath(provider, '/login'), { method: 'DELETE' });
   },
   generate(
     prompt: string,

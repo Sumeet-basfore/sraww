@@ -8,9 +8,14 @@ import { IMPORT_ACCEPT, readDrawingFile, uniqueName } from './import.ts';
 interface DiagramListProps {
   onOpen: (name: string) => void;
   onOpenArchitecture: (name: string) => void;
+  onOpenAi: () => void;
 }
 
-export function DiagramList({ onOpen, onOpenArchitecture }: DiagramListProps) {
+function countLabel(count: number): string {
+  return `${count} drawing${count === 1 ? '' : 's'}`;
+}
+
+export function DiagramList({ onOpen, onOpenArchitecture, onOpenAi }: DiagramListProps) {
   const [items, setItems] = useState<DiagramSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
@@ -97,10 +102,17 @@ export function DiagramList({ onOpen, onOpenArchitecture }: DiagramListProps) {
 
   return (
     <section className="diagram-list" aria-labelledby="diagram-list-title">
-      <header className="page-header">
+      <header className="masthead">
         <Logo className="brand-lockup" />
-        <h1 id="diagram-list-title">Diagrams</h1>
+        <button type="button" className="link-button" onClick={onOpenAi}>
+          AI tools
+        </button>
       </header>
+
+      <div className="intro">
+        <h1 id="diagram-list-title">Diagrams</h1>
+        {items && <p className="meta">{countLabel(items.length)}</p>}
+      </div>
 
       <form className="new-diagram" onSubmit={handleCreate}>
         <label htmlFor="new-diagram-name" className="visually-hidden">
@@ -110,7 +122,7 @@ export function DiagramList({ onOpen, onOpenArchitecture }: DiagramListProps) {
           id="new-diagram-name"
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
-          placeholder="Name a new diagram"
+          placeholder="Name a new drawing"
           maxLength={81}
           disabled={busy}
         />
@@ -122,7 +134,7 @@ export function DiagramList({ onOpen, onOpenArchitecture }: DiagramListProps) {
       <div className="import-row">
         <button
           type="button"
-          className="button ghost"
+          className="link-button"
           disabled={busy || items === null}
           onClick={() => fileInput.current?.click()}
         >
@@ -144,15 +156,10 @@ export function DiagramList({ onOpen, onOpenArchitecture }: DiagramListProps) {
         </p>
       )}
 
-      <ArchNewForm
-        existingNames={(items ?? []).map((item) => item.name)}
-        onOpen={onOpenArchitecture}
-      />
-
       {items === null && !error && <p className="muted">Loading…</p>}
 
       {items?.length === 0 && (
-        <p className="empty">No diagrams yet. Name one above to start drawing.</p>
+        <p className="empty">Nothing drawn yet. Name a drawing above to start.</p>
       )}
 
       {items && items.length > 0 && (
@@ -164,19 +171,23 @@ export function DiagramList({ onOpen, onOpenArchitecture }: DiagramListProps) {
               </button>
               <span className="row-meta">Updated {new Date(item.updatedAt).toLocaleString()}</span>
               <span className="row-actions">
-                <button type="button" className="button ghost" onClick={() => handleRename(item)}>
+                <button
+                  type="button"
+                  className="button ghost small"
+                  onClick={() => handleRename(item)}
+                >
                   Rename
                 </button>
                 <button
                   type="button"
-                  className="button ghost"
+                  className="button ghost small"
                   onClick={() => handleDuplicate(item)}
                 >
                   Duplicate
                 </button>
                 <button
                   type="button"
-                  className="button ghost danger"
+                  className="button ghost small danger"
                   onClick={() => handleDelete(item)}
                 >
                   Delete
@@ -186,6 +197,11 @@ export function DiagramList({ onOpen, onOpenArchitecture }: DiagramListProps) {
           ))}
         </ul>
       )}
+
+      <ArchNewForm
+        existingNames={(items ?? []).map((item) => item.name)}
+        onOpen={onOpenArchitecture}
+      />
     </section>
   );
 }

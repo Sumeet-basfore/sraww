@@ -8,10 +8,12 @@ import type { AiProvider, ProviderHealth } from '../provider.ts';
 import { withHealthCache } from '../provider.ts';
 import { runCommand } from '../runner.ts';
 import { generateStructured } from '../structured.ts';
+import type { ProviderSelection } from '../../../shared/ai-account.ts';
 
 export interface CodexCliOptions {
   bin: string;
-  model?: string | undefined;
+  /** Read on every call, so a change in the AI settings applies to the next request. */
+  selection?: () => ProviderSelection;
   workdir: string;
   timeoutMs: number;
 }
@@ -75,7 +77,10 @@ export function createCodexProvider(options: CodexCliOptions): AiProvider {
         '-o',
         outFile,
       ];
-      if (options.model) args.push('-m', options.model);
+      const selection = options.selection?.() ?? { model: null, effort: null };
+      if (selection.model) args.push('-m', selection.model);
+      // The value is parsed as TOML, so the effort is quoted. It was validated against a fixed list.
+      if (selection.effort) args.push('-c', `model_reasoning_effort="${selection.effort}"`);
       args.push('-');
 
       const result = await runCommand({

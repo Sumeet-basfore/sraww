@@ -11,7 +11,7 @@ test.beforeAll(async () => {
 
 test('draws on a new diagram, reloads, and finds the drawing saved', async ({ page, request }) => {
   await page.goto('/');
-  await page.getByPlaceholder('Name a new diagram').fill(NAME);
+  await page.getByPlaceholder('Name a new drawing').fill(NAME);
   await page.getByRole('button', { name: 'Create' }).click();
 
   await expect(page.getByRole('heading', { name: NAME })).toBeVisible();

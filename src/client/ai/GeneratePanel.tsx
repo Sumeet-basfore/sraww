@@ -1,16 +1,14 @@
 import { CaptureUpdateAction, convertToExcalidrawElements } from '@excalidraw/excalidraw';
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types';
 import { useEffect, useState, type FormEvent } from 'react';
-import { aiApi, type AiStatus, type ProviderId } from '../lib/api.ts';
+import { aiApi } from '../lib/api.ts';
 import { errorMessage } from '../lib/errors.ts';
 import type { DiagramGraph } from '../../shared/ai-schemas.ts';
 import { layoutGraph } from './layout.ts';
 import { graphToSkeleton } from './skeleton.ts';
-
-const PROVIDER_LABELS: Record<ProviderId, string> = {
-  claude: 'Claude (Claude Pro login)',
-  codex: 'Codex (ChatGPT Plus login)',
-};
+import { ToolSummary } from './ToolSummary.tsx';
+import { useAiProviders } from './useAiProviders.ts';
+import { defaultView, isReady } from './toolSummary.ts';
 
 interface GeneratePanelProps {
   getApi: () => ExcalidrawImperativeAPI | null;
@@ -18,23 +16,13 @@ interface GeneratePanelProps {
 }
 
 export function GeneratePanel({ getApi, onClose }: GeneratePanelProps) {
-  const [status, setStatus] = useState<AiStatus | null>(null);
-  const [statusError, setStatusError] = useState<string | null>(null);
-  const [provider, setProvider] = useState<ProviderId | null>(null);
+  const { state } = useAiProviders();
+  const view = state.status === 'ready' ? defaultView(state.data) : null;
+  const ready = isReady(view);
   const [prompt, setPrompt] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<DiagramGraph | null>(null);
-
-  useEffect(() => {
-    aiApi
-      .status()
-      .then((result) => {
-        setStatus(result);
-        setProvider(result.defaultProvider);
-      })
-      .catch((err: unknown) => setStatusError(errorMessage(err)));
-  }, []);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent): void {
@@ -44,17 +32,14 @@ export function GeneratePanel({ getApi, onClose }: GeneratePanelProps) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const selected = status?.providers.find((p) => p.id === provider);
-  const canUse = Boolean(selected?.installed && selected.loggedIn);
-
   async function handleGenerate(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    if (!provider || !canUse) return;
+    if (!view || !ready) return;
     setBusy(true);
     setError(null);
     setPreview(null);
     try {
-      const result = await aiApi.generate(prompt.trim(), provider);
+      const result = await aiApi.generate(prompt.trim(), view.id);
       setPreview(result.graph);
     } catch (err) {
       setError(errorMessage(err));
@@ -97,58 +82,38 @@ export function GeneratePanel({ getApi, onClose }: GeneratePanelProps) {
   }
 
   return (
-    <aside className="ai-panel" role="dialog" aria-labelledby="ai-panel-title">
-      <header className="ai-panel-header">
-        <h2 id="ai-panel-title">Generate with AI</h2>
-        <button type="button" className="button ghost small" onClick={onClose} aria-label="Close">
+    <aside className="sheet" role="dialog" aria-labelledby="ai-panel-title">
+      <header className="sheet-header">
+        <h2 id="ai-panel-title">Generate a diagram</h2>
+        <button type="button" className="button ghost small" onClick={onClose}>
           Close
         </button>
       </header>
 
-      {statusError && (
-        <p role="alert" className="banner error">
-          {statusError}
-        </p>
-      )}
+      <ToolSummary state={state} />
 
-      <form className="ai-form" onSubmit={(e) => void handleGenerate(e)}>
-        <label htmlFor="ai-prompt">Describe the diagram</label>
-        <textarea
-          id="ai-prompt"
-          rows={5}
-          maxLength={2000}
-          value={prompt}
-          disabled={busy}
-          placeholder="e.g. Checkout flow: cart, then payment, then confirmation email"
-          onChange={(e) => setPrompt(e.target.value)}
-        />
-
-        <label htmlFor="ai-provider">Tool</label>
-        <select
-          id="ai-provider"
-          value={provider ?? ''}
-          disabled={busy || !status}
-          onChange={(e) => setProvider(e.target.value as ProviderId)}
-        >
-          {status?.providers.map((p) => {
-            const ready = p.installed && p.loggedIn;
-            return (
-              <option key={p.id} value={p.id} disabled={!ready}>
-                {PROVIDER_LABELS[p.id]}
-                {ready ? '' : ' — unavailable'}
-              </option>
-            );
-          })}
-        </select>
-        {selected && <p className="muted small">{selected.detail}</p>}
-
-        <button
-          type="submit"
-          className="button primary"
-          disabled={busy || !canUse || prompt.trim().length < 3}
-        >
-          {busy ? 'Working…' : 'Generate'}
-        </button>
+      <form className="stack" onSubmit={(e) => void handleGenerate(e)}>
+        <label className="field" htmlFor="ai-prompt">
+          <span>Describe the diagram</span>
+          <textarea
+            id="ai-prompt"
+            rows={5}
+            maxLength={2000}
+            value={prompt}
+            disabled={busy}
+            placeholder="Checkout flow: cart, then payment, then confirmation email"
+            onChange={(e) => setPrompt(e.target.value)}
+          />
+        </label>
+        <div className="form-actions">
+          <button
+            type="submit"
+            className="button primary"
+            disabled={busy || !ready || prompt.trim().length < 3}
+          >
+            {busy ? 'Working…' : 'Generate'}
+          </button>
+        </div>
       </form>
 
       {error && (
@@ -158,12 +123,12 @@ export function GeneratePanel({ getApi, onClose }: GeneratePanelProps) {
       )}
 
       {preview && (
-        <div className="ai-preview">
+        <div className="preview">
           <p>
             {preview.nodes.length} shapes and {preview.edges.length} connections, laid out
             automatically.
           </p>
-          <div className="ai-preview-actions">
+          <div className="form-actions">
             <button
               type="button"
               className="button primary"
@@ -174,7 +139,7 @@ export function GeneratePanel({ getApi, onClose }: GeneratePanelProps) {
             </button>
             <button
               type="button"
-              className="button ghost"
+              className="button"
               disabled={busy}
               onClick={() => void insert('replace')}
             >
@@ -184,9 +149,7 @@ export function GeneratePanel({ getApi, onClose }: GeneratePanelProps) {
         </div>
       )}
 
-      <p className="muted small">
-        Runs through your local Claude Code or Codex login. No API key is used.
-      </p>
+      <p className="muted small">Runs through your local Claude Code or Codex sign-in.</p>
     </aside>
   );
 }

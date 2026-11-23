@@ -17,13 +17,13 @@ Use the symbol alone where space is tight (favicon, app icon, avatars). Use the 
 
 ## Colour
 
-| Role | Name | Hex | Used for |
-|------|------|-----|----------|
-| Accent | Indigo | `#4F46E5` | Symbol and app icon field on light |
-| Accent (dark) | Lifted indigo | `#8D8AF7` | Symbol on dark backgrounds |
-| Ink | Ink | `#1C1D2E` | Wordmark on light |
-| Paper | Paper | `#F6F5F1` | Wordmark on dark; symbol inside the app icon |
-| Dark ground | Night | `#14151F` | Background for dark versions |
+| Role          | Name          | Hex       | Used for                                     |
+| ------------- | ------------- | --------- | -------------------------------------------- |
+| Accent        | Indigo        | `#4F46E5` | Symbol and app icon field on light           |
+| Accent (dark) | Lifted indigo | `#8D8AF7` | Symbol on dark backgrounds                   |
+| Ink           | Ink           | `#1C1D2E` | Wordmark on light                            |
+| Paper         | Paper         | `#F6F5F1` | Wordmark on dark; symbol inside the app icon |
+| Dark ground   | Night         | `#14151F` | Background for dark versions                 |
 
 The mark uses one colour per version: the accent (or its dark form) for the symbol, and ink or paper for the wordmark. Do not add gradients, shadows or outlines.
 
@@ -35,18 +35,18 @@ The app's interface keeps its own type: a system sans for controls and an editor
 
 ## Versions
 
-| Use | File |
-|-----|------|
-| Symbol, light | `logo/sraww-symbol.svg` |
-| Symbol, dark | `logo/sraww-symbol-dark.svg` |
-| Wordmark, light | `logo/sraww-wordmark.svg` |
-| Wordmark, dark | `logo/sraww-wordmark-dark.svg` |
-| Primary lockup, light | `logo/sraww-primary-light.svg` |
-| Primary lockup, dark | `logo/sraww-primary-dark.svg` |
-| App icon | `logo/sraww-app-icon.svg` (and `logo/png/app-icon-512.png`, `app-icon-192.png`) |
-| Apple touch icon | `logo/png/apple-touch-icon-180.png` |
-| Favicon | `logo/favicon.ico` (16, 32, 48 px); `logo/png/favicon-16.png`, `favicon-32.png` |
-| Social avatar | `logo/png/social-avatar-1024.png` |
+| Use                   | File                                                                            |
+| --------------------- | ------------------------------------------------------------------------------- |
+| Symbol, light         | `logo/sraww-symbol.svg`                                                         |
+| Symbol, dark          | `logo/sraww-symbol-dark.svg`                                                    |
+| Wordmark, light       | `logo/sraww-wordmark.svg`                                                       |
+| Wordmark, dark        | `logo/sraww-wordmark-dark.svg`                                                  |
+| Primary lockup, light | `logo/sraww-primary-light.svg`                                                  |
+| Primary lockup, dark  | `logo/sraww-primary-dark.svg`                                                   |
+| App icon              | `logo/sraww-app-icon.svg` (and `logo/png/app-icon-512.png`, `app-icon-192.png`) |
+| Apple touch icon      | `logo/png/apple-touch-icon-180.png`                                             |
+| Favicon               | `logo/favicon.ico` (16, 32, 48 px); `logo/png/favicon-16.png`, `favicon-32.png` |
+| Social avatar         | `logo/png/social-avatar-1024.png`                                               |
 
 PNG renders of the primary lockup are in `logo/png/`.
 

@@ -51,7 +51,7 @@ export function createArchRouter(
     const name = req.params.name;
     const model = await store.readModel(name);
     if (!model) throw new DiagramError('NOT_FOUND', `No architecture model for "${name}".`);
-    const reply = await ai.providers[ai.defaultProvider].generate(
+    const reply = await ai.providers[ai.currentDefault()].generate(
       buildNamingPrompt(model),
       namingReplySchema,
     );
