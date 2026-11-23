@@ -54,12 +54,13 @@ sraww never reads, stores or transmits a password, a sign-in token or an API key
 
 Each AI action below sends only the content listed. Nothing is sent for an AI action unless you press the button or send the message.
 
-| You do this                                   | What is sent to the provider                                                                                                                                                                                           |
-| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Press **Generate diagram** (New diagram mode) | The text you typed in the assistant's message box                                                                                                                                                                      |
-| Send a message (Edit this drawing mode)       | Your message; the last 12 messages of the chat; and a summary of the open drawing: each shape's identifier, kind and label, and each arrow's identifier, its label text, and the identifiers of the shapes it connects |
-| Press **+** to explain the selected shapes    | The same as a chat message, but the summary covers only the selected shapes and arrows, plus the identifiers of the shapes those arrows connect and their label text                                                   |
-| Press **Name with AI** on an architecture map | For each folder: its path relative to the project root; up to 15 file base names (names only, not paths); and the other folders and npm packages it imports, with counts. File contents are never sent                 |
+| You do this                                     | What is sent to the provider                                                                                                                                                                                           |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Press **Generate diagram** (New diagram mode)   | The text you typed in the assistant's message box                                                                                                                                                                      |
+| Send a message (Edit this drawing mode)         | Your message; the last 12 messages of the chat; and a summary of the open drawing: each shape's identifier, kind and label, and each arrow's identifier, its label text, and the identifiers of the shapes it connects |
+| Press **+** to explain the selected shapes      | The same as a chat message, but the summary covers only the selected shapes and arrows, plus the identifiers of the shapes those arrows connect and their label text                                                   |
+| Press **Name with AI** on an architecture map   | For each folder: its path relative to the project root; up to 15 file base names (names only, not paths); and the other folders and npm packages it imports, with counts. File contents are never sent                 |
+| Press **Review with AI** on an architecture map | Each folder's path and label, its counts of files and imports, and the computed findings. Never file contents or file names.                                                                                           |
 
 Architecture maps are built on your computer with no AI call. The map itself never leaves your machine.
 

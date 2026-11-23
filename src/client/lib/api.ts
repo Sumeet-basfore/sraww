@@ -206,12 +206,38 @@ export interface ArchProjectInfo {
   label: string;
 }
 
+export interface ArchReviewFinding {
+  severity: 'high' | 'medium' | 'low';
+  title: string;
+  evidence: string[];
+  suggestion: string;
+}
+
+export interface ArchReview {
+  summary: string;
+  findings: ArchReviewFinding[];
+}
+
+export interface ArchReviewSidecar {
+  version: 1;
+  generatedAt: string;
+  modelGeneratedAt: string;
+  provider: ProviderId;
+  review: ArchReview;
+}
+
 export const archApi = {
   projects(): Promise<{ projects: ArchProjectInfo[] }> {
     return request('/arch/projects');
   },
   model(name: string): Promise<{ model: ArchModel; layout: ArchLayout | null }> {
     return request(`/arch/models/${encodeURIComponent(name)}`);
+  },
+  review(name: string): Promise<{ review: ArchReviewSidecar | null; stale: boolean }> {
+    return request(`/arch/models/${encodeURIComponent(name)}/review`);
+  },
+  runReview(name: string): Promise<{ review: ArchReviewSidecar; skipped: number }> {
+    return request(`/arch/models/${encodeURIComponent(name)}/review`, { method: 'POST' });
   },
   findings(name: string): Promise<{ findings: ArchFinding[] }> {
     return request(`/arch/models/${encodeURIComponent(name)}/findings`);

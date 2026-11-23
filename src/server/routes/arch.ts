@@ -10,6 +10,7 @@ import { DiagramError } from '../storage/diagram-store.ts';
 import type { AiServices } from '../ai/services.ts';
 import { applyNames, buildNamingPrompt, namingReplySchema } from '../arch/naming.ts';
 import { computeFindings } from '../arch/findings.ts';
+import { buildReviewPrompt, reviewReplySchema, validateReview } from '../arch/review.ts';
 
 export const MAX_SCAN_FILES = 5000;
 export const SCAN_TIMEOUT_MS = 120_000;
@@ -45,6 +46,34 @@ export function createArchRouter(
       throw new DiagramError('NOT_FOUND', `No architecture model for "${req.params.name}".`);
     }
     res.json({ findings: computeFindings(model) });
+  });
+
+  router.get('/models/:name/review', async (req, res) => {
+    const name = req.params.name;
+    const model = await store.readModel(name);
+    if (!model) throw new DiagramError('NOT_FOUND', `No architecture model for "${name}".`);
+    const review = await store.readReview(name);
+    res.json({ review, stale: review !== null && review.modelGeneratedAt !== model.generatedAt });
+  });
+
+  router.post('/models/:name/review', async (req, res) => {
+    const name = req.params.name;
+    const model = await store.readModel(name);
+    if (!model) throw new DiagramError('NOT_FOUND', `No architecture model for "${name}".`);
+    const provider = ai.currentDefault();
+    const reply = await ai.providers[provider].generate(
+      buildReviewPrompt(model, computeFindings(model)),
+      reviewReplySchema,
+    );
+    const { review, skipped } = validateReview(reply, model);
+    const saved = await store.writeReview(name, {
+      version: 1,
+      generatedAt: new Date().toISOString(),
+      modelGeneratedAt: model.generatedAt,
+      provider,
+      review,
+    });
+    res.json({ review: saved, skipped });
   });
 
   router.put('/models/:name/layout', async (req, res) => {

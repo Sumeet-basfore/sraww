@@ -8,6 +8,7 @@ import { capturePositions } from './layout-capture.ts';
 import { elementIds } from './render.ts';
 import { architectureElements } from './to-scene.ts';
 import { FindingsSection } from './FindingsSection.tsx';
+import { ReviewSection } from './ReviewSection.tsx';
 
 const LIST_LIMIT = 12;
 
@@ -267,6 +268,7 @@ export function ArchPanel({ name, getApi, onClose }: ArchPanelProps) {
             selectedIds={selectedIds}
             onSelection={setSelectedIds}
           />
+          <ReviewSection name={name} model={model} />
         </>
       )}
 
