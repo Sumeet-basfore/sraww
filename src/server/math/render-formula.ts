@@ -5,6 +5,7 @@ const MAX_LATEX_LENGTH = 500;
 const MIN_FONT_SIZE = 12;
 const MAX_FONT_SIZE = 120;
 const UNITS_PER_EM = 1000;
+const MAX_DIMENSION = 2000;
 
 let initPromise: Promise<unknown> | undefined;
 
@@ -13,7 +14,7 @@ function initializeMathJax(): Promise<unknown> {
   return initPromise;
 }
 
-function extractSvg(markup: string): string {
+export function extractSvg(markup: string): string {
   const start = markup.indexOf('<svg');
   const end = markup.indexOf('</svg>', start);
   if (start < 0 || end < 0) {
@@ -25,7 +26,15 @@ function extractSvg(markup: string): string {
       // Keep the SVG namespace on the root: an image loaded from a data URL will not render without it.
       // Only the xlink declaration is dropped, because xlink:href is rewritten to href below.
       .replace(/\s+xmlns:xlink="[^"]*"/g, '')
-      .replace(/\bxlink:href=/g, 'href=')
+      .replace(/\bxlink:href=/gi, 'href=')
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, '')
+      .replace(/<foreignObject\b[^>]*>[\s\S]*?<\/foreignObject\s*>/gi, '')
+      .replace(/\s+on[a-z]+\s*=\s*(?:"[^"]*"|'[^']*')/gi, '')
+      .replace(/\s+data-latex\s*=\s*(?:"[^"]*"|'[^']*')/gi, '')
+      .replace(/\s+(?:xlink:)?href\s*=\s*(?:"(?!#)[^"]*"|'(?!#)[^']*')/gi, '')
+      .replace(/\s+style\s*=\s*("[^"]*"|'[^']*')/gi, (attribute) => {
+        return /url\s*\(|expression|javascript:|@import|<|\\/i.test(attribute) ? '' : attribute;
+      })
   );
 }
 
@@ -44,7 +53,7 @@ export async function renderFormula(
   }
 
   await initializeMathJax();
-  const node = MathJax.tex2svg(latex, { display: true });
+  const node = await MathJax.tex2svgPromise(latex, { display: true });
   const markup = MathJax.startup.adaptor.outerHTML(node);
   if (/data-mjx-error|mjx-merror/i.test(markup)) {
     throw new DiagramError('INVALID_CONTENT', 'That formula has an error.');
@@ -57,8 +66,11 @@ export async function renderFormula(
   }
 
   const boundedFontSize = Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, fontSize));
-  const width = Math.round((Number(viewBox[1]) / UNITS_PER_EM) * boundedFontSize);
-  const height = Math.round((Number(viewBox[2]) / UNITS_PER_EM) * boundedFontSize);
+  const rawWidth = (Number(viewBox[1]) / UNITS_PER_EM) * boundedFontSize;
+  const rawHeight = (Number(viewBox[2]) / UNITS_PER_EM) * boundedFontSize;
+  const dimensionScale = Math.min(1, MAX_DIMENSION / Math.max(rawWidth, rawHeight));
+  const width = Math.max(1, Math.round(rawWidth * dimensionScale));
+  const height = Math.max(1, Math.round(rawHeight * dimensionScale));
 
   return { svg, width, height };
 }
