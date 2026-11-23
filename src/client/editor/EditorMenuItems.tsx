@@ -47,16 +47,38 @@ export function FileMenuItems({
       <EditorMenuItem disabled={disabled} onClick={() => onSelect('excalidraw')}>
         Export .excalidraw file
       </EditorMenuItem>
-      <EditorMenuItem disabled={disabled} onClick={() => onSelect('import-drawing')}>
+      <EditorMenuItem disabled={disabled} focusManaged onClick={() => onSelect('import-drawing')}>
         Import .excalidraw file as new drawing…
       </EditorMenuItem>
-      <EditorMenuItem disabled={disabled} onClick={() => onSelect('import-library')}>
+      <EditorMenuItem disabled={disabled} focusManaged onClick={() => onSelect('import-library')}>
         Import library (.excalidrawlib)…
       </EditorMenuItem>
       <EditorMenuItem disabled={disabled} onClick={() => onSelect('export-library')}>
         Export library (.excalidrawlib)
       </EditorMenuItem>
     </>
+  );
+}
+
+function EditorMenuRadioItem({
+  children,
+  checked,
+  onClick,
+}: {
+  children: string;
+  checked: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitemradio"
+      aria-checked={checked}
+      className="editor-menu-item"
+      onClick={onClick}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -109,10 +131,13 @@ export function MoreMenuItems({
       <div className="editor-menu-group" role="group" aria-label="Drawing style">
         <span className="editor-menu-heading">Drawing style</span>
         {(['hand', 'clean'] as const).map((style) => (
-          <EditorMenuItem key={style} onClick={() => onDrawingStyle(style)}>
-            {drawingStyle === style ? '✓ ' : ''}
+          <EditorMenuRadioItem
+            key={style}
+            checked={drawingStyle === style}
+            onClick={() => onDrawingStyle(style)}
+          >
             {style === 'hand' ? 'Hand-drawn' : 'Clean'}
-          </EditorMenuItem>
+          </EditorMenuRadioItem>
         ))}
       </div>
     </>

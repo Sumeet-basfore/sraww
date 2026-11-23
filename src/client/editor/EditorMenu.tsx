@@ -29,7 +29,10 @@ export function EditorMenu({
   useEffect(() => {
     if (!open) return undefined;
     function onPointerDown(event: PointerEvent): void {
-      if (!wrapperRef.current?.contains(event.target as Node)) onClose();
+      if (!wrapperRef.current?.contains(event.target as Node)) {
+        onClose();
+        window.setTimeout(() => triggerRef.current?.focus(), 0);
+      }
     }
     document.addEventListener('pointerdown', onPointerDown);
     return () => document.removeEventListener('pointerdown', onPointerDown);
@@ -44,7 +47,9 @@ export function EditorMenu({
     }
     if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
     const items = [
-      ...(wrapperRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? []),
+      ...(wrapperRef.current?.querySelectorAll<HTMLButtonElement>(
+        '[role="menuitem"], [role="menuitemradio"]',
+      ) ?? []),
     ].filter((item) => !item.disabled);
     if (items.length === 0) return;
     event.preventDefault();
@@ -62,8 +67,18 @@ export function EditorMenu({
     items[next]?.focus();
   }
 
-  function closeAfterAction(): void {
+  function closeAfterAction(focusManaged = false): void {
     onClose();
+    if (focusManaged) return;
+    window.setTimeout(() => {
+      const active = document.activeElement;
+      if (
+        active === document.body ||
+        wrapperRef.current?.querySelector('[role="menu"]')?.contains(active)
+      ) {
+        triggerRef.current?.focus();
+      }
+    }, 0);
   }
 
   return (
@@ -85,7 +100,10 @@ export function EditorMenu({
         <div id={`${id}-menu`} className="editor-menu-popup" role="menu" aria-label={label}>
           <div
             onClick={(event) => {
-              if ((event.target as HTMLElement).closest('[role="menuitem"]')) closeAfterAction();
+              const item = (event.target as HTMLElement).closest(
+                '[role="menuitem"], [role="menuitemradio"]',
+              );
+              if (item) closeAfterAction(item.hasAttribute('data-focus-managed'));
             }}
           >
             {children}
@@ -101,11 +119,13 @@ export function EditorMenuItem({
   onClick,
   disabled = false,
   className = '',
+  focusManaged = false,
 }: {
   children: ReactNode;
   onClick: () => void;
   disabled?: boolean;
   className?: string;
+  focusManaged?: boolean;
 }) {
   return (
     <button
@@ -113,6 +133,7 @@ export function EditorMenuItem({
       role="menuitem"
       className={`editor-menu-item ${className}`}
       disabled={disabled}
+      data-focus-managed={focusManaged || undefined}
       onClick={onClick}
     >
       {children}

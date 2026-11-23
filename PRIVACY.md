@@ -1,6 +1,6 @@
 # Privacy policy
 
-Last updated: 2026-11-23
+Last updated: 2026-11-24
 
 ## The short version
 
@@ -60,7 +60,7 @@ Each AI action below sends only the content listed. Nothing is sent for an AI ac
 | Send a message (Edit this drawing mode)         | Your message; the last 12 messages of the chat; and a summary of the open drawing: each shape's identifier, kind and label, and each arrow's identifier, its label text, and the identifiers of the shapes it connects |
 | Press **+** to explain the selected shapes      | The same as a chat message, but the summary covers only the selected shapes and arrows, plus the identifiers of the shapes those arrows connect and their label text                                                   |
 | Press **Name with AI** on an architecture map   | For each folder: its path relative to the project root; up to 15 file base names (names only, not paths); and the other folders and npm packages it imports, with counts. File contents are never sent                 |
-| Press **Review with AI** on an architecture map | Each folder's path and label, its counts of files and imports, and the computed findings. Never file contents or file names.                                                                                           |
+| Press **Review with AI** on an architecture map | Each folder's path and label, its file count and import edges with counts, and the computed findings (finding id, kind, severity, title and folder ids). Never file contents or file names.                            |
 
 Architecture maps are built on your computer with no AI call. The map itself never leaves your machine.
 
@@ -68,7 +68,7 @@ The provider sees the content of each request. Anthropic and OpenAI handle it un
 
 ## Code upload
 
-On the start page, under **Code projects**, you can upload a project folder or a zip file so that its structure can be mapped. Before the upload you tick a notice that says the code stays on this computer, and that an AI tool sees only folder paths and file names, and only when you press **Name with AI**.
+On the start page, under **Code projects**, you can upload a project folder or a zip file so that its structure can be mapped. Before the upload you tick a notice that says the code stays on this computer. It explains that **Name with AI** sends each folder's path, up to 15 file names per folder, and the other folders and packages it imports with counts; **Review with AI** sends folder paths, folder labels, file and import counts, and computed findings. Neither sends file contents.
 
 - GitHub import downloads the public repository you name from codeload.github.com. GitHub sees the request, as any website does. Only public repositories and branches are supported, with no token.
 - **Where it is kept.** Each upload is a snapshot of the files that were kept, stored under `PROJECTS_DIR` with a small manifest. The manifest records the project name, when it was uploaded, when you accepted the notice, how many files were kept and their total size, and the list of files left out with the reason for each. The paths of left-out files are therefore stored as well. Their contents are not.
@@ -78,7 +78,7 @@ On the start page, under **Code projects**, you can upload a project folder or a
 - **Left out by the server, and listed with a reason.** Credential, key and lock files (for example `.env`, `.npmrc`, `*.pem`, `package-lock.json`). Binary files such as images, fonts, archives and compiled code. Text files that match a known credential format: cloud access keys, private key blocks, and common API token prefixes. A password written in plain text in an ordinary file is not detected. Paths that try to leave the project are refused. The start page lists each of these with its reason.
 - **Limits.** At most 5,000 files, 50 MB after unpacking, and a 60 MB zip. Only the files that are kept count toward these limits.
 - **Where the checks happen.** The browser skips package, build, cache and version-control folders and oversized files before re-packing a zip. The server checks every file in the re-packed upload and validates the oversized-file manifest, so the rules hold even if the browser is changed.
-- **What is sent to an AI tool.** The upload sends nothing to an AI tool. Mapping a project builds the map on your computer with no AI call. Pressing **Name with AI** on the map sends the folder paths and file names listed in the table above, never file contents.
+- **What is sent to an AI tool.** The upload sends nothing to an AI tool. Mapping a project builds the map on your computer with no AI call. Pressing **Name with AI** sends the folder paths, up to 15 file names per folder, and import counts listed in the table above. Pressing **Review with AI** sends folder paths, folder labels, file and import counts, and computed findings. Neither action sends file contents; Review with AI does not send file names.
 - **Deleting.** Click **Delete** beside a project on the start page. That removes its kept files and its manifest. Architecture maps made from the project are drawings in `DIAGRAMS_DIR`, and they keep their folder and file paths until you delete them.
 
 If the upload does not do what this section says, that is a bug. Please report it.

@@ -72,7 +72,7 @@ describe('ReviewSection', () => {
     await user.click(screen.getByRole('button', { name: 'Review with AI' }));
     expect(
       screen.getByText(
-        'Send 2 folder paths and labels and their findings, no file contents or file names.',
+        'Send 2 folder paths, labels, file and import counts, and the findings. No file contents or file names.',
       ),
     ).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(1);

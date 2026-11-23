@@ -111,8 +111,8 @@ export function ReviewSection({ name, model }: ReviewSectionProps) {
       {confirming && (
         <>
           <p className="small muted">
-            Send {componentCount} folder paths and labels and their findings, no file contents or
-            file names.
+            Send {componentCount} folder paths, labels, file and import counts, and the findings. No
+            file contents or file names.
           </p>
           <button
             type="button"

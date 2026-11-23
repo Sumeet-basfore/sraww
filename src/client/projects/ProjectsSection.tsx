@@ -142,18 +142,20 @@ export function ProjectsSection({ onChanged }: ProjectsSectionProps) {
       <aside className="privacy-notice" aria-labelledby="privacy-notice-title">
         <h3 id="privacy-notice-title">Your code stays on this computer</h3>
         <p>
-          An AI tool sees only folder paths and file names, and only when you press Review with AI
-          or Name with AI.
+          Name with AI sends each folder path, up to 15 file names per folder, and the other folders
+          and packages it imports, with counts. Review with AI sends folder paths, folder labels,
+          file and import counts, and computed findings. Neither sends file contents.
         </p>
-        <p>File contents are never sent.</p>
         <a href="/PRIVACY.md">Details</a>
       </aside>
 
       <label className="consent">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
         <span>
-          I understand that this project’s code is kept on this computer, and that an AI tool sees
-          only folder paths and file names, and only when I press Review with AI or Name with AI.
+          I understand that this project’s code is kept on this computer. Name with AI sends each
+          folder path, up to 15 file names per folder, and the other folders and packages it
+          imports, with counts. Review with AI sends folder paths, folder labels, file and import
+          counts, and computed findings. Neither sends file contents.
         </span>
       </label>
 

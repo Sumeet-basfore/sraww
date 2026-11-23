@@ -40,6 +40,20 @@ afterEach(() => {
 });
 
 describe('ProjectsSection', () => {
+  it('explains exactly what each AI action sends and excludes file contents', () => {
+    render(<ProjectsSection onChanged={() => undefined} />);
+    expect(
+      screen.getByText(
+        'Name with AI sends each folder path, up to 15 file names per folder, and the other folders and packages it imports, with counts. Review with AI sends folder paths, folder labels, file and import counts, and computed findings. Neither sends file contents.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('checkbox', {
+        name: /Name with AI sends each folder path, up to 15 file names per folder, and the other folders and packages it imports, with counts\. Review with AI sends folder paths, folder labels, file and import counts, and computed findings\. Neither sends file contents\./,
+      }),
+    ).toBeInTheDocument();
+  });
+
   it('keeps both upload buttons disabled until the privacy notice is accepted', async () => {
     render(<ProjectsSection onChanged={() => undefined} />);
     const user = userEvent.setup();

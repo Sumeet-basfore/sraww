@@ -110,6 +110,28 @@ describe('DiagramList', () => {
     expect(diagramCalls()[1]?.[1]).toMatchObject({ method: 'DELETE' });
   });
 
+  it('renames a drawing after prompting and refreshes the list', async () => {
+    queueDiagramResponses(
+      json(200, {
+        diagrams: [{ name: 'before', updatedAt: '2026-01-01T00:00:00Z', sizeBytes: 1 }],
+      }),
+      json(200, { name: 'after' }),
+      json(200, {
+        diagrams: [{ name: 'after', updatedAt: '2026-01-01T00:00:00Z', sizeBytes: 1 }],
+      }),
+    );
+    vi.spyOn(window, 'prompt').mockReturnValue('after');
+    renderList();
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Rename before' }));
+    expect(window.prompt).toHaveBeenCalledWith('Rename diagram', 'before');
+    expect(await screen.findByRole('button', { name: 'Rename after' })).toBeInTheDocument();
+    expect(diagramCalls()[1]).toEqual([
+      '/api/diagrams/before',
+      expect.objectContaining({ method: 'PATCH', body: JSON.stringify({ name: 'after' }) }),
+    ]);
+  });
+
   it('imports a drawing under a free name when the name is taken', async () => {
     queueDiagramResponses(
       json(200, {

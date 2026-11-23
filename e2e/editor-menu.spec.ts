@@ -10,7 +10,7 @@ test.beforeAll(async () => {
   await rm(DIAGRAMS_DIR, { recursive: true, force: true });
 });
 
-async function openDrawing(page: import('@playwright/test').Page): Promise<void> {
+async function openDrawing(page: import('@playwright/test').Page): Promise<string> {
   drawingSequence += 1;
   const name = `${NAME} ${drawingSequence}`;
   await page.goto('/');
@@ -18,6 +18,7 @@ async function openDrawing(page: import('@playwright/test').Page): Promise<void>
   await page.getByRole('button', { name: 'Create' }).click();
   await expect(page.getByRole('heading', { name })).toBeVisible();
   await expect(page.locator('.excalidraw')).toBeVisible({ timeout: 30_000 });
+  return name;
 }
 
 test('Insert menu opens, closes on Escape and outside click, and returns focus', async ({
@@ -34,8 +35,61 @@ test('Insert menu opens, closes on Escape and outside click, and returns focus',
   await expect(insert).toBeFocused();
 
   await insert.click();
-  await page.locator('.excalidraw').click({ position: { x: 300, y: 300 } });
+  await page.getByRole('button', { name: 'Switch to dark mode' }).click();
   await expect(menu).toBeHidden();
+  await expect(insert).toBeFocused();
+});
+
+test('insert actions update the saved drawing and Formula keeps focus in its dialog', async ({
+  page,
+  request,
+}) => {
+  const name = await openDrawing(page);
+  const insert = page.getByRole('button', { name: 'Insert', exact: true });
+  await insert.click();
+  const menu = page.getByRole('menu', { name: 'Insert' });
+  await menu.getByRole('menuitem', { name: 'Table' }).click();
+  await expect(page.getByRole('status')).toHaveText('All changes saved', { timeout: 15_000 });
+  const saved = await request.get(`/api/diagrams/${encodeURIComponent(name)}`);
+  expect(saved.ok()).toBeTruthy();
+  const scene = (await saved.json()) as { elements: Array<{ type: string }> };
+  expect(scene.elements.filter((element) => element.type === 'line')).toHaveLength(8);
+  await expect(insert).toBeFocused();
+
+  await insert.click();
+  await page
+    .getByRole('menu', { name: 'Insert' })
+    .getByRole('menuitem', { name: 'Formula (LaTeX)…' })
+    .click();
+  const dialog = page.getByRole('dialog', { name: 'Insert formula' });
+  await expect(dialog).toBeVisible();
+  await expect(page.getByLabel('LaTeX formula')).toBeFocused();
+});
+
+test('exporting a PNG starts a download', async ({ page }) => {
+  await openDrawing(page);
+  await page.getByRole('button', { name: 'File', exact: true }).click();
+  const menu = page.getByRole('menu', { name: 'File' });
+  const downloadPromise = page.waitForEvent('download');
+  await menu.getByRole('menuitem', { name: 'Export PNG image' }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/\.png$/i);
+});
+
+test('drawing style choices expose radio state', async ({ page }) => {
+  await openDrawing(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'More', exact: true }).click();
+  const hand = page.getByRole('menuitemradio', { name: 'Hand-drawn' });
+  const clean = page.getByRole('menuitemradio', { name: 'Clean' });
+  await expect(hand).toHaveAttribute('aria-checked', 'true');
+  await expect(clean).toHaveAttribute('aria-checked', 'false');
+  await clean.click();
+  await page.getByRole('button', { name: 'More', exact: true }).click();
+  await expect(page.getByRole('menuitemradio', { name: 'Clean' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
 });
 
 test('theme toggle says what the next theme action will do', async ({ page }) => {
