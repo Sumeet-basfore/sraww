@@ -31,6 +31,7 @@ Relative paths such as `./data/diagrams` are relative to the folder you start sr
 | Architecture maps and their layouts              | `DIAGRAMS_DIR`                                                 | `DIAGRAMS_DIR`      | Delete the map in the app, or delete the folder                           |
 | AI tool choices (which tool, model and effort)   | `AI_SETTINGS_FILE`, default `./data/ai-settings.json`          | `AI_SETTINGS_FILE`  | Delete the file. It holds no credentials                                  |
 | Working folder for the AI tools                  | `AI_WORKDIR`, default `./data/ai-workdir`                      | `AI_WORKDIR`        | Delete the folder. The app removes its temporary files after each request |
+| Excalidraw library (reusable shapes)             | `DIAGRAMS_DIR`, file `library.json`                            | `DIAGRAMS_DIR`      | Delete the file, or remove items in the editor's library panel            |
 | Display preferences (theme, drawing style)       | Your browser's local storage, key `sraww.prefs`                | Settings in the app | Clear the site's data in your browser                                     |
 | Editor drafts (library publishing, Mermaid text) | Your browser's local storage, written by the Excalidraw editor | None                | Clear the site's data in your browser. We have not confirmed these keys   |
 

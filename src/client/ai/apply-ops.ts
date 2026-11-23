@@ -1,6 +1,16 @@
 import { convertToExcalidrawElements, newElementWith } from '@excalidraw/excalidraw';
 import type { ChatOp } from '../../shared/chat-schemas.ts';
 import type { GraphEdge, GraphNode } from '../../shared/ai-schemas.ts';
+import {
+  arrowStyle,
+  borderPoint,
+  centreOf,
+  edgeLabelSkeleton,
+  INK,
+  isNote,
+  PALETTE,
+  shapeStyle,
+} from './style.ts';
 
 /** Element fields used here. Excalidraw elements carry many more; they are kept untouched. */
 export interface EditableElement {
@@ -17,20 +27,20 @@ export interface EditableElement {
   [key: string]: unknown;
 }
 
+type NodeUpdate = Extract<ChatOp, { type: 'updateNodes' }>['updates'][number];
+
 const NEW_SHAPE_WIDTH = 160;
 const NEW_SHAPE_HEIGHT = 72;
 const ROW_GAP = 220;
 const LAYER_GAP = 120;
+const APPROX_CHAR_WIDTH = 10;
+const TEXT_PADDING = 16;
 
 interface Box {
   x: number;
   y: number;
   width: number;
   height: number;
-}
-
-function centerOf(box: Box): { x: number; y: number } {
-  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 }
 
 /** Drops a shape, its label, and every arrow glued to it or to a deleted shape. */
@@ -48,10 +58,67 @@ function deleteIds(elements: EditableElement[], ids: ReadonlySet<string>): Edita
   });
 }
 
+/** Text for a shape's label, kept inside the shape and centred on it. */
+function relabelled(
+  text: EditableElement,
+  label: string,
+  container: EditableElement | undefined,
+): EditableElement {
+  const room = container ? container.width - TEXT_PADDING : Number.POSITIVE_INFINITY;
+  const width = Math.min(room, Math.max(40, label.length * APPROX_CHAR_WIDTH));
+  const x = container ? container.x + (container.width - width) / 2 : text.x;
+  return newElementWith(
+    text as never,
+    {
+      text: label,
+      originalText: label,
+      width,
+      x,
+    } as never,
+  ) as unknown as EditableElement;
+}
+
+/**
+ * Changes the text or colour of existing shapes and notes. A label change edits the text bound to
+ * the shape, or a note's own text, and keeps it inside its shape.
+ */
+function applyUpdates(
+  elements: EditableElement[],
+  updates: readonly NodeUpdate[],
+): EditableElement[] {
+  const byId = new Map(updates.map((update) => [update.id, update]));
+  const byElement = new Map(elements.map((el) => [el.id, el]));
+  return elements.map((el) => {
+    if (el.isDeleted) return el;
+    const own = byId.get(el.id);
+    if (own?.color) {
+      const colour = PALETTE[own.color];
+      return newElementWith(
+        el as never,
+        {
+          strokeColor: colour.stroke,
+          backgroundColor: colour.fill,
+        } as never,
+      ) as unknown as EditableElement;
+    }
+    if (el.type === 'text' && !el.containerId && own?.label) {
+      // A note is a text element of its own.
+      return relabelled(el, own.label, undefined);
+    }
+    const owner = el.containerId ? byId.get(el.containerId) : undefined;
+    if (el.type === 'text' && owner?.label) {
+      const container = el.containerId ? byElement.get(el.containerId) : undefined;
+      return relabelled(el, owner.label, container);
+    }
+    return el;
+  });
+}
+
 /**
  * Returns a new element list with the edits applied. New shapes go in a row below the drawing.
- * Arrows between two new shapes are glued to them. Arrows that touch an existing shape are
- * drawn between the shapes' centres but are not glued, since Excalidraw only binds within one batch.
+ * Arrows between two new shapes are glued to them. Arrows that touch an existing shape or a note
+ * are drawn between the centres but are not glued, since Excalidraw only binds within one batch
+ * and notes are text, not shapes.
  */
 export function applyChatOps(
   elements: readonly EditableElement[],
@@ -64,14 +131,17 @@ export function applyChatOps(
   }
 
   const deletions = new Set<string>();
+  const updates: NodeUpdate[] = [];
   const newNodes: GraphNode[] = [];
   const newEdges: GraphEdge[] = [];
   for (const op of ops) {
     if (op.type === 'deleteElements') op.ids.forEach((id) => deletions.add(id));
+    if (op.type === 'updateNodes') updates.push(...op.updates);
     if (op.type === 'addNodes') newNodes.push(...op.nodes);
     if (op.type === 'addEdges') newEdges.push(...op.edges);
   }
   if (deletions.size > 0) current = deleteIds(current, deletions);
+  if (updates.length > 0) current = applyUpdates(current, updates);
 
   const liveBottom = Math.max(0, ...[...boxes.values()].map((b) => b.y + b.height));
   const liveLeft = Math.min(0, ...[...boxes.values()].map((b) => b.x));
@@ -86,7 +156,29 @@ export function applyChatOps(
   });
 
   const newIds = new Set(newNodes.map((n) => n.id));
-  const shapeSkeletons = newNodes.map((node) => {
+  const noteIds = new Set(newNodes.filter(isNote).map((n) => n.id));
+  const bindable = (id: string): boolean => newIds.has(id) && !noteIds.has(id);
+
+  const shapeSkeletons = newNodes
+    .filter((node) => !isNote(node))
+    .map((node) => {
+      const box = boxes.get(node.id) ?? {
+        x: 0,
+        y: 0,
+        width: NEW_SHAPE_WIDTH,
+        height: NEW_SHAPE_HEIGHT,
+      };
+      return {
+        ...shapeStyle(node),
+        id: node.id,
+        x: box.x,
+        y: box.y,
+        width: box.width,
+        height: box.height,
+        label: { text: node.label, fontSize: 18 },
+      };
+    });
+  const noteTexts = newNodes.filter(isNote).map((node) => {
     const box = boxes.get(node.id) ?? {
       x: 0,
       y: 0,
@@ -94,40 +186,53 @@ export function applyChatOps(
       height: NEW_SHAPE_HEIGHT,
     };
     return {
-      type: node.shape ?? 'rectangle',
-      id: node.id,
+      type: 'text' as const,
       x: box.x,
       y: box.y,
-      width: box.width,
-      height: box.height,
-      label: { text: node.label, fontSize: 18 },
+      text: node.label,
+      fontSize: 18,
+      strokeColor: INK,
     };
   });
   const boundArrows = newEdges
-    .filter((edge) => newIds.has(edge.from) && newIds.has(edge.to))
-    .map((edge) => ({
-      type: 'arrow' as const,
-      x: 0,
-      y: 0,
-      start: { id: edge.from },
-      end: { id: edge.to },
-      ...(edge.label ? { label: { text: edge.label, fontSize: 14 } } : {}),
-    }));
+    .filter((edge) => bindable(edge.from) && bindable(edge.to))
+    .map((edge) => {
+      const from = boxes.get(edge.from)!;
+      const to = boxes.get(edge.to)!;
+      const a = borderPoint(from, centreOf(to));
+      const b = borderPoint(to, centreOf(from));
+      return {
+        type: 'arrow' as const,
+        x: a.x,
+        y: a.y,
+        points: [
+          [0, 0],
+          [b.x - a.x, b.y - a.y],
+        ],
+        start: { id: edge.from },
+        end: { id: edge.to },
+        ...arrowStyle(edge),
+      };
+    });
+  const boundLabels = newEdges
+    .filter((edge) => edge.label && bindable(edge.from) && bindable(edge.to))
+    .map((edge) => edgeLabelSkeleton(edge.label ?? '', boxes.get(edge.from)!, boxes.get(edge.to)!));
   const created =
-    shapeSkeletons.length + boundArrows.length > 0
-      ? convertToExcalidrawElements([...shapeSkeletons, ...boundArrows] as never, {
-          regenerateIds: true,
-        })
+    shapeSkeletons.length + noteTexts.length + boundArrows.length > 0
+      ? convertToExcalidrawElements(
+          [...shapeSkeletons, ...noteTexts, ...boundArrows, ...boundLabels] as never,
+          { regenerateIds: true },
+        )
       : [];
 
   const looseArrows = newEdges
-    .filter((edge) => !(newIds.has(edge.from) && newIds.has(edge.to)))
+    .filter((edge) => !(bindable(edge.from) && bindable(edge.to)))
     .flatMap((edge) => {
       const from = boxes.get(edge.from);
       const to = boxes.get(edge.to);
       if (!from || !to) return [];
-      const a = centerOf(from);
-      const b = centerOf(to);
+      const a = borderPoint(from, centreOf(to));
+      const b = borderPoint(to, centreOf(from));
       return convertToExcalidrawElements(
         [
           {
@@ -138,8 +243,9 @@ export function applyChatOps(
               [0, 0],
               [b.x - a.x, b.y - a.y],
             ],
-            ...(edge.label ? { label: { text: edge.label, fontSize: 14 } } : {}),
+            ...arrowStyle(edge),
           },
+          ...(edge.label ? [edgeLabelSkeleton(edge.label, from, to)] : []),
         ] as never,
         { regenerateIds: true },
       );

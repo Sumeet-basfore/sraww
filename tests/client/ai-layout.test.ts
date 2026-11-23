@@ -24,14 +24,14 @@ describe('sizeFor', () => {
 
 describe('layoutGraph', () => {
   it('places each node once and lays edges out top to bottom', async () => {
-    const boxes = await layoutGraph(GRAPH);
+    const { boxes } = await layoutGraph(GRAPH);
     expect([...boxes.keys()].sort()).toEqual(['api', 'db', 'web']);
     expect(boxes.get('api')!.y).toBeGreaterThan(boxes.get('web')!.y);
     expect(boxes.get('db')!.y).toBeGreaterThan(boxes.get('api')!.y);
   });
 
   it('never overlaps two boxes', async () => {
-    const boxes = [...(await layoutGraph(GRAPH)).values()];
+    const boxes = [...(await layoutGraph(GRAPH)).boxes.values()];
     for (let i = 0; i < boxes.length; i += 1) {
       for (let j = i + 1; j < boxes.length; j += 1) {
         const a = boxes[i]!;
@@ -51,7 +51,7 @@ describe('graphToSkeleton', () => {
   it('creates one labelled shape per node, using the requested shape type', async () => {
     const boxes = await layoutGraph(GRAPH);
     const skeleton = graphToSkeleton(GRAPH, boxes);
-    const shapes = skeleton.filter((el) => el.type !== 'arrow');
+    const shapes = skeleton.filter((el) => el.type !== 'arrow' && el.type !== 'text');
     expect(shapes.map((s) => [s.id, s.type])).toEqual([
       ['web', 'rectangle'],
       ['api', 'ellipse'],
@@ -67,14 +67,17 @@ describe('graphToSkeleton', () => {
     expect(arrows[0]).toMatchObject({
       start: { id: 'web' },
       end: { id: 'api' },
-      label: { text: 'calls' },
     });
+    // The label is its own text element at the middle of the arrow, not bound to it.
+    expect(
+      graphToSkeleton(GRAPH, boxes).find((el) => el.type === 'text' && el.text === 'calls'),
+    ).toBeDefined();
     expect(arrows[1]).toMatchObject({ start: { id: 'api' }, end: { id: 'db' } });
     expect(arrows[1]).not.toHaveProperty('label');
   });
 
   it('skips nodes that have no computed position', () => {
-    const skeleton = graphToSkeleton(GRAPH, new Map());
+    const skeleton = graphToSkeleton(GRAPH, { boxes: new Map(), frames: new Map() });
     expect(skeleton.filter((el) => el.type !== 'arrow')).toHaveLength(0);
   });
 });
