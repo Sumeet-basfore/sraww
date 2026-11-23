@@ -17,7 +17,6 @@ import { loadPrefs, roughnessFor, savePrefs, type DrawingStyle, type Prefs } fro
 import type { ExcalidrawScene } from '../../shared/diagram.ts';
 import { createAutosave, type Autosave, type SaveStatus } from './autosave.ts';
 import { ArchPanel } from '../arch/ArchPanel.tsx';
-import { Logo } from '../brand/Logo.tsx';
 import { Assistant } from '../ai/assistant/Assistant.tsx';
 import { downloadBlob, exportScene, type ExportFormat } from './export.ts';
 import { createLibrarySync, type LibrarySync } from './library-sync.ts';
@@ -26,6 +25,9 @@ import { sceneFingerprint, toSavedScene } from './scene.ts';
 import { attachWheelZoom } from './wheel-zoom.ts';
 import { insertTemplate, type TemplateKind } from '../math/insert-template.ts';
 import { FormulaDialog } from '../math/FormulaDialog.tsx';
+import { EditorMenu } from './EditorMenu.tsx';
+import { FileMenuItems, InsertMenuItems, MoreMenuItems } from './EditorMenuItems.tsx';
+import './editor.css';
 
 export const AUTOSAVE_DELAY_MS = 800;
 
@@ -47,6 +49,8 @@ interface EditorProps {
   mode?: 'diagram' | 'architecture';
   /** Reopens the walkthrough. The button is shown only when this is given. */
   onShowTour?: () => void;
+  /** Opens the architecture view for this drawing. */
+  onOpenArchitecture?: () => void;
 }
 
 /** The server validated the file; restore() performs Excalidraw's own normalization. */
@@ -59,13 +63,19 @@ function restoreScene(scene: ExcalidrawScene, style: DrawingStyle): RestoredScen
   };
 }
 
-export function Editor({ name, onExit, mode = 'diagram', onShowTour }: EditorProps) {
+export function Editor({
+  name,
+  onExit,
+  mode = 'diagram',
+  onShowTour,
+  onOpenArchitecture,
+}: EditorProps) {
   const [load, setLoad] = useState<LoadState>({ kind: 'loading' });
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
   const [prefs, setPrefs] = useState<Prefs>(loadPrefs);
   const [actionError, setActionError] = useState<string | null>(null);
   const [panel, setPanel] = useState<'arch' | null>(mode === 'architecture' ? 'arch' : null);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [activeMenu, setActiveMenu] = useState<'insert' | 'file' | 'more' | null>(null);
   const [formulaDialogOpen, setFormulaDialogOpen] = useState(false);
   const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -255,10 +265,30 @@ export function Editor({ name, onExit, mode = 'diagram', onShowTour }: EditorPro
     savePrefs(next);
   }
 
+  function toggleMenu(menu: 'insert' | 'file' | 'more'): void {
+    setActiveMenu((active) => (active === menu ? null : menu));
+  }
+
+  function closeMenu(): void {
+    setActiveMenu(null);
+  }
+
+  function selectTemplate(kind: TemplateKind): void {
+    closeMenu();
+    runTemplateAction(kind);
+  }
+
+  function selectFileAction(action: string): void {
+    closeMenu();
+    runFileAction(action);
+  }
+
+  const themeAction = prefs.theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+  const themeIcon = prefs.theme === 'dark' ? '☀' : '☾';
+
   return (
     <div className="editor">
       <header className="editor-bar">
-        <Logo variant="symbol" className="brand-symbol" />
         <button
           type="button"
           className="button ghost editor-back"
@@ -273,112 +303,127 @@ export function Editor({ name, onExit, mode = 'diagram', onShowTour }: EditorPro
         {load.kind === 'ready' && (
           <SaveIndicator status={saveStatus} onRetry={() => void load.autosave.flush()} />
         )}
-        <div className={`editor-menu ${menuOpen ? 'menu-open' : ''}`}>
+        <div className="editor-actions">
+          <div className="editor-style segmented" role="radiogroup" aria-label="Drawing style">
+            {(['hand', 'clean'] as const).map((style) => (
+              <button
+                key={style}
+                type="button"
+                role="radio"
+                aria-checked={prefs.drawingStyle === style}
+                className={prefs.drawingStyle === style ? 'active' : ''}
+                onClick={() => updateStyle(style)}
+              >
+                {style === 'hand' ? 'Hand-drawn' : 'Clean'}
+              </button>
+            ))}
+          </div>
+          <EditorMenu
+            id="insert"
+            label="Insert"
+            open={activeMenu === 'insert'}
+            onToggle={() => toggleMenu('insert')}
+            onClose={closeMenu}
+          >
+            <InsertMenuItems
+              disabled={load.kind !== 'ready'}
+              onTemplate={selectTemplate}
+              onFormula={() => {
+                closeMenu();
+                setFormulaDialogOpen(true);
+              }}
+            />
+          </EditorMenu>
+          <EditorMenu
+            id="file"
+            label="File"
+            open={activeMenu === 'file'}
+            onToggle={() => toggleMenu('file')}
+            onClose={closeMenu}
+          >
+            <FileMenuItems disabled={load.kind !== 'ready'} onSelect={selectFileAction} />
+          </EditorMenu>
           <button
             type="button"
-            className="editor-menu-toggle"
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((open) => !open)}
+            className="editor-menu-button"
+            aria-expanded={mode === 'architecture' ? panel === 'arch' : undefined}
+            disabled={load.kind !== 'ready'}
+            onClick={() =>
+              mode === 'architecture'
+                ? setPanel((open) => (open === 'arch' ? null : 'arch'))
+                : onOpenArchitecture?.()
+            }
           >
-            More
+            Architecture
           </button>
-          <div className="editor-menu-content">
-            <div className="segmented" role="radiogroup" aria-label="Drawing style">
-              {(['hand', 'clean'] as const).map((style) => (
-                <button
-                  key={style}
-                  type="button"
-                  role="radio"
-                  aria-checked={prefs.drawingStyle === style}
-                  className={prefs.drawingStyle === style ? 'active' : ''}
-                  onClick={() => updateStyle(style)}
-                >
-                  {style === 'hand' ? 'Hand-drawn' : 'Clean'}
-                </button>
-              ))}
-            </div>
-            {onShowTour && (
-              <button type="button" className="button ghost" onClick={onShowTour}>
-                Tour
-              </button>
-            )}
-            {mode === 'architecture' && (
-              <button
-                type="button"
-                className="button ghost"
-                aria-expanded={panel === 'arch'}
-                disabled={load.kind !== 'ready'}
-                onClick={() => setPanel((open) => (open === 'arch' ? null : 'arch'))}
-              >
-                Architecture
-              </button>
-            )}
-            <select
-              className="export-select"
-              aria-label="Insert"
-              value=""
-              disabled={load.kind !== 'ready'}
-              onChange={(e) => {
-                const value = e.target.value;
-                e.target.value = '';
-                if (value === 'formula') setFormulaDialogOpen(true);
-                else if (value) runTemplateAction(value as TemplateKind);
-              }}
-            >
-              <option value="">Insert…</option>
-              <option value="axes">Axes</option>
-              <option value="number-line">Number line</option>
-              <option value="table">Table</option>
-              <option value="formula">Formula (LaTeX)…</option>
-            </select>
-            <select
-              className="export-select"
-              aria-label="File actions"
-              value=""
-              disabled={load.kind !== 'ready'}
-              onChange={(e) => {
-                const action = e.target.value;
-                e.target.value = '';
-                runFileAction(action);
-              }}
-            >
-              <option value="">File…</option>
-              <option value="png">Export PNG image</option>
-              <option value="svg">Export SVG image</option>
-              <option value="excalidraw">Export .excalidraw file</option>
-              <option value="import-drawing">Import .excalidraw file as new drawing…</option>
-              <option value="import-library">Import library (.excalidrawlib)…</option>
-              <option value="export-library">Export library (.excalidrawlib)</option>
-            </select>
-            <input
-              ref={drawingInput}
-              type="file"
-              accept={IMPORT_ACCEPT}
-              hidden
-              aria-label="Choose a drawing to import"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                e.target.value = '';
-                if (file) void importDrawing(file);
-              }}
-            />
-            <input
-              ref={libraryInput}
-              type="file"
-              accept=".excalidrawlib,.json,application/json"
-              hidden
-              aria-label="Choose a library to import"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                e.target.value = '';
-                if (file) void importLibrary(file);
-              }}
-            />
-            <button type="button" className="button ghost" onClick={toggleTheme}>
-              {prefs.theme === 'dark' ? 'Light' : 'Dark'} mode
+          {onShowTour && (
+            <button type="button" className="editor-menu-button" onClick={onShowTour}>
+              Tour
             </button>
-          </div>
+          )}
+          <button
+            type="button"
+            className="editor-menu-button editor-theme-button"
+            aria-label={themeAction}
+            onClick={toggleTheme}
+          >
+            <span aria-hidden="true">{themeIcon}</span>
+          </button>
+          <EditorMenu
+            id="more"
+            label="More"
+            open={activeMenu === 'more'}
+            onToggle={() => toggleMenu('more')}
+            onClose={closeMenu}
+            className="editor-more"
+          >
+            <MoreMenuItems
+              disabled={load.kind !== 'ready'}
+              architecture
+              onArchitecture={() =>
+                mode === 'architecture'
+                  ? setPanel((open) => (open === 'arch' ? null : 'arch'))
+                  : onOpenArchitecture?.()
+              }
+              onTour={onShowTour}
+              onTemplate={selectTemplate}
+              onFormula={() => {
+                closeMenu();
+                setFormulaDialogOpen(true);
+              }}
+              onFileAction={selectFileAction}
+              onTheme={toggleTheme}
+              themeAction={themeAction}
+              themeIcon={themeIcon}
+              drawingStyle={prefs.drawingStyle}
+              onDrawingStyle={updateStyle}
+            />
+          </EditorMenu>
         </div>
+        <input
+          ref={drawingInput}
+          type="file"
+          accept={IMPORT_ACCEPT}
+          hidden
+          aria-label="Choose a drawing to import"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = '';
+            if (file) void importDrawing(file);
+          }}
+        />
+        <input
+          ref={libraryInput}
+          type="file"
+          accept=".excalidrawlib,.json,application/json"
+          hidden
+          aria-label="Choose a library to import"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = '';
+            if (file) void importLibrary(file);
+          }}
+        />
       </header>
 
       {actionError && (

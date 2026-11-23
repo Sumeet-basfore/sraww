@@ -49,6 +49,7 @@ function Pages({ route, onShowTour }: PagesProps) {
           mode={isArchitecture ? 'architecture' : 'diagram'}
           onExit={() => goTo('#/')}
           onShowTour={onShowTour}
+          onOpenArchitecture={() => goTo(architectureHash(route.name))}
         />
       </Suspense>
     </div>

@@ -16,7 +16,8 @@ test('inserts a table template into a new drawing', async ({ page, request }) =>
   await expect(page.getByRole('heading', { name: NAME })).toBeVisible();
   await expect(page.locator('.excalidraw')).toBeVisible({ timeout: 30_000 });
 
-  await page.getByRole('combobox', { name: 'Insert' }).selectOption('table');
+  await page.getByRole('button', { name: 'Insert', exact: true }).click();
+  await page.getByRole('menu', { name: 'Insert' }).getByRole('menuitem', { name: 'Table' }).click();
   await expect(page.getByRole('status')).toHaveText('All changes saved', { timeout: 15_000 });
 
   const saved = await request.get(`/api/diagrams/${encodeURIComponent(NAME)}`);
