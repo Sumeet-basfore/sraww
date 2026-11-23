@@ -94,6 +94,7 @@ export interface ProjectSummary {
   fileCount: number;
   bytes: number;
   excluded: ProjectExclusion[];
+  source?: { kind: 'github'; repo: string; ref: string };
 }
 
 export const projectsApi = {
@@ -120,6 +121,14 @@ export const projectsApi = {
       throw new ApiError(response.status, message);
     }
     return body as ProjectSummary;
+  },
+  importGithub(input: {
+    repo: string;
+    ref?: string;
+    name: string;
+    consent: true;
+  }): Promise<ProjectSummary> {
+    return request('/projects/github', { method: 'POST', body: JSON.stringify(input) });
   },
   remove(id: string): Promise<void> {
     return request(`/projects/${encodeURIComponent(id)}`, { method: 'DELETE' });

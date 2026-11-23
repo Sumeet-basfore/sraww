@@ -13,6 +13,7 @@ export interface ProjectManifest {
   fileCount: number;
   bytes: number;
   excluded: Exclusion[];
+  source?: { kind: 'github'; repo: string; ref: string };
 }
 
 const ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -53,6 +54,7 @@ export function createProjectStore(dir: string) {
       name: string;
       consentAt: string;
       intake: Intake;
+      source?: ProjectManifest['source'];
     }): Promise<ProjectManifest> {
       const id = randomUUID();
       const project = folderOf(id);
@@ -74,6 +76,7 @@ export function createProjectStore(dir: string) {
           fileCount: input.intake.files.length,
           bytes: input.intake.bytes,
           excluded: input.intake.excluded,
+          ...(input.source ? { source: input.source } : {}),
         };
         // The manifest is written last, so a half-written project never appears in the list.
         const tmp = path.join(project, `${MANIFEST}.${randomUUID()}.tmp`);

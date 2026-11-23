@@ -1450,6 +1450,39 @@ textarea:focus {
   margin: 0 0 0.5rem;
 }
 
+.github-import {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 38rem;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+}
+
+.github-import legend {
+  padding: 0 0.35rem;
+  font-weight: 600;
+}
+
+.github-import > label:not(.consent) {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.github-import input[type='text'] {
+  width: 100%;
+  min-width: 0;
+}
+
+.github-import .consent {
+  margin: 0.25rem 0;
+}
+
+.github-import button {
+  justify-self: start;
+}
+
 .consent {
   display: flex;
   gap: 0.6rem;
