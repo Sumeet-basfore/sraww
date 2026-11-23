@@ -1,0 +1,48 @@
+{
+  "project": "sraww",
+  "phase": "production",
+  "round": 1,
+  "gates": {
+    "A_brief": "approved 2026-11-23",
+    "B_concept_choice": "C chosen 2026-11-23",
+    "C_app_asset_changes": "not granted"
+  },
+  "tagline": "Sketch the systems you build.",
+  "scope": "new identity",
+  "palette": {
+    "direction": "blue to violet",
+    "accent": "#4F46E5",
+    "accent_dark": "#8D8AF7",
+    "ink": "#1C1D2E",
+    "paper": "#F6F5F1",
+    "dark_background": "#14151F"
+  },
+  "font": {
+    "source": "Space Grotesk Medium (SIL OFL), outlined to paths",
+    "file": "/usr/share/fonts/OTF/SpaceGrotesk-Medium.otf"
+  },
+  "concepts": [
+    {
+      "id": "a-angular",
+      "geometry": "angular",
+      "idea": "two square nodes joined by an elbow connector",
+      "files": ["a-angular-symbol.svg", "a-angular-lockup-light.svg", "a-angular-lockup-dark.svg"],
+      "notes": "Reads clearly as linked systems. Strongest candidate for the favicon."
+    },
+    {
+      "id": "b-organic",
+      "geometry": "organic",
+      "idea": "two round nodes joined by one soft S-curve",
+      "files": ["b-organic-symbol.svg", "b-organic-lockup-light.svg", "b-organic-lockup-dark.svg"],
+      "notes": "Calmer and friendlier. The curve ends are the weakest detail; they may need smoothing."
+    },
+    {
+      "id": "c-frame",
+      "geometry": "third direction, not a mix",
+      "idea": "a canvas outline open at one corner, with one point of focus",
+      "files": ["c-frame-symbol.svg", "c-frame-lockup-light.svg", "c-frame-lockup-dark.svg"],
+      "notes": "Ties to the whiteboard idea. Reads as a corner bracket at small sizes; weakest of the three."
+    }
+  ],
+  "generator": "scratchpad gen_round1.py (not part of the repo)"
+}
