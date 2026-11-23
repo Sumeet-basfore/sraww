@@ -95,13 +95,33 @@ input:focus-visible,
   padding: 56px 24px 96px;
 }
 
-.eyebrow {
-  margin: 0 0 6px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--accent);
+/* Brand mark (src/client/brand/Logo.tsx) */
+.brand-lockup {
+  display: block;
+  width: 119px;
+  height: 40px;
+  margin-bottom: 28px;
+  color: var(--ink);
+}
+
+.brand-symbol {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  margin-right: 4px;
+}
+
+.brand-frame {
+  fill: none;
+  stroke: var(--accent);
+}
+
+.brand-point {
+  fill: var(--accent);
+}
+
+.brand-wordmark {
+  fill: currentColor;
 }
 
 .page-header h1 {

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEv
 import { diagramApi, type DiagramSummary } from '../lib/api.ts';
 import { errorMessage } from '../lib/errors.ts';
 import { ArchNewForm } from '../arch/ArchNewForm.tsx';
+import { Logo } from '../brand/Logo.tsx';
 import { IMPORT_ACCEPT, readDrawingFile, uniqueName } from './import.ts';
 
 interface DiagramListProps {
@@ -97,7 +98,7 @@ export function DiagramList({ onOpen, onOpenArchitecture }: DiagramListProps) {
   return (
     <section className="diagram-list" aria-labelledby="diagram-list-title">
       <header className="page-header">
-        <p className="eyebrow">sraww</p>
+        <Logo className="brand-lockup" />
         <h1 id="diagram-list-title">Diagrams</h1>
       </header>
 

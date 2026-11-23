@@ -8,6 +8,7 @@ import { loadPrefs, roughnessFor, savePrefs, type DrawingStyle, type Prefs } fro
 import type { ExcalidrawScene } from '../../shared/diagram.ts';
 import { createAutosave, type Autosave, type SaveStatus } from './autosave.ts';
 import { ArchPanel } from '../arch/ArchPanel.tsx';
+import { Logo } from '../brand/Logo.tsx';
 import { ChatPanel } from '../ai/ChatPanel.tsx';
 import { GeneratePanel } from '../ai/GeneratePanel.tsx';
 import { exportScene, type ExportFormat } from './export.ts';
@@ -140,6 +141,7 @@ export function Editor({ name, onExit, mode = 'diagram' }: EditorProps) {
   return (
     <div className="editor">
       <header className="editor-bar">
+        <Logo variant="symbol" className="brand-symbol" />
         <button type="button" className="button ghost" onClick={() => void handleExit()}>
           ← Diagrams
         </button>

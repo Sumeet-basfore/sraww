@@ -1,4 +1,7 @@
-<img src="assets/icon.svg" width="64" height="64" alt="">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/sraww-primary-dark.svg">
+  <img src="assets/sraww-primary-light.svg" width="260" alt="sraww">
+</picture>
 
 # sraww
 
