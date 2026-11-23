@@ -18,6 +18,7 @@ import type { fetchRepoZip } from './projects/github.ts';
 import { uploadedArchProjects } from './projects/arch-projects.ts';
 import type { ArchProject } from './arch/projects.ts';
 import { createDiagramStore, type DiagramStore } from './storage/diagram-store.ts';
+import { createMathRouter } from './routes/math.ts';
 
 export const JSON_BODY_LIMIT = '10mb';
 
@@ -66,6 +67,7 @@ export function createApp(
   });
 
   app.use('/api/diagrams', createDiagramRouter(store));
+  app.use('/api/math', createMathRouter());
   app.use('/api/library', createLibraryRouter(createLibraryStore(store.dir)));
   app.use('/api/projects', createProjectRouter(projectStore, projects));
   app.use('/api/arch', createArchRouter(createArchStore(store.dir), archProjects, ai));
