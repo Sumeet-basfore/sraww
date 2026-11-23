@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -31,9 +32,25 @@ function keepExcalidrawFontsLocal(): Plugin {
 
 export default defineConfig({
   plugins: [keepExcalidrawFontsLocal(), react()],
-  // Dev pre-bundling would copy Excalidraw out of reach of the transform above, so keep it as source.
+  // Dev pre-bundling: apply the same font rewrite to Excalidraw files as they are pre-bundled.
   optimizeDeps: {
-    exclude: ['@excalidraw/excalidraw'],
+    esbuildOptions: {
+      plugins: [
+        {
+          name: 'keep-excalidraw-fonts-local-prebundle',
+          setup(build) {
+            build.onLoad({ filter: /@excalidraw\/excalidraw\/dist\/.*\.js$/ }, async (args) => {
+              const code = await readFile(args.path, 'utf8');
+              if (!code.includes('`https://esm.sh/${')) return undefined;
+              return {
+                contents: code.replaceAll('`https://esm.sh/${', '`${window.location.origin}/${'),
+                loader: 'js',
+              };
+            });
+          },
+        },
+      ],
+    },
   },
   server: {
     host: '127.0.0.1',
