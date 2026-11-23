@@ -115,11 +115,13 @@ export function ProjectsSection({ onChanged }: ProjectsSectionProps) {
     <section className="projects" aria-labelledby="projects-title">
       <h2 id="projects-title">Code projects</h2>
       <p className="muted">
-        Upload a project folder or a zip file to draw its structure. Dependency folders and build
-        output are skipped without being listed. Credential files, secrets and binary files are left
-        out, and each one is listed with its reason. The code stays in your data folder. An AI tool
-        sees only folder paths and file names, and only when you press “Name with AI” on the map.
-        File contents are never sent.
+        Upload a project folder or a zip file to draw its structure. Package, build, cache and
+        version-control folders are skipped without being listed. For a folder upload, files over 1
+        MB are not read. For a zip upload, the browser reads the whole archive into memory, but
+        oversized files and skipped-folder entries are not decompressed or included in the upload.
+        They are listed with that reason. Other excluded files are listed with their reason. The
+        code stays in your data folder. An AI tool sees only folder paths and file names, and only
+        when you press “Name with AI” on the map. File contents are never sent.
       </p>
 
       <label className="consent">

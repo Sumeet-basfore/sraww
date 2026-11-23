@@ -24,10 +24,10 @@ export interface ImportedDrawing {
 export function nameFromFileName(fileName: string): string {
   const base = fileName.replace(/\.(excalidraw|json)$/i, '');
   let cleaned = base
-    .replace(/[^a-zA-Z0-9 _-]+/g, ' ')
+    .replace(/[^\p{L}\p{N} _-]+/gu, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-  if (!/^[a-zA-Z0-9]/.test(cleaned)) cleaned = `Imported ${cleaned}`.trim();
+  if (!/^[\p{L}\p{N}]/u.test(cleaned)) cleaned = `Imported ${cleaned}`.trim();
   cleaned = cleaned.slice(0, 81).trim();
   return diagramNameSchema.safeParse(cleaned).success ? cleaned : 'Imported drawing';
 }

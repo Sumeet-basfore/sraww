@@ -61,7 +61,8 @@ export function Editor({ name, onExit, mode = 'diagram', onShowTour }: EditorPro
   const [prefs, setPrefs] = useState<Prefs>(loadPrefs);
   const [actionError, setActionError] = useState<string | null>(null);
   const [panel, setPanel] = useState<'arch' | null>(mode === 'architecture' ? 'arch' : null);
-  const [assistantOpen, setAssistantOpen] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const drawingInput = useRef<HTMLInputElement>(null);
@@ -249,91 +250,108 @@ export function Editor({ name, onExit, mode = 'diagram', onShowTour }: EditorPro
     <div className="editor">
       <header className="editor-bar">
         <Logo variant="symbol" className="brand-symbol" />
-        <button type="button" className="button ghost" onClick={() => void handleExit()}>
+        <button
+          type="button"
+          className="button ghost editor-back"
+          aria-label="Back to diagrams"
+          onClick={() => void handleExit()}
+        >
           ← Diagrams
         </button>
-        <h1 className="editor-title" title={name}>
+        <h1 className="editor-title" title={name} aria-label={name}>
           {name}
         </h1>
         {load.kind === 'ready' && (
           <SaveIndicator status={saveStatus} onRetry={() => void load.autosave.flush()} />
         )}
-        <div className="segmented" role="radiogroup" aria-label="Drawing style">
-          {(['hand', 'clean'] as const).map((style) => (
-            <button
-              key={style}
-              type="button"
-              role="radio"
-              aria-checked={prefs.drawingStyle === style}
-              className={prefs.drawingStyle === style ? 'active' : ''}
-              onClick={() => updateStyle(style)}
-            >
-              {style === 'hand' ? 'Hand-drawn' : 'Clean'}
-            </button>
-          ))}
-        </div>
-        {onShowTour && (
-          <button type="button" className="button ghost" onClick={onShowTour}>
-            Tour
-          </button>
-        )}
-        {mode === 'architecture' && (
+        <div className={`editor-menu ${menuOpen ? 'menu-open' : ''}`}>
           <button
             type="button"
-            className="button ghost"
-            aria-expanded={panel === 'arch'}
-            disabled={load.kind !== 'ready'}
-            onClick={() => setPanel((open) => (open === 'arch' ? null : 'arch'))}
+            className="editor-menu-toggle"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((open) => !open)}
           >
-            Architecture
+            More
           </button>
-        )}
-        <select
-          className="export-select"
-          aria-label="File actions"
-          value=""
-          disabled={load.kind !== 'ready'}
-          onChange={(e) => {
-            const action = e.target.value;
-            e.target.value = '';
-            runFileAction(action);
-          }}
-        >
-          <option value="">File…</option>
-          <option value="png">Export PNG image</option>
-          <option value="svg">Export SVG image</option>
-          <option value="excalidraw">Export .excalidraw file</option>
-          <option value="import-drawing">Import .excalidraw file as new drawing…</option>
-          <option value="import-library">Import library (.excalidrawlib)…</option>
-          <option value="export-library">Export library (.excalidrawlib)</option>
-        </select>
-        <input
-          ref={drawingInput}
-          type="file"
-          accept={IMPORT_ACCEPT}
-          hidden
-          aria-label="Choose a drawing to import"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            e.target.value = '';
-            if (file) void importDrawing(file);
-          }}
-        />
-        <input
-          ref={libraryInput}
-          type="file"
-          accept=".excalidrawlib,.json,application/json"
-          hidden
-          aria-label="Choose a library to import"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            e.target.value = '';
-            if (file) void importLibrary(file);
-          }}
-        />
-        <button type="button" className="button ghost" onClick={toggleTheme}>
-          {prefs.theme === 'dark' ? 'Light' : 'Dark'} mode
-        </button>
+          <div className="editor-menu-content">
+            <div className="segmented" role="radiogroup" aria-label="Drawing style">
+              {(['hand', 'clean'] as const).map((style) => (
+                <button
+                  key={style}
+                  type="button"
+                  role="radio"
+                  aria-checked={prefs.drawingStyle === style}
+                  className={prefs.drawingStyle === style ? 'active' : ''}
+                  onClick={() => updateStyle(style)}
+                >
+                  {style === 'hand' ? 'Hand-drawn' : 'Clean'}
+                </button>
+              ))}
+            </div>
+            {onShowTour && (
+              <button type="button" className="button ghost" onClick={onShowTour}>
+                Tour
+              </button>
+            )}
+            {mode === 'architecture' && (
+              <button
+                type="button"
+                className="button ghost"
+                aria-expanded={panel === 'arch'}
+                disabled={load.kind !== 'ready'}
+                onClick={() => setPanel((open) => (open === 'arch' ? null : 'arch'))}
+              >
+                Architecture
+              </button>
+            )}
+            <select
+              className="export-select"
+              aria-label="File actions"
+              value=""
+              disabled={load.kind !== 'ready'}
+              onChange={(e) => {
+                const action = e.target.value;
+                e.target.value = '';
+                runFileAction(action);
+              }}
+            >
+              <option value="">File…</option>
+              <option value="png">Export PNG image</option>
+              <option value="svg">Export SVG image</option>
+              <option value="excalidraw">Export .excalidraw file</option>
+              <option value="import-drawing">Import .excalidraw file as new drawing…</option>
+              <option value="import-library">Import library (.excalidrawlib)…</option>
+              <option value="export-library">Export library (.excalidrawlib)</option>
+            </select>
+            <input
+              ref={drawingInput}
+              type="file"
+              accept={IMPORT_ACCEPT}
+              hidden
+              aria-label="Choose a drawing to import"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = '';
+                if (file) void importDrawing(file);
+              }}
+            />
+            <input
+              ref={libraryInput}
+              type="file"
+              accept=".excalidrawlib,.json,application/json"
+              hidden
+              aria-label="Choose a library to import"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = '';
+                if (file) void importLibrary(file);
+              }}
+            />
+            <button type="button" className="button ghost" onClick={toggleTheme}>
+              {prefs.theme === 'dark' ? 'Light' : 'Dark'} mode
+            </button>
+          </div>
+        </div>
       </header>
 
       {actionError && (

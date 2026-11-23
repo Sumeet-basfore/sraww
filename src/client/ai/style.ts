@@ -1,13 +1,14 @@
 import type { Color, GraphEdge, GraphNode } from '../../shared/ai-schemas.ts';
+import { measureLabel } from './label-sizing.ts';
 
 /** Light-theme colours: a border and a soft fill. Neutral has no fill. */
-export const PALETTE: Record<Color, { stroke: string; fill: string }> = {
-  neutral: { stroke: '#1e1e1e', fill: 'transparent' },
-  blue: { stroke: '#1971c2', fill: '#d0ebff' },
-  green: { stroke: '#2f9e44', fill: '#d3f9d8' },
-  amber: { stroke: '#e67700', fill: '#fff3bf' },
-  red: { stroke: '#c92a2a', fill: '#ffe3e3' },
-  violet: { stroke: '#6741d9', fill: '#e5dbff' },
+export const PALETTE: Record<Color, { stroke: string; fill: string; text: string }> = {
+  neutral: { stroke: '#1e1e1e', fill: 'transparent', text: '#1e1e1e' },
+  blue: { stroke: '#1971c2', fill: '#d0ebff', text: '#12324a' },
+  green: { stroke: '#2f9e44', fill: '#d3f9d8', text: '#14532d' },
+  amber: { stroke: '#e67700', fill: '#fff3bf', text: '#6b3a00' },
+  red: { stroke: '#c92a2a', fill: '#ffe3e3', text: '#7f1d1d' },
+  violet: { stroke: '#6741d9', fill: '#e5dbff', text: '#3b1d7a' },
 };
 
 /** Text colour for notes, and for anything drawn as plain text. */
@@ -81,8 +82,8 @@ export function arrowStyle(edge: Pick<GraphEdge, 'style' | 'arrow'>): ArrowStyle
 }
 
 /**
- * A label for an arrow, as a plain text element at the middle of the line between two shapes.
- * Arrow labels bound to a skeleton are not repositioned by Excalidraw, so they are placed here.
+ * A label beside the arrow segment. Shape dimensions and text width use the shared deterministic
+ * label metric, so the label sits wholly clear of the shaft.
  */
 export function edgeLabelSkeleton(
   text: string,
@@ -91,8 +92,20 @@ export function edgeLabelSkeleton(
 ): { type: 'text'; x: number; y: number; text: string; fontSize: number } {
   const midX = (from.x + from.width / 2 + to.x + to.width / 2) / 2;
   const midY = (from.y + from.height / 2 + to.y + to.height / 2) / 2;
-  const approxWidth = text.length * 8;
-  return { type: 'text', x: midX - approxWidth / 2, y: midY - 26, text, fontSize: 14 };
+  const width = measureLabel(text, 14);
+  if (
+    Math.abs(to.y + to.height / 2 - (from.y + from.height / 2)) >
+    Math.abs(to.x + to.width / 2 - (from.x + from.width / 2))
+  ) {
+    return {
+      type: 'text',
+      x: Math.max(from.x + from.width, to.x + to.width) + 8,
+      y: midY - 10,
+      text,
+      fontSize: 14,
+    };
+  }
+  return { type: 'text', x: midX - width / 2, y: midY - 28, text, fontSize: 14 };
 }
 
 export function isNote(node: Pick<GraphNode, 'shape'>): boolean {

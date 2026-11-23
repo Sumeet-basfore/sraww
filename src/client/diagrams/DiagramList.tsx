@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { diagramApi, type DiagramSummary } from '../lib/api.ts';
 import { errorMessage } from '../lib/errors.ts';
+import { diagramNameError, diagramNameSchema } from '../../shared/diagram.ts';
 import { ArchNewForm } from '../arch/ArchNewForm.tsx';
 import { Logo } from '../brand/Logo.tsx';
 import { ProjectsSection } from '../projects/ProjectsSection.tsx';
@@ -61,6 +62,10 @@ export function DiagramList({
     event.preventDefault();
     const name = newName.trim();
     if (!name) return;
+    if (!diagramNameSchema.safeParse(name).success) {
+      setError(diagramNameError);
+      return;
+    }
     setBusy(true);
     try {
       await diagramApi.create(name);
@@ -140,7 +145,6 @@ export function DiagramList({
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="Name a new drawing"
-          maxLength={81}
           disabled={busy}
         />
         <button type="submit" className="button primary" disabled={busy || !newName.trim()}>

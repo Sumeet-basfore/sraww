@@ -2,15 +2,34 @@ import { z } from 'zod';
 
 /** File extension used for every saved diagram. */
 export const DIAGRAM_EXTENSION = '.excalidraw';
+export const MAX_DIAGRAM_FILENAME_BYTES = 200;
 
-/** Letters, digits, spaces, dashes and underscores; must start with a letter or digit. */
-export const diagramNamePattern = /^[a-zA-Z0-9][a-zA-Z0-9 _-]{0,80}$/;
+const RESERVED_WINDOWS_NAMES = new Set([
+  'con',
+  'prn',
+  'aux',
+  'nul',
+  ...Array.from({ length: 9 }, (_, index) => `com${index + 1}`),
+  ...Array.from({ length: 9 }, (_, index) => `lpt${index + 1}`),
+]);
+
+/** Unicode letters and digits, spaces, dashes and underscores; safe as a single filename stem. */
+export const diagramNamePattern = /^[\p{L}\p{N}][\p{L}\p{N} _-]{0,80}$/u;
+export const diagramNameError =
+  'Use 1–81 Unicode letters, digits, spaces, dashes or underscores, starting with a letter or digit; the filename must be at most 200 UTF-8 bytes.';
+
+export function diagramNameByteLength(name: string): number {
+  return new TextEncoder().encode(`${name}${DIAGRAM_EXTENSION}`).length;
+}
 
 export const diagramNameSchema = z
   .string()
-  .regex(
-    diagramNamePattern,
-    'Use 1–81 letters, digits, spaces, dashes or underscores, starting with a letter or digit.',
+  .regex(diagramNamePattern, diagramNameError)
+  .refine(
+    (name) =>
+      diagramNameByteLength(name) <= MAX_DIAGRAM_FILENAME_BYTES &&
+      !RESERVED_WINDOWS_NAMES.has(name.toLowerCase()),
+    diagramNameError,
   );
 
 export const excalidrawElementSchema = z.looseObject({

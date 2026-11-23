@@ -67,7 +67,7 @@ export function graphToSkeleton(graph: DiagramGraph, layout: Layout): Excalidraw
           y: box.y,
           text: node.label,
           fontSize: 18,
-          strokeColor: node.color ? PALETTE[node.color].stroke : INK,
+          strokeColor: node.color ? PALETTE[node.color].text : INK,
         } as ExcalidrawElementSkeleton,
       ];
     }
@@ -80,7 +80,11 @@ export function graphToSkeleton(graph: DiagramGraph, layout: Layout): Excalidraw
         y: box.y,
         width: box.width,
         height: box.height,
-        label: { text: node.label, fontSize: 18 },
+        label: {
+          text: node.label,
+          fontSize: 18,
+          strokeColor: PALETTE[node.color ?? 'neutral'].text,
+        },
       } as ExcalidrawElementSkeleton,
     ];
   });

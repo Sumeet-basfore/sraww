@@ -1,5 +1,6 @@
 import ELK from 'elkjs/lib/elk.bundled.js';
 import type { DiagramGraph, GraphNode } from '../../shared/ai-schemas.ts';
+import { sizeLabel } from './label-sizing.ts';
 
 export interface Box {
   x: number;
@@ -29,11 +30,8 @@ const GROUP_PREFIX = 'group:';
 
 /** Node size from its label, so text fits inside the shape. */
 export function sizeFor(node: GraphNode): { width: number; height: number } {
-  const textWidth = node.label.length * 9 + 48;
-  const width = Math.min(280, Math.max(140, textWidth));
-  if (node.shape === 'ellipse') return { width: width + 20, height: 96 };
-  if (node.shape === 'diamond') return { width: width + 60, height: 110 };
-  return { width, height: 72 };
+  const { width, height } = sizeLabel(node.label, node.shape);
+  return { width, height };
 }
 
 function boxOf(element: ElkBox): Box {

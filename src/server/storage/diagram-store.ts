@@ -123,9 +123,23 @@ export function createDiagramStore(dir: string) {
     return summaries.sort((a, b) => a.name.localeCompare(b.name));
   }
 
+  async function rejectCaseConflict(name: string): Promise<void> {
+    const folded = name.toLowerCase();
+    const conflict = (await list()).find(
+      (diagram) => diagram.name !== name && diagram.name.toLowerCase() === folded,
+    );
+    if (conflict) {
+      throw new DiagramError(
+        'EXISTS',
+        `Diagram "${name}" conflicts with "${conflict.name}" by case.`,
+      );
+    }
+  }
+
   async function create(name: string, scene: unknown): Promise<void> {
     const file = fileFor(name);
     const valid = parseScene(scene);
+    await rejectCaseConflict(name);
     await mkdir(root, { recursive: true });
     try {
       await writeFile(file, `${JSON.stringify(valid, null, 2)}\n`, {
@@ -142,6 +156,7 @@ export function createDiagramStore(dir: string) {
   async function write(name: string, scene: unknown): Promise<void> {
     const file = fileFor(name);
     const valid = parseScene(scene);
+    await rejectCaseConflict(name);
     if (!(await exists(file))) throw new DiagramError('NOT_FOUND', `Diagram "${name}" not found.`);
     await writeAtomic(file, valid);
   }
@@ -151,6 +166,7 @@ export function createDiagramStore(dir: string) {
     const target = fileFor(to);
     if (!(await exists(source)))
       throw new DiagramError('NOT_FOUND', `Diagram "${from}" not found.`);
+    await rejectCaseConflict(to);
     if (await exists(target)) throw new DiagramError('EXISTS', `Diagram "${to}" already exists.`);
     await rename(source, target);
   }
