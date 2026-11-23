@@ -1127,3 +1127,352 @@ textarea:focus {
     transition: none;
   }
 }
+
+/* AI assistant, docked under the drawing */
+.assistant {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.assistant.open {
+  height: 300px;
+}
+
+.assistant-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 8px 14px;
+}
+
+.assistant-toggle {
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.assistant .tool-summary {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 13px;
+}
+
+.assistant .tool-summary a {
+  margin-left: 0;
+}
+
+.assistant-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 14px 12px;
+}
+
+.assistant-log {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.assistant-msg {
+  max-width: 80ch;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.assistant-msg.user {
+  align-self: flex-end;
+  max-width: 70%;
+  background: var(--accent-soft);
+}
+
+.assistant-msg p {
+  margin: 0;
+}
+
+.assistant-note {
+  margin-top: 6px !important;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.assistant-proposal {
+  margin-top: 10px;
+}
+
+.assistant-empty {
+  padding: 10px 0;
+}
+
+.assistant-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.assistant-form textarea {
+  flex: 1;
+  min-height: 44px;
+  resize: none;
+}
+
+.assistant-error {
+  margin: 8px 0 0;
+}
+
+@media (max-width: 640px) {
+  .assistant.open {
+    height: 340px;
+  }
+}
+
+/* Composer: the assistant's input card, with its controls underneath */
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 820px;
+  margin: 4px auto 12px;
+  padding: 14px 16px 10px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: 0 12px 30px -20px oklch(20% 0.03 265 / 0.35);
+}
+
+.composer textarea {
+  min-height: 44px;
+  max-height: 160px;
+  padding: 4px 2px;
+  border: 0;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  resize: none;
+  font-size: 15px;
+}
+
+.composer textarea:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.composer-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.composer-round {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.composer-round:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.composer-send {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.composer-mode {
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.composer-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--paper);
+  font-size: 14px;
+}
+
+.composer-tool[data-ready='false'] {
+  color: var(--warn);
+}
+
+.composer-tool-name {
+  font-weight: 500;
+}
+
+.composer-tool-detail {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.composer-spacer {
+  flex: 1;
+}
+
+/* Code projects on the start page */
+.projects {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.projects h2 {
+  margin: 0 0 0.5rem;
+}
+
+.consent {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  margin: 1rem 0;
+  max-width: 62ch;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+}
+
+.consent input {
+  margin-top: 0.25rem;
+  flex: none;
+}
+
+.excluded {
+  margin-top: 0.4rem;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.excluded summary {
+  cursor: pointer;
+}
+
+.excluded code {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.project-rows .row {
+  align-items: flex-start;
+}
+
+@media (max-width: 640px) {
+  .consent {
+    font-size: 0.9rem;
+  }
+}
+
+.row-title-static {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* Masthead links, and the first-visit walkthrough */
+.masthead-links {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.tour-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: color-mix(in oklab, var(--ink) 38%, transparent);
+}
+
+.tour-dialog {
+  width: min(32rem, 100%);
+  padding: 1.5rem 1.5rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-sheet);
+}
+
+.tour-dialog h2 {
+  margin: 0.25rem 0 0.6rem;
+  font-size: 1.35rem;
+}
+
+.tour-dialog p {
+  margin: 0 0 0.6rem;
+  line-height: 1.5;
+}
+
+.tour-count {
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.tour-where {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.tour-where span {
+  font-weight: 600;
+}
+
+.tour-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.tour-spacer {
+  flex: 1;
+}
+
+@media (max-width: 480px) {
+  .tour-dialog {
+    padding: 1.25rem;
+  }
+}

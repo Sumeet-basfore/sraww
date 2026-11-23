@@ -21,6 +21,7 @@ export default defineConfig({
     env: {
       PORT: String(PORT),
       DIAGRAMS_DIR: './data/e2e-diagrams',
+      PROJECTS_DIR: './data/e2e-projects',
       ARCH_PROJECTS: path.resolve('tests/fixtures/sample-project'),
     },
   },

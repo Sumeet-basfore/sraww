@@ -1,6 +1,6 @@
 import { rm } from 'node:fs/promises';
 import path from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures.ts';
 
 const DIAGRAMS_DIR = path.resolve('data/e2e-diagrams');
 const NAME = 'e2e persistence';

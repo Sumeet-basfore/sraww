@@ -21,13 +21,14 @@ const scanBody = z.object({
 /** Architecture routes. Models and layouts are under /models; scanning reads only allowed projects. */
 export function createArchRouter(
   store: ArchStore,
-  projects: readonly ArchProject[],
+  projects: () => Promise<readonly ArchProject[]>,
   ai: AiServices,
 ): Router {
   const router = Router();
 
-  router.get('/projects', (_req, res) => {
-    res.json({ projects: projects.map(({ id, label }) => ({ id, label })) });
+  router.get('/projects', async (_req, res) => {
+    const list = await projects();
+    res.json({ projects: list.map(({ id, label }) => ({ id, label })) });
   });
 
   router.get('/models/:name', async (req, res) => {
@@ -62,7 +63,7 @@ export function createArchRouter(
 
   router.post('/scan', async (req, res) => {
     const body = scanBody.parse(req.body);
-    const project = projects.find((p) => p.id === body.projectId);
+    const project = (await projects()).find((p) => p.id === body.projectId);
     if (!project) throw new DiagramError('NOT_FOUND', 'Unknown project. Add it to ARCH_PROJECTS.');
 
     const files = await collectSourceFiles(project.root, MAX_SCAN_FILES);

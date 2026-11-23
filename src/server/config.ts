@@ -3,6 +3,8 @@ import { z } from 'zod';
 const envSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(4317),
   DIAGRAMS_DIR: z.string().min(1).default('./data/diagrams'),
+  /** Uploaded code projects, one folder each. */
+  PROJECTS_DIR: z.string().min(1).default('./data/projects'),
   AI_WORKDIR: z.string().min(1).default('./data/ai-workdir'),
   /** Comma-separated absolute folders that architecture scans may read. Empty means none. */
   ARCH_PROJECTS: z.string().default(''),

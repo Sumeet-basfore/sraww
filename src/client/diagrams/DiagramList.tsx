@@ -3,23 +3,33 @@ import { diagramApi, type DiagramSummary } from '../lib/api.ts';
 import { errorMessage } from '../lib/errors.ts';
 import { ArchNewForm } from '../arch/ArchNewForm.tsx';
 import { Logo } from '../brand/Logo.tsx';
+import { ProjectsSection } from '../projects/ProjectsSection.tsx';
 import { IMPORT_ACCEPT, readDrawingFile, uniqueName } from './import.ts';
 
 interface DiagramListProps {
   onOpen: (name: string) => void;
   onOpenArchitecture: (name: string) => void;
   onOpenAi: () => void;
+  /** Reopens the walkthrough. The button is shown only when this is given. */
+  onShowTour?: () => void;
 }
 
 function countLabel(count: number): string {
   return `${count} drawing${count === 1 ? '' : 's'}`;
 }
 
-export function DiagramList({ onOpen, onOpenArchitecture, onOpenAi }: DiagramListProps) {
+export function DiagramList({
+  onOpen,
+  onOpenArchitecture,
+  onOpenAi,
+  onShowTour,
+}: DiagramListProps) {
   const [items, setItems] = useState<DiagramSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
   const [busy, setBusy] = useState(false);
+  // Bumped after a project is added or removed, so the architecture form lists the change.
+  const [projectsVersion, setProjectsVersion] = useState(0);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const refresh = useCallback(async () => {
@@ -104,9 +114,16 @@ export function DiagramList({ onOpen, onOpenArchitecture, onOpenAi }: DiagramLis
     <section className="diagram-list" aria-labelledby="diagram-list-title">
       <header className="masthead">
         <Logo className="brand-lockup" />
-        <button type="button" className="link-button" onClick={onOpenAi}>
-          AI tools
-        </button>
+        <div className="masthead-links">
+          {onShowTour && (
+            <button type="button" className="link-button" onClick={onShowTour}>
+              Take the tour
+            </button>
+          )}
+          <button type="button" className="link-button" onClick={onOpenAi}>
+            AI tools
+          </button>
+        </div>
       </header>
 
       <div className="intro">
@@ -198,7 +215,10 @@ export function DiagramList({ onOpen, onOpenArchitecture, onOpenAi }: DiagramLis
         </ul>
       )}
 
+      <ProjectsSection onChanged={() => setProjectsVersion((v) => v + 1)} />
+
       <ArchNewForm
+        key={projectsVersion}
         existingNames={(items ?? []).map((item) => item.name)}
         onOpen={onOpenArchitecture}
       />
