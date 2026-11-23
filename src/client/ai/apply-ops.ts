@@ -11,6 +11,7 @@ import {
   PALETTE,
   shapeStyle,
 } from './style.ts';
+import { sizeLabel } from './label-sizing.ts';
 
 /** Element fields used here. Excalidraw elements carry many more; they are kept untouched. */
 export interface EditableElement {
@@ -29,11 +30,7 @@ export interface EditableElement {
 
 type NodeUpdate = Extract<ChatOp, { type: 'updateNodes' }>['updates'][number];
 
-const NEW_SHAPE_WIDTH = 160;
-const NEW_SHAPE_HEIGHT = 72;
-const ROW_GAP = 220;
 const LAYER_GAP = 120;
-const APPROX_CHAR_WIDTH = 10;
 const TEXT_PADDING = 16;
 
 interface Box {
@@ -66,8 +63,11 @@ function labelChanges(
   label: string,
   container: EditableElement | undefined,
 ): Record<string, unknown> {
+  const shape =
+    container?.type === 'diamond' || container?.type === 'ellipse' ? container.type : 'rectangle';
+  const measuredWidth = sizeLabel(label, shape).width - TEXT_PADDING;
   const room = container ? container.width - TEXT_PADDING : Number.POSITIVE_INFINITY;
-  const width = Math.max(MIN_LABEL_WIDTH, Math.min(room, label.length * APPROX_CHAR_WIDTH));
+  const width = Math.max(MIN_LABEL_WIDTH, Math.min(room, measuredWidth));
   const x = container ? container.x + (container.width - width) / 2 : text.x;
   return { text: label, originalText: label, width, x };
 }
@@ -95,6 +95,8 @@ function applyUpdates(
       changes.backgroundColor = colour.fill;
     } else if (colour && isNote) {
       changes.strokeColor = colour.stroke;
+    } else if (owner?.color && el.type === 'text') {
+      changes.strokeColor = PALETTE[owner.color].text;
     }
     if (isNote && own?.label) {
       Object.assign(changes, labelChanges(el, own.label, undefined));
@@ -138,14 +140,17 @@ export function applyChatOps(
 
   const liveBottom = Math.max(0, ...[...boxes.values()].map((b) => b.y + b.height));
   const liveLeft = Math.min(0, ...[...boxes.values()].map((b) => b.x));
-  const rowY = boxes.size > 0 ? liveBottom + LAYER_GAP : 0;
-  newNodes.forEach((node, index) => {
+  const rowY = boxes.size > 0 ? liveBottom + LAYER_GAP : 100;
+  let nextX = boxes.size > 0 ? liveLeft : 100;
+  newNodes.forEach((node) => {
+    const size = sizeLabel(node.label, node.shape);
     boxes.set(node.id, {
-      x: liveLeft + index * ROW_GAP,
+      x: nextX,
       y: rowY,
-      width: NEW_SHAPE_WIDTH,
-      height: NEW_SHAPE_HEIGHT,
+      width: size.width,
+      height: size.height,
     });
+    nextX += size.width + 60;
   });
 
   const newIds = new Set(newNodes.map((n) => n.id));
@@ -158,8 +163,8 @@ export function applyChatOps(
       const box = boxes.get(node.id) ?? {
         x: 0,
         y: 0,
-        width: NEW_SHAPE_WIDTH,
-        height: NEW_SHAPE_HEIGHT,
+        width: sizeLabel(node.label, node.shape).width,
+        height: sizeLabel(node.label, node.shape).height,
       };
       return {
         ...shapeStyle(node),
@@ -168,15 +173,19 @@ export function applyChatOps(
         y: box.y,
         width: box.width,
         height: box.height,
-        label: { text: node.label, fontSize: 18 },
+        label: {
+          text: node.label,
+          fontSize: 18,
+          strokeColor: PALETTE[node.color ?? 'neutral'].text,
+        },
       };
     });
   const noteTexts = newNodes.filter(isNote).map((node) => {
     const box = boxes.get(node.id) ?? {
       x: 0,
       y: 0,
-      width: NEW_SHAPE_WIDTH,
-      height: NEW_SHAPE_HEIGHT,
+      width: sizeLabel(node.label, node.shape).width,
+      height: sizeLabel(node.label, node.shape).height,
     };
     return {
       type: 'text' as const,
@@ -184,7 +193,7 @@ export function applyChatOps(
       y: box.y,
       text: node.label,
       fontSize: 18,
-      strokeColor: node.color ? PALETTE[node.color].stroke : INK,
+      strokeColor: node.color ? PALETTE[node.color].text : INK,
     };
   });
   const boundArrows = newEdges

@@ -1,10 +1,51 @@
 import { describe, expect, it, vi } from 'vitest';
 import { graphToSkeleton } from '../../src/client/ai/skeleton.ts';
 import { layoutGraph } from '../../src/client/ai/layout.ts';
-import { arrowStyle, PALETTE, shapeStyle } from '../../src/client/ai/style.ts';
+import { arrowStyle, edgeLabelSkeleton, PALETTE, shapeStyle } from '../../src/client/ai/style.ts';
 import type { DiagramGraph } from '../../src/shared/ai-schemas.ts';
 
 vi.mock('@excalidraw/excalidraw', () => import('../mocks/excalidraw.tsx'));
+
+function luminance(hex: string): number {
+  const channels = hex.match(/[0-9a-f]{2}/gi)!.map((value) => parseInt(value, 16) / 255);
+  const [r, g, b] = channels.map((value) =>
+    value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4,
+  );
+  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+}
+
+function contrast(a: string, b: string): number {
+  const [light, dark] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (light! + 0.05) / (dark! + 0.05);
+}
+
+describe('palette text contrast', () => {
+  it('keeps all normal-sized labels at WCAG AA contrast on their fills', () => {
+    for (const palette of Object.values(PALETTE)) {
+      expect(
+        contrast(palette.text, palette.fill === 'transparent' ? '#ffffff' : palette.fill),
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+});
+
+describe('edgeLabelSkeleton', () => {
+  it('places labels beside vertical shafts', () => {
+    const from = { x: 0, y: 0, width: 200, height: 72 };
+    const to = { x: 10, y: 200, width: 200, height: 72 };
+    const label = edgeLabelSkeleton('request', from, to);
+    const shaftX = (from.x + from.width / 2 + to.x + to.width / 2) / 2;
+    expect(label.x).toBeGreaterThan(shaftX);
+  });
+
+  it('places labels above horizontal shafts with a clear gap', () => {
+    const from = { x: 0, y: 0, width: 200, height: 72 };
+    const to = { x: 300, y: 10, width: 200, height: 72 };
+    const label = edgeLabelSkeleton('request', from, to);
+    const shaftY = (from.y + from.height / 2 + to.y + to.height / 2) / 2;
+    expect(label.y + 20).toBeLessThan(shaftY);
+  });
+});
 
 describe('shapeStyle', () => {
   it('draws a rounded node as a rectangle with corners', () => {
@@ -119,6 +160,7 @@ describe('graphToSkeleton with styles, frames and a title', () => {
     expect(skeleton.find((el) => el.id === 'api')).toMatchObject({
       roundness: { type: 3 },
       strokeColor: PALETTE.blue.stroke,
+      label: { strokeColor: PALETTE.blue.text },
     });
     expect(skeleton.find((el) => el.type === 'arrow')).toMatchObject({
       strokeStyle: 'dashed',

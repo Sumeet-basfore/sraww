@@ -107,6 +107,7 @@ export function Assistant({ getApi, open, onToggle }: AssistantProps) {
     setInput('');
     setError(null);
     setBusy(true);
+    if (!open) onToggle();
     push({ role: 'user', text });
     try {
       if (mode === 'new') await generate(text);
@@ -127,6 +128,7 @@ export function Assistant({ getApi, open, onToggle }: AssistantProps) {
     }
     setError(null);
     setBusy(true);
+    if (!open) onToggle();
     push({ role: 'user', text: 'Explain selection' });
     try {
       await edit(EXPLAIN_MESSAGE, true);
@@ -195,58 +197,63 @@ export function Assistant({ getApi, open, onToggle }: AssistantProps) {
             onReplace={(id, graph) => void place(id, graph, 'replace')}
             busy={busy}
           />
-          <form className="composer" onSubmit={(e) => void send(e)}>
-            <label htmlFor="assistant-input" className="visually-hidden">
-              Message the assistant
-            </label>
-            <textarea
-              id="assistant-input"
-              rows={2}
-              maxLength={2000}
-              value={input}
-              disabled={busy || !ready}
-              placeholder={ready ? placeholder : 'Sign in to an AI tool to start (see AI tools).'}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={onKeyDown}
-            />
-            <div className="composer-row">
-              <button
-                type="button"
-                className="composer-round"
-                aria-label="Explain the selected shapes"
-                title="Explain the selected shapes"
-                disabled={busy || !ready}
-                onClick={() => void explainSelection()}
-              >
-                +
-              </button>
-              <select
-                className="composer-mode"
-                aria-label="What the assistant does"
-                value={mode}
-                disabled={busy}
-                onChange={(e) => setMode(e.target.value as Mode)}
-              >
-                <option value="edit">Edit this drawing</option>
-                <option value="new">New diagram</option>
-              </select>
-              <span className="composer-tool" data-ready={ready}>
-                <span className="composer-tool-name">{toolName}</span>
-                {toolDetail && <span className="composer-tool-detail">{toolDetail}</span>}
-              </span>
-              <span className="composer-spacer" />
-              <button
-                type="submit"
-                className="composer-round composer-send"
-                aria-label={mode === 'new' ? 'Generate diagram' : 'Send'}
-                disabled={busy || !ready || !input.trim()}
-              >
-                {busy ? '…' : '↑'}
-              </button>
-            </div>
-          </form>
         </div>
       )}
+      {error && !open && (
+        <p role="alert" className="banner error assistant-error">
+          {error}
+        </p>
+      )}
+      <form className="composer" onSubmit={(e) => void send(e)}>
+        <label htmlFor="assistant-input" className="visually-hidden">
+          Message the assistant
+        </label>
+        <textarea
+          id="assistant-input"
+          rows={2}
+          maxLength={2000}
+          value={input}
+          disabled={busy || !ready}
+          placeholder={ready ? placeholder : 'Sign in to an AI tool to start (see AI tools).'}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={onKeyDown}
+        />
+        <div className="composer-row">
+          <button
+            type="button"
+            className="composer-round"
+            aria-label="Explain the selected shapes"
+            title="Explain the selected shapes"
+            disabled={busy || !ready}
+            onClick={() => void explainSelection()}
+          >
+            +
+          </button>
+          <select
+            className="composer-mode"
+            aria-label="What the assistant does"
+            value={mode}
+            disabled={busy}
+            onChange={(e) => setMode(e.target.value as Mode)}
+          >
+            <option value="edit">Edit this drawing</option>
+            <option value="new">New diagram</option>
+          </select>
+          <span className="composer-tool" data-ready={ready}>
+            <span className="composer-tool-name">{toolName}</span>
+            {toolDetail && <span className="composer-tool-detail">{toolDetail}</span>}
+          </span>
+          <span className="composer-spacer" />
+          <button
+            type="submit"
+            className="composer-round composer-send"
+            aria-label={mode === 'new' ? 'Generate diagram' : 'Send'}
+            disabled={busy || !ready || !input.trim()}
+          >
+            {busy ? '…' : '↑'}
+          </button>
+        </div>
+      </form>
     </section>
   );
 }

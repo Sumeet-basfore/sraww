@@ -138,12 +138,14 @@ describe('Assistant', () => {
     expect(api.updateScene).not.toHaveBeenCalled();
   });
 
-  it('shows only its bar when collapsed', async () => {
-    renderAssistant(fakeApi(), false);
+  it('keeps the compact composer visible while collapsed and hides conversation history', async () => {
+    const { container } = renderAssistant(fakeApi(), false);
     expect(await screen.findByRole('button', { name: /Assistant/ })).toHaveAttribute(
       'aria-expanded',
       'false',
     );
-    expect(screen.queryByLabelText('Message the assistant')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Message the assistant')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'What the assistant does' })).toBeInTheDocument();
+    expect(container.querySelector('.assistant-log')).toBeNull();
   });
 });

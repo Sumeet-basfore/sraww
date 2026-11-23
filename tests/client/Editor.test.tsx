@@ -103,7 +103,7 @@ describe('Editor', () => {
       );
     });
     const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: /Diagrams/ }));
+    await user.click(screen.getByRole('button', { name: 'Back to diagrams' }));
     await waitFor(() => expect(onExit).toHaveBeenCalledTimes(1));
     expect(fetchMock.mock.calls.some((c) => c[1]?.method === 'PUT')).toBe(true);
   });

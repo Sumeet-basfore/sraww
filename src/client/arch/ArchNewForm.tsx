@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { diagramApi, archApi, type ArchProjectInfo } from '../lib/api.ts';
 import { errorMessage } from '../lib/errors.ts';
-import { architectureElements, architectureScene } from './to-scene.ts';
+import { diagramNameError, diagramNameSchema } from '../../shared/diagram.ts';
 
 interface ArchNewFormProps {
   existingNames: readonly string[];
@@ -31,6 +31,10 @@ export function ArchNewForm({ existingNames, onOpen }: ArchNewFormProps) {
     event.preventDefault();
     const target = name.trim();
     if (!projectId || !target) return;
+    if (!diagramNameSchema.safeParse(target).success) {
+      setError(diagramNameError);
+      return;
+    }
     const exists = existingNames.includes(target);
     if (
       exists &&
@@ -43,6 +47,7 @@ export function ArchNewForm({ existingNames, onOpen }: ArchNewFormProps) {
     setBusy(true);
     setError(null);
     try {
+      const { architectureElements, architectureScene } = await import('./to-scene.ts');
       const { model, layout } = await archApi.scan(projectId, target);
       const scene = architectureScene(await architectureElements(model, layout));
       if (exists) await diagramApi.save(target, scene);
@@ -85,12 +90,7 @@ export function ArchNewForm({ existingNames, onOpen }: ArchNewFormProps) {
           </label>
           <label>
             <span className="small muted">Diagram name</span>
-            <input
-              value={name}
-              maxLength={81}
-              disabled={busy}
-              onChange={(e) => setName(e.target.value)}
-            />
+            <input value={name} disabled={busy} onChange={(e) => setName(e.target.value)} />
           </label>
           <button type="submit" className="button primary" disabled={busy || !name.trim()}>
             {busy ? 'Mapping…' : 'Map project'}

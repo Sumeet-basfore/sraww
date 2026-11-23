@@ -37,6 +37,38 @@ describe('diagram routes', () => {
     expect(one.body.type).toBe('excalidraw');
   });
 
+  it('accepts Unicode names and the 81-character maximum', async () => {
+    for (const name of ['Unicode Δ drawing', 'a'.repeat(81), '界'.repeat(60)]) {
+      const res = await request(app).post('/api/diagrams').set('Host', HOST).send({ name });
+      expect(res.status).toBe(201);
+    }
+  });
+
+  it('rejects a name whose UTF-8 filename would exceed the byte limit', async () => {
+    const res = await request(app)
+      .post('/api/diagrams')
+      .set('Host', HOST)
+      .send({ name: '𐐀'.repeat(81) });
+    expect(res.status).toBe(400);
+  });
+
+  it.each(['CON', 'con', 'PRN', 'AUX', 'NUL', 'COM1', 'LPT9'])(
+    'rejects reserved name %s',
+    async (name) => {
+      const res = await request(app).post('/api/diagrams').set('Host', HOST).send({ name });
+      expect(res.status).toBe(400);
+    },
+  );
+
+  it.each(['name/with/slash', '.leading', 'a'.repeat(82), 'trailing.'])(
+    'rejects unsafe name %s',
+    async (name) => {
+      const res = await request(app).post('/api/diagrams').set('Host', HOST).send({ name });
+      expect(res.status).toBe(400);
+      expect(res.body.error).toMatch(/1–81 Unicode letters.*200 UTF-8 bytes/i);
+    },
+  );
+
   it('saves a scene with PUT', async () => {
     await request(app).post('/api/diagrams').set('Host', HOST).send({ name: 'd' });
     const scene = { ...emptyScene(), elements: [{ id: 'e1', type: 'rectangle' }] };
@@ -88,5 +120,18 @@ describe('diagram routes', () => {
     await request(app).post('/api/diagrams').set('Host', HOST).send({ name: 'dup' });
     const again = await request(app).post('/api/diagrams').set('Host', HOST).send({ name: 'dup' });
     expect(again.status).toBe(409);
+  });
+
+  it('returns 409 when creating a diagram that differs only by case', async () => {
+    await request(app)
+      .post('/api/diagrams')
+      .set('Host', HOST)
+      .send({ name: 'Roadmap' })
+      .expect(201);
+    const lower = await request(app)
+      .post('/api/diagrams')
+      .set('Host', HOST)
+      .send({ name: 'roadmap' });
+    expect(lower.status).toBe(409);
   });
 });

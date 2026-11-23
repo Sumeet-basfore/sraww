@@ -2,6 +2,7 @@ import { unzipSync } from 'fflate';
 import {
   checkPath,
   MAX_FILE_BYTES,
+  MAX_OVERSIZED_ENTRIES,
   MAX_UPLOAD_BYTES,
   MAX_UPLOAD_FILES,
 } from '../../shared/project-rules.ts';
@@ -20,6 +21,41 @@ export interface Intake {
   files: UploadedFile[];
   excluded: Exclusion[];
   bytes: number;
+}
+
+export interface OversizedFile {
+  path: string;
+  size: number;
+}
+
+export function validateOversizedFiles(
+  value: unknown,
+  archivedPaths: ReadonlySet<string> = new Set(),
+): OversizedFile[] {
+  if (!Array.isArray(value) || value.length > MAX_OVERSIZED_ENTRIES) {
+    throw intakeError('The oversized file list is invalid.', 400);
+  }
+  const seen = new Set<string>();
+  return value.map((entry) => {
+    if (
+      typeof entry !== 'object' ||
+      entry === null ||
+      !('path' in entry) ||
+      typeof entry.path !== 'string' ||
+      !('size' in entry) ||
+      typeof entry.size !== 'number' ||
+      !Number.isFinite(entry.size) ||
+      !Number.isInteger(entry.size) ||
+      entry.size <= MAX_FILE_BYTES
+    )
+      throw intakeError('The oversized file list is invalid.', 400);
+    const verdict = checkPath(entry.path);
+    const normalizedPath = entry.path.replace(/\\/g, '/');
+    if (!verdict.ok || seen.has(normalizedPath) || archivedPaths.has(normalizedPath))
+      throw intakeError('The oversized file list is invalid.', 400);
+    seen.add(normalizedPath);
+    return { path: entry.path, size: entry.size };
+  });
 }
 
 /** An error the client can read, with an HTTP status. */
@@ -58,8 +94,8 @@ export function containsSecret(text: string): boolean {
  * the folder, or is excluded by name, costs nothing. The remaining files are checked for size,
  * binary content and secrets. Anything that fails is listed with its reason, not silently dropped.
  */
-export function readZip(bytes: Uint8Array): Intake {
-  const excluded: Exclusion[] = [];
+export function readZip(bytes: Uint8Array, oversized: readonly OversizedFile[] = []): Intake {
+  const excluded: Exclusion[] = oversized.map(({ path }) => ({ path, reason: 'larger than 1 MB' }));
   let declaredBytes = 0;
   let kept = 0;
 
@@ -68,6 +104,7 @@ export function readZip(bytes: Uint8Array): Intake {
     entries = unzipSync(bytes, {
       filter(file) {
         if (file.name.endsWith('/')) return false;
+        if (file.name === '.__sraww_oversized__.json') return false;
         // Excluded entries are not counted toward the limits: only the files kept are.
         const verdict = checkPath(file.name);
         if (!verdict.ok) {

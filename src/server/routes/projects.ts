@@ -1,7 +1,8 @@
 import express, { Router } from 'express';
+import { unzipSync } from 'fflate';
 import { z } from 'zod';
-import { MAX_UPLOAD_ZIP_BYTES } from '../../shared/project-rules.ts';
-import { intakeError, readZip } from '../projects/intake.ts';
+import { MAX_OVERSIZED_METADATA_BYTES, MAX_UPLOAD_ZIP_BYTES } from '../../shared/project-rules.ts';
+import { intakeError, readZip, validateOversizedFiles } from '../projects/intake.ts';
 import type { ProjectStore } from '../projects/store.ts';
 
 const uploadQuery = z.object({
@@ -32,8 +33,37 @@ export function createProjectRouter(store: ProjectStore): Router {
       if (!Buffer.isBuffer(body) || body.length === 0) {
         throw intakeError('Send the project as a zip file.', 400);
       }
-      const intake = readZip(new Uint8Array(body));
-      if (intake.files.length === 0) {
+      const bytes = new Uint8Array(body);
+      let oversized: ReturnType<typeof validateOversizedFiles> = [];
+      const archivedPaths = new Set<string>();
+      let companionEntries = 0;
+      try {
+        const metadata = unzipSync(bytes, {
+          filter: (entry) => {
+            if (entry.name === '.__sraww_oversized__.json') {
+              companionEntries += 1;
+              if (companionEntries > 1)
+                throw intakeError('The oversized file list is invalid.', 400);
+              if (entry.originalSize > MAX_OVERSIZED_METADATA_BYTES)
+                throw intakeError('The oversized file list is invalid.', 400);
+              return true;
+            }
+            if (!entry.name.endsWith('/')) archivedPaths.add(entry.name.replace(/\\/g, '/'));
+            return false;
+          },
+        });
+        const encoded = metadata['.__sraww_oversized__.json'];
+        if (encoded)
+          oversized = validateOversizedFiles(
+            JSON.parse(new TextDecoder().decode(encoded)),
+            archivedPaths,
+          );
+      } catch (err) {
+        if ((err as { status?: number }).status) throw err;
+        throw intakeError('The oversized file list is invalid.', 400);
+      }
+      const intake = readZip(bytes, oversized);
+      if (intake.files.length === 0 && intake.excluded.length === 0) {
         throw intakeError('No files were kept. Check the list of excluded files.', 422);
       }
       const manifest = await store.create({

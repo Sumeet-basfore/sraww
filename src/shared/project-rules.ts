@@ -5,6 +5,10 @@ export const MAX_UPLOAD_FILES = 5_000;
 /** Total size of the files kept, after unpacking. */
 export const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
 export const MAX_FILE_BYTES = 1024 * 1024;
+/** Maximum uncompressed size of the upload's reserved oversized-file metadata entry. */
+export const MAX_OVERSIZED_METADATA_BYTES = 256 * 1024;
+/** Maximum number of oversized files described by the upload's metadata entry. */
+export const MAX_OVERSIZED_ENTRIES = 1_000;
 /** Size of the zip file that is sent. */
 export const MAX_UPLOAD_ZIP_BYTES = 60 * 1024 * 1024;
 

@@ -16,9 +16,9 @@ const GRAPH: DiagramGraph = {
 };
 
 describe('sizeFor', () => {
-  it('keeps shapes within a readable width range', () => {
-    expect(sizeFor({ id: 'a', label: 'x' }).width).toBe(140);
-    expect(sizeFor({ id: 'a', label: 'x'.repeat(200) }).width).toBe(280);
+  it('uses the shared minimum and grows for long unbroken words', () => {
+    expect(sizeFor({ id: 'a', label: 'x' }).width).toBe(200);
+    expect(sizeFor({ id: 'a', label: 'x'.repeat(200) }).width).toBeGreaterThan(1000);
   });
 });
 
