@@ -1,11 +1,13 @@
 import '@excalidraw/excalidraw/index.css';
 import {
   Excalidraw,
+  MainMenu,
   loadLibraryFromBlob,
   restore,
   serializeLibraryAsJSON,
 } from '@excalidraw/excalidraw';
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types';
+import { PROJECT_LINKS } from '../lib/project-links.ts';
 import { useEffect, useRef, useState } from 'react';
 import { diagramApi } from '../lib/api.ts';
 import { editorHash } from '../lib/route.ts';
@@ -412,7 +414,22 @@ export function Editor({ name, onExit, mode = 'diagram', onShowTour }: EditorPro
             onChange={(elements, appState, files) =>
               load.autosave.update(toSavedScene(elements, appState, files))
             }
-          />
+          >
+            {/* Replaces Excalidraw's default menu, which links to Excalidraw's own social pages. */}
+            <MainMenu>
+              <MainMenu.DefaultItems.ChangeCanvasBackground />
+              <MainMenu.DefaultItems.ClearCanvas />
+              <MainMenu.Separator />
+              {PROJECT_LINKS.map((link) => (
+                <MainMenu.Item
+                  key={link.href}
+                  onSelect={() => window.open(link.href, '_blank', 'noopener,noreferrer')}
+                >
+                  {link.label}
+                </MainMenu.Item>
+              ))}
+            </MainMenu>
+          </Excalidraw>
         )}
         {panel === 'arch' && load.kind === 'ready' && (
           <ArchPanel name={name} getApi={() => apiRef.current} onClose={() => setPanel(null)} />
