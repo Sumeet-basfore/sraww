@@ -15,8 +15,25 @@ export const canvasProps: { current: FakeExcalidrawProps | null } = { current: n
 
 export const Excalidraw = (props: FakeExcalidrawProps) => {
   canvasProps.current = props;
-  return <div data-testid="excalidraw-canvas" data-theme={props.theme ?? 'light'} />;
+  return (
+    <div data-testid="excalidraw-canvas" data-theme={props.theme ?? 'light'}>
+      {props.children}
+    </div>
+  );
 };
+
+/** Stand-in for Excalidraw's menu: the real menu is checked in e2e/project-links.spec.ts. */
+export const MainMenu = Object.assign(
+  ({ children }: { children?: ReactNode }) => <div data-testid="main-menu">{children}</div>,
+  {
+    DefaultItems: {
+      ChangeCanvasBackground: () => null,
+      ClearCanvas: () => null,
+    },
+    Separator: () => null,
+    Item: ({ children }: { children?: ReactNode }) => <button type="button">{children}</button>,
+  },
+);
 
 export function restore(data: { elements?: unknown; appState?: unknown; files?: unknown } | null): {
   elements: unknown[];
