@@ -1,10 +1,40 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 
 const API_TARGET = 'http://127.0.0.1:4317';
 
+/**
+ * Excalidraw falls back to esm.sh for any font it cannot find locally. The app's Content
+ * Security Policy blocks that, but the attempt would still contact a third party, so the
+ * fallback is pointed at this server instead. A missing font then fails locally.
+ */
+function keepExcalidrawFontsLocal(): Plugin {
+  return {
+    name: 'keep-excalidraw-fonts-local',
+    enforce: 'pre',
+    transform(code, id) {
+      if (!id.includes('@excalidraw/excalidraw/dist/')) return null;
+      if (!code.includes('`https://esm.sh/${')) {
+        // A new Excalidraw release that changes this code would silently bring esm.sh back.
+        if (code.includes('ASSETS_FALLBACK_URL')) {
+          this.warn('Excalidraw fallback font URL has changed; check keepExcalidrawFontsLocal.');
+        }
+        return null;
+      }
+      return {
+        code: code.replaceAll('`https://esm.sh/${', '`${window.location.origin}/${'),
+        map: null,
+      };
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [keepExcalidrawFontsLocal(), react()],
+  // Dev pre-bundling would copy Excalidraw out of reach of the transform above, so keep it as source.
+  optimizeDeps: {
+    exclude: ['@excalidraw/excalidraw'],
+  },
   server: {
     host: '127.0.0.1',
     port: 5173,
