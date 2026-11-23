@@ -99,7 +99,7 @@ docs/PLAN.md  the implementation plan this was built from
 
 ## Security notes
 
-The full privacy policy is in [PRIVACY.md](PRIVACY.md). In short: nothing is sent to the maintainer, and the only outside traffic is what you send to Claude Code or Codex when you use the AI features.
+The full privacy policy is in [PRIVACY.md](PRIVACY.md). In short: nothing is sent to the maintainer. sraww's own features send only what that policy lists, and the AI features pass your chosen content to Claude Code or Codex.
 
 - The server only answers local requests (Host and Origin checks), and sends a strict content security policy with no framing.
 - Diagram and model names are validated and can never leave the data folder.

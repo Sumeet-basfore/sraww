@@ -231,6 +231,7 @@ export function Editor({ name, onExit, mode = 'diagram' }: EditorProps) {
             key={name}
             initialData={load.initial}
             theme={prefs.theme}
+            aiEnabled={false}
             excalidrawAPI={(api) => {
               apiRef.current = api;
             }}

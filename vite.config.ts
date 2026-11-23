@@ -14,7 +14,13 @@ function keepExcalidrawFontsLocal(): Plugin {
     enforce: 'pre',
     transform(code, id) {
       if (!id.includes('@excalidraw/excalidraw/dist/')) return null;
-      if (!code.includes('`https://esm.sh/${')) return null;
+      if (!code.includes('`https://esm.sh/${')) {
+        // A new Excalidraw release that changes this code would silently bring esm.sh back.
+        if (code.includes('ASSETS_FALLBACK_URL')) {
+          this.warn('Excalidraw fallback font URL has changed; check keepExcalidrawFontsLocal.');
+        }
+        return null;
+      }
       return {
         code: code.replaceAll('`https://esm.sh/${', '`${window.location.origin}/${'),
         map: null,
@@ -25,6 +31,10 @@ function keepExcalidrawFontsLocal(): Plugin {
 
 export default defineConfig({
   plugins: [keepExcalidrawFontsLocal(), react()],
+  // Dev pre-bundling would copy Excalidraw out of reach of the transform above, so keep it as source.
+  optimizeDeps: {
+    exclude: ['@excalidraw/excalidraw'],
+  },
   server: {
     host: '127.0.0.1',
     port: 5173,

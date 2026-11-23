@@ -1,5 +1,5 @@
 // Copies Excalidraw's font files into public/fonts so the editor works offline.
-// Excalidraw loads fonts from EXCALIDRAW_ASSET_PATH, which is set to "/" in index.html.
+// Excalidraw loads fonts from EXCALIDRAW_ASSET_PATH, which is set to "/" in src/client/excalidraw-assets.ts.
 import { cp, rm, access } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
