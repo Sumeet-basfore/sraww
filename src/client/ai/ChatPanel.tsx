@@ -22,6 +22,7 @@ function changeCount(ops: readonly ChatOp[]): number {
   return ops.reduce((total, op) => {
     if (op.type === 'addNodes') return total + op.nodes.length;
     if (op.type === 'addEdges') return total + op.edges.length;
+    if (op.type === 'updateNodes') return total + op.updates.length;
     return total + op.ids.length;
   }, 0);
 }

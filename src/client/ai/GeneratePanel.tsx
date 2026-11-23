@@ -63,8 +63,8 @@ export function GeneratePanel({ getApi, onClose }: GeneratePanelProps) {
     setBusy(true);
     setError(null);
     try {
-      const boxes = await layoutGraph(preview);
-      const created = convertToExcalidrawElements(graphToSkeleton(preview, boxes), {
+      const layout = await layoutGraph(preview);
+      const created = convertToExcalidrawElements(graphToSkeleton(preview, layout), {
         regenerateIds: true,
       });
       const existing = mode === 'add' ? api.getSceneElementsIncludingDeleted() : [];

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { graphEdgeSchema, graphNodeSchema } from './ai-schemas.ts';
+import { colorSchema, GRAPH_LIMITS, graphEdgeSchema, graphNodeSchema } from './ai-schemas.ts';
 
 export const CHAT_LIMITS = {
   maxShapes: 150,
@@ -40,6 +40,20 @@ export const chatOpSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('deleteElements'),
     ids: z.array(z.string().min(1).max(200)).min(1).max(40),
+  }),
+  z.object({
+    type: z.literal('updateNodes'),
+    // Relabel or recolour existing shapes. Changing a shape's form needs a delete and an add.
+    updates: z
+      .array(
+        z.object({
+          id: z.string().min(1).max(200),
+          label: z.string().min(1).max(GRAPH_LIMITS.maxLabel).nullish(),
+          color: colorSchema.nullish(),
+        }),
+      )
+      .min(1)
+      .max(40),
   }),
 ]);
 

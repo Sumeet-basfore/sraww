@@ -58,9 +58,9 @@ The server listens on `127.0.0.1` only and rejects requests whose Host or Origin
 
 ## Using it
 
-**Drawings.** Create, open, rename, duplicate, delete and import `.excalidraw` files from the start page. Edits save automatically after a short pause, and the status line shows whether everything is saved. Export a drawing as PNG, SVG or `.excalidraw` from the editor's Export menu.
+**Drawings.** Create, open, rename, duplicate, delete and import `.excalidraw` files from the start page. Edits save automatically after a short pause, and the status line shows whether everything is saved. Scroll the mouse wheel over the canvas to zoom. The editor's File menu exports a drawing as PNG, SVG or `.excalidraw`, imports a `.excalidraw` file as a new drawing, and imports or exports your Excalidraw library (`.excalidrawlib`). The library is saved in the diagrams folder.
 
-**AI generate.** “Generate” turns a sentence into a diagram. The model returns shapes and links only; the layout is computed by ELK. You can add the result to the drawing or replace the drawing (replace asks first).
+**AI generate.** “Generate” turns a sentence into a diagram. The model can choose rounded boxes, ellipses, diamonds or notes, colours with meaning, dashed or plain arrows, group frames, a left-to-right or top-down layout, and a title. It never gives coordinates; the layout is computed by ELK. You can add the result to the drawing or replace the drawing (replace asks first).
 
 **AI chat.** “Chat” edits the open drawing. The model may add shapes, add arrows and delete shapes, and every change is applied as one step, so Ctrl+Z undoes a whole reply. Requests that point at unknown shapes are dropped and the reason is shown. “Explain selection” describes the selected shapes and changes nothing.
 
@@ -110,7 +110,7 @@ The full privacy policy is in [PRIVACY.md](PRIVACY.md). In short: nothing is sen
 ## Known limits
 
 - Chat arrows to shapes that already existed are drawn between them but not glued, because Excalidraw only binds arrows to shapes created in the same change. Arrows between new shapes are glued.
-- Chat cannot relabel existing shapes yet.
+- Notes are text, so an arrow to a note is not glued to it.
 - The architecture scanner reads TypeScript and JavaScript only.
 - Architecture maps are limited to 200 folders and 5,000 source files per scan.
 - AI calls count against your Claude Pro or ChatGPT Plus usage limits. Each call starts a new CLI process, so expect a few seconds of delay per request.

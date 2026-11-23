@@ -10,6 +10,8 @@ import { createAiRouter } from './routes/ai.ts';
 import { createArchStore } from './storage/arch-store.ts';
 import { listArchProjects } from './arch/projects.ts';
 import { createDiagramRouter } from './routes/diagrams.ts';
+import { createLibraryRouter } from './routes/library.ts';
+import { createLibraryStore } from './storage/library-store.ts';
 import { createDiagramStore, type DiagramStore } from './storage/diagram-store.ts';
 
 export const JSON_BODY_LIMIT = '10mb';
@@ -53,6 +55,7 @@ export function createApp(
   });
 
   app.use('/api/diagrams', createDiagramRouter(store));
+  app.use('/api/library', createLibraryRouter(createLibraryStore(store.dir)));
   app.use(
     '/api/arch',
     createArchRouter(createArchStore(store.dir), listArchProjects(config.ARCH_PROJECTS), ai),

@@ -174,7 +174,13 @@ export async function renderArchitecture(
   model: ArchModel,
   savedLayout: ArchLayout | null,
 ): Promise<{ skeleton: ExcalidrawElementSkeleton[]; boxes: Map<string, Box> }> {
-  const computed = await layoutGraph(archToGraph(model));
+  // The architecture renderer draws its own group frames, so the layout gets a flat graph.
+  const graph = archToGraph(model);
+  const flat = {
+    ...graph,
+    nodes: graph.nodes.map((node) => ({ id: node.id, label: node.label, shape: node.shape })),
+  };
+  const computed = (await layoutGraph(flat)).boxes;
   const boxes = mergeBoxes(computed, savedLayout?.positions);
   return { skeleton: archSkeleton(model, boxes), boxes };
 }

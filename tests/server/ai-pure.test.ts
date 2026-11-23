@@ -139,7 +139,8 @@ describe('cliSafeSchema', () => {
       required: string[];
       properties: { nodes: { items: { required: string[]; properties: object } } };
     };
-    expect(json.required).toEqual(['nodes', 'edges']);
+    // Strict structured output (Codex) requires every key, including the optional ones.
+    expect([...json.required].sort()).toEqual(['direction', 'edges', 'nodes', 'title']);
     const node = json.properties.nodes.items;
     expect(node.required.sort()).toEqual(Object.keys(node.properties).sort());
   });

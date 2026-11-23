@@ -7,13 +7,13 @@ import { PROVIDERS, json } from './ai-fixtures.ts';
 
 vi.mock('@excalidraw/excalidraw', () => import('../mocks/excalidraw.tsx'));
 vi.mock('../../src/client/ai/layout.ts', () => ({
-  layoutGraph: vi.fn(
-    async () =>
-      new Map([
-        ['api', { x: 0, y: 0, width: 140, height: 72 }],
-        ['db', { x: 0, y: 150, width: 140, height: 72 }],
-      ]),
-  ),
+  layoutGraph: vi.fn(async () => ({
+    boxes: new Map([
+      ['api', { x: 0, y: 0, width: 140, height: 72 }],
+      ['db', { x: 0, y: 150, width: 140, height: 72 }],
+    ]),
+    frames: new Map(),
+  })),
 }));
 
 const GRAPH = {

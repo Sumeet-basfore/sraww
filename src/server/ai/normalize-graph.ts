@@ -37,7 +37,15 @@ export function normalizeGraph(graph: DiagramGraph): DiagramGraph {
       from: edge.from,
       to: edge.to,
       ...(edge.label ? { label: cleanLabel(edge.label) } : {}),
+      ...(edge.style ? { style: edge.style } : {}),
+      ...(edge.arrow ? { arrow: edge.arrow } : {}),
     }));
 
-  return { nodes, edges };
+  const title = graph.title ? cleanLabel(graph.title) : '';
+  return {
+    nodes,
+    edges,
+    direction: graph.direction ?? null,
+    title: title || null,
+  };
 }
