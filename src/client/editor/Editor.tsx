@@ -22,6 +22,7 @@ import { createLibrarySync, type LibrarySync } from './library-sync.ts';
 import { SaveIndicator } from './SaveIndicator.tsx';
 import { sceneFingerprint, toSavedScene } from './scene.ts';
 import { attachWheelZoom } from './wheel-zoom.ts';
+import { insertTemplate, type TemplateKind } from '../math/insert-template.ts';
 
 export const AUTOSAVE_DELAY_MS = 800;
 
@@ -219,6 +220,11 @@ export function Editor({ name, onExit, mode = 'diagram', onShowTour }: EditorPro
     else if (action) void handleExport(action as ExportFormat);
   }
 
+  function runTemplateAction(kind: TemplateKind): void {
+    const api = apiRef.current;
+    if (api) void insertTemplate(api, kind);
+  }
+
   /** Adds the saved library to Excalidraw's own library, which it keeps in this browser. */
   async function seedLibrary(api: ExcalidrawImperativeAPI): Promise<void> {
     try {
@@ -303,6 +309,22 @@ export function Editor({ name, onExit, mode = 'diagram', onShowTour }: EditorPro
                 Architecture
               </button>
             )}
+            <select
+              className="export-select"
+              aria-label="Insert"
+              value=""
+              disabled={load.kind !== 'ready'}
+              onChange={(e) => {
+                const kind = e.target.value as TemplateKind | '';
+                e.target.value = '';
+                if (kind) runTemplateAction(kind);
+              }}
+            >
+              <option value="">Insert…</option>
+              <option value="axes">Axes</option>
+              <option value="number-line">Number line</option>
+              <option value="table">Table</option>
+            </select>
             <select
               className="export-select"
               aria-label="File actions"
