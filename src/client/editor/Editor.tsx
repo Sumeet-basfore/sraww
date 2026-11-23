@@ -1,8 +1,15 @@
 import '@excalidraw/excalidraw/index.css';
-import { Excalidraw, restore } from '@excalidraw/excalidraw';
+import {
+  Excalidraw,
+  loadLibraryFromBlob,
+  restore,
+  serializeLibraryAsJSON,
+} from '@excalidraw/excalidraw';
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types';
 import { useEffect, useRef, useState } from 'react';
 import { diagramApi } from '../lib/api.ts';
+import { editorHash } from '../lib/route.ts';
+import { IMPORT_ACCEPT, readDrawingFile, uniqueName } from '../diagrams/import.ts';
 import { errorMessage } from '../lib/errors.ts';
 import { loadPrefs, roughnessFor, savePrefs, type DrawingStyle, type Prefs } from '../lib/prefs.ts';
 import type { ExcalidrawScene } from '../../shared/diagram.ts';
@@ -11,11 +18,18 @@ import { ArchPanel } from '../arch/ArchPanel.tsx';
 import { Logo } from '../brand/Logo.tsx';
 import { ChatPanel } from '../ai/ChatPanel.tsx';
 import { GeneratePanel } from '../ai/GeneratePanel.tsx';
-import { exportScene, type ExportFormat } from './export.ts';
+import { downloadBlob, exportScene, type ExportFormat } from './export.ts';
+import { createLibrarySync, type LibrarySync } from './library-sync.ts';
 import { SaveIndicator } from './SaveIndicator.tsx';
 import { sceneFingerprint, toSavedScene } from './scene.ts';
+import { attachWheelZoom } from './wheel-zoom.ts';
 
 export const AUTOSAVE_DELAY_MS = 800;
+
+// Loading a file from Excalidraw's own menu would replace this drawing and autosave would then
+// write the replacement here. Importing goes through the app instead, which creates a new drawing.
+const LIBRARY_SAVE_DELAY_MS = 600;
+const UI_OPTIONS = { canvasActions: { loadScene: false } } as const;
 
 type RestoredScene = ReturnType<typeof restore>;
 type LoadState =
@@ -44,11 +58,29 @@ export function Editor({ name, onExit, mode = 'diagram' }: EditorProps) {
   const [load, setLoad] = useState<LoadState>({ kind: 'loading' });
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
   const [prefs, setPrefs] = useState<Prefs>(loadPrefs);
-  const [exportError, setExportError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [panel, setPanel] = useState<'arch' | 'generate' | 'chat' | null>(
     mode === 'architecture' ? 'arch' : null,
   );
   const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const drawingInput = useRef<HTMLInputElement>(null);
+  const libraryInput = useRef<HTMLInputElement>(null);
+  const librarySyncRef = useRef<LibrarySync | null>(null);
+
+  useEffect(() => {
+    const sync = createLibrarySync({ delayMs: LIBRARY_SAVE_DELAY_MS, onError: setActionError });
+    librarySyncRef.current = sync;
+    return () => {
+      sync.dispose();
+      librarySyncRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const element = canvasRef.current;
+    return element ? attachWheelZoom(element) : undefined;
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -113,7 +145,7 @@ export function Editor({ name, onExit, mode = 'diagram' }: EditorProps) {
   async function handleExport(format: ExportFormat): Promise<void> {
     const api = apiRef.current;
     if (!api) return;
-    setExportError(null);
+    setActionError(null);
     try {
       await exportScene(
         format,
@@ -125,8 +157,53 @@ export function Editor({ name, onExit, mode = 'diagram' }: EditorProps) {
         name,
       );
     } catch (err) {
-      setExportError(`Export failed. ${errorMessage(err)}`);
+      setActionError(`Export failed. ${errorMessage(err)}`);
     }
+  }
+
+  async function importDrawing(file: File): Promise<void> {
+    setActionError(null);
+    try {
+      const drawing = await readDrawingFile(file);
+      const existing = (await diagramApi.list()).map((item) => item.name);
+      const created = uniqueName(drawing.name, existing);
+      await diagramApi.create(created, drawing.scene);
+      window.location.hash = editorHash(created);
+    } catch (err) {
+      setActionError(`Import failed. ${errorMessage(err)}`);
+    }
+  }
+
+  async function importLibrary(file: File): Promise<void> {
+    const api = apiRef.current;
+    if (!api) return;
+    setActionError(null);
+    try {
+      const libraryItems = await loadLibraryFromBlob(file);
+      await api.updateLibrary({ libraryItems, merge: true, prompt: false, openLibraryMenu: true });
+    } catch (err) {
+      setActionError(`Library import failed. ${errorMessage(err)}`);
+    }
+  }
+
+  function exportLibrary(): void {
+    const items = librarySyncRef.current?.current() ?? [];
+    const json = serializeLibraryAsJSON(items as never);
+    downloadBlob(new Blob([json], { type: 'application/json' }), 'sraww-library.excalidrawlib');
+  }
+
+  function runFileAction(action: string): void {
+    if (action === 'import-drawing') drawingInput.current?.click();
+    else if (action === 'import-library') libraryInput.current?.click();
+    else if (action === 'export-library') exportLibrary();
+    else if (action) void handleExport(action as ExportFormat);
+  }
+
+  /** Adds the saved library to Excalidraw's own library, which it keeps in this browser. */
+  async function seedLibrary(api: ExcalidrawImperativeAPI): Promise<void> {
+    const saved = (await librarySyncRef.current?.initial()) ?? [];
+    if (saved.length === 0) return;
+    await api.updateLibrary({ libraryItems: saved as never, merge: true, prompt: false });
   }
 
   function toggleTheme(): void {
@@ -190,31 +267,59 @@ export function Editor({ name, onExit, mode = 'diagram' }: EditorProps) {
         ))}
         <select
           className="export-select"
-          aria-label="Export drawing"
+          aria-label="File actions"
           value=""
           disabled={load.kind !== 'ready'}
           onChange={(e) => {
-            const format = e.target.value as ExportFormat;
-            if (format) void handleExport(format);
+            const action = e.target.value;
+            e.target.value = '';
+            runFileAction(action);
           }}
         >
-          <option value="">Export…</option>
-          <option value="png">PNG image</option>
-          <option value="svg">SVG image</option>
-          <option value="excalidraw">Excalidraw file</option>
+          <option value="">File…</option>
+          <option value="png">Export PNG image</option>
+          <option value="svg">Export SVG image</option>
+          <option value="excalidraw">Export .excalidraw file</option>
+          <option value="import-drawing">Import .excalidraw file as new drawing…</option>
+          <option value="import-library">Import library (.excalidrawlib)…</option>
+          <option value="export-library">Export library (.excalidrawlib)</option>
         </select>
+        <input
+          ref={drawingInput}
+          type="file"
+          accept={IMPORT_ACCEPT}
+          hidden
+          aria-label="Choose a drawing to import"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = '';
+            if (file) void importDrawing(file);
+          }}
+        />
+        <input
+          ref={libraryInput}
+          type="file"
+          accept=".excalidrawlib,.json,application/json"
+          hidden
+          aria-label="Choose a library to import"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = '';
+            if (file) void importLibrary(file);
+          }}
+        />
         <button type="button" className="button ghost" onClick={toggleTheme}>
           {prefs.theme === 'dark' ? 'Light' : 'Dark'} mode
         </button>
       </header>
 
-      {exportError && (
+      {actionError && (
         <p role="alert" className="banner error export-error">
-          {exportError}
+          {actionError}
         </p>
       )}
 
-      <div className="editor-canvas">
+      <div className="editor-canvas" ref={canvasRef}>
         {load.kind === 'loading' && <p className="muted pad">Opening {name}…</p>}
         {load.kind === 'failed' && (
           <div className="pad">
@@ -232,8 +337,11 @@ export function Editor({ name, onExit, mode = 'diagram' }: EditorProps) {
             initialData={load.initial}
             theme={prefs.theme}
             aiEnabled={false}
+            UIOptions={UI_OPTIONS}
+            onLibraryChange={(items) => librarySyncRef.current?.changed(items)}
             excalidrawAPI={(api) => {
               apiRef.current = api;
+              void seedLibrary(api);
             }}
             onChange={(elements, appState, files) =>
               load.autosave.update(toSavedScene(elements, appState, files))

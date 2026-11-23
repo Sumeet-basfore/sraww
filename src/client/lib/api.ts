@@ -80,6 +80,15 @@ export const diagramApi = {
   },
 };
 
+export const libraryApi = {
+  get(): Promise<{ items: unknown[] }> {
+    return request('/library');
+  },
+  save(items: unknown[]): Promise<{ count: number }> {
+    return request('/library', { method: 'PUT', body: JSON.stringify({ items }) });
+  },
+};
+
 const providerPath = (provider: ProviderId, rest = ''): string =>
   `/ai/providers/${provider}${rest}`;
 
