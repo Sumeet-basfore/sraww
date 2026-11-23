@@ -30,6 +30,7 @@ const MODEL: ArchModel = {
       files: 1,
       members: ['src/client/app.mts'],
     },
+    { id: 'ext:express', label: 'express', kind: 'external', group: null, files: 0, members: [] },
   ],
   edges: [{ from: 'src/client', to: 'src/server', count: 3 }],
   groups: [{ id: 'src', label: 'src', members: ['src/server', 'src/client'] }],
@@ -71,6 +72,8 @@ describe('architecture review reply', () => {
     const prompt = buildReviewPrompt(MODEL, FINDINGS);
     expect(prompt).toContain('src/server');
     expect(prompt).toContain('cycle:src/client,src/server');
+    expect(prompt).toContain('"files":1');
+    expect(prompt).not.toContain('ext:express');
     expect(
       MODEL.nodes.flatMap((node) => node.members).every((member) => !prompt.includes(member)),
     ).toBe(true);
@@ -95,7 +98,7 @@ describe('architecture review reply', () => {
       {
         summary: 'Review',
         findings: [
-          { ...REVIEW_FINDING, evidence: ['ghost'] },
+          { ...REVIEW_FINDING, evidence: ['ghost', 'ext:express'] },
           { ...REVIEW_FINDING, evidence: ['src/server', 'ghost'] },
         ],
       },
@@ -104,6 +107,23 @@ describe('architecture review reply', () => {
     expect(result.skipped).toBe(1);
     expect(result.review.findings).toHaveLength(1);
     expect(result.review.findings[0]?.evidence).toEqual(['src/server']);
+  });
+
+  it('throws INVALID_OUTPUT when evidence only references an external package', () => {
+    expect(() =>
+      validateReview(
+        { summary: 'Review', findings: [{ ...REVIEW_FINDING, evidence: ['ext:express'] }] },
+        MODEL,
+      ),
+    ).toThrow(AiError);
+    try {
+      validateReview(
+        { summary: 'Review', findings: [{ ...REVIEW_FINDING, evidence: ['ext:express'] }] },
+        MODEL,
+      );
+    } catch (error) {
+      expect(error).toMatchObject({ code: 'INVALID_OUTPUT' });
+    }
   });
 
   it('throws INVALID_OUTPUT when no finding has valid evidence', () => {

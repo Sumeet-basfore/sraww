@@ -49,6 +49,7 @@ export function buildReviewPrompt(model: ArchModel, findings: readonly ArchFindi
       .map((node) => ({
         id: node.id,
         label: node.label,
+        files: node.files,
         dependsOn: model.edges
           .filter((edge) => edge.from === node.id)
           .map((edge) => ({ id: edge.to, count: edge.count })),
@@ -78,10 +79,12 @@ export function validateReview(
   reply: ReviewReply,
   model: ArchModel,
 ): { review: ReviewReply; skipped: number } {
-  const nodeIds = new Set(model.nodes.map((node) => node.id));
+  const componentIds = new Set(
+    model.nodes.filter((node) => node.kind === 'component').map((node) => node.id),
+  );
   let skipped = 0;
   const findings = reply.findings.flatMap((finding) => {
-    const evidence = finding.evidence.filter((id) => nodeIds.has(id));
+    const evidence = finding.evidence.filter((id) => componentIds.has(id));
     if (evidence.length === 0) {
       skipped += 1;
       return [];
