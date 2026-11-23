@@ -12,6 +12,10 @@ import { listArchProjects } from './arch/projects.ts';
 import { createDiagramRouter } from './routes/diagrams.ts';
 import { createLibraryRouter } from './routes/library.ts';
 import { createLibraryStore } from './storage/library-store.ts';
+import { createProjectRouter } from './routes/projects.ts';
+import { createProjectStore } from './projects/store.ts';
+import { uploadedArchProjects } from './projects/arch-projects.ts';
+import type { ArchProject } from './arch/projects.ts';
 import { createDiagramStore, type DiagramStore } from './storage/diagram-store.ts';
 
 export const JSON_BODY_LIMIT = '10mb';
@@ -39,6 +43,11 @@ export function createApp(
   ai: AiServices = createAiServices(config),
 ): express.Express {
   const app = express();
+  const projectStore = createProjectStore(config.PROJECTS_DIR);
+  const archProjects = async (): Promise<ArchProject[]> => [
+    ...listArchProjects(config.ARCH_PROJECTS),
+    ...(await uploadedArchProjects(projectStore)),
+  ];
   app.disable('x-powered-by');
   app.use(localOnlyGuard);
   app.use((_req, res, next) => {
@@ -56,10 +65,8 @@ export function createApp(
 
   app.use('/api/diagrams', createDiagramRouter(store));
   app.use('/api/library', createLibraryRouter(createLibraryStore(store.dir)));
-  app.use(
-    '/api/arch',
-    createArchRouter(createArchStore(store.dir), listArchProjects(config.ARCH_PROJECTS), ai),
-  );
+  app.use('/api/projects', createProjectRouter(projectStore));
+  app.use('/api/arch', createArchRouter(createArchStore(store.dir), archProjects, ai));
   app.use('/api/ai', createAiRouter(ai));
 
   app.use('/api', (_req, res) => {

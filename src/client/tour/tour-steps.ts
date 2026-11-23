@@ -1,0 +1,48 @@
+export interface TourStep {
+  title: string;
+  body: string;
+  /** Where on the site the thing is, so a first-time visitor knows where to look. */
+  where?: string;
+}
+
+/** The walkthrough, in the order a new person meets the parts of the app. */
+export const TOUR_STEPS: readonly TourStep[] = [
+  {
+    title: 'Welcome to sraww',
+    body: 'sraww is a whiteboard for drawing diagrams, with AI help and a way to map the structure of your code. Everything is stored on this computer. This tour takes about a minute, and you can open it again from the top of any page.',
+  },
+  {
+    title: 'Drawings',
+    body: 'Type a name and press Create to start a drawing, or import an .excalidraw file. Click a name to open it. Rename, duplicate and delete are beside each name.',
+    where: 'Start page, at the top of the list',
+  },
+  {
+    title: 'Code projects',
+    body: 'Upload a project folder or a zip file to draw its structure. Tick the privacy notice first. Dependency folders and build output are skipped. Credential files and binaries are left out, and the list shows each one with its reason.',
+    where: 'Start page, under “Code projects”',
+  },
+  {
+    title: 'Architecture maps',
+    body: 'Choose an uploaded project under “Map a project” and press “Map project”. The map groups the project into boxes you can move. Where you put them is saved for that map.',
+    where: 'Start page, under “Map a project”',
+  },
+  {
+    title: 'The assistant',
+    body: 'The assistant sits at the bottom of a drawing. In “Edit this drawing” it changes the drawing when you ask, and in “New diagram” it proposes a whole diagram that you can add or replace. Press + to ask it to explain the shapes you have selected.',
+    where: 'Bottom of an open drawing',
+  },
+  {
+    title: 'AI tools',
+    body: 'The assistant uses the Claude Code or Codex command-line tool that you are already signed in to, so no API keys are needed. Sign in to each one and choose which one is the default here.',
+    where: 'Top right of the start page, “AI tools”',
+  },
+  {
+    title: 'Your privacy',
+    body: 'Drawings and uploaded code stay in the data folder on this computer. An AI tool receives only what you send through the assistant, and for a project map only the folder paths and file names, when you press “Name with AI”. File contents are never sent.',
+    where: 'PRIVACY.md in the project',
+  },
+  {
+    title: 'You are set',
+    body: 'Start with a new drawing, or upload a project to map it. You can open this tour again at any time from the top of the start page or from the “Tour” button in a drawing.',
+  },
+];

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures.ts';
 
 // PRIVACY.md promises that the browser contacts nothing outside this machine while the app is used.
 // The AI CLIs run as separate programs and are not part of the browser, so they are not covered here.
@@ -43,19 +43,18 @@ test('the browser makes no requests outside this machine while the app is used',
     });
   });
 
-  // The drawing list, then a new drawing with its Generate and Chat panels opened.
+  // The drawing list, then a new drawing with its assistant in both of its modes.
   await page.goto('/');
   await page.getByPlaceholder('Name a new drawing').fill('privacy check');
   await page.getByRole('button', { name: 'Create' }).click();
   await expect(page.locator('.excalidraw')).toBeVisible({ timeout: 30_000 });
   await page.waitForLoadState('networkidle');
 
-  await page.getByRole('button', { name: 'Generate', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: 'Generate a diagram' })).toBeVisible();
-  await page.getByRole('button', { name: 'Close', exact: true }).first().click();
-
-  await page.getByRole('button', { name: 'Chat', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: 'Chat about this diagram' })).toBeVisible();
+  const mode = page.getByRole('combobox', { name: 'What the assistant does' });
+  await mode.selectOption('new');
+  await expect(page.getByRole('button', { name: 'Generate diagram' })).toBeVisible();
+  await mode.selectOption('edit');
+  await expect(page.getByLabel('Message the assistant')).toBeVisible();
   await page.waitForLoadState('networkidle');
 
   // The AI tools page.

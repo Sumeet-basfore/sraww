@@ -16,8 +16,7 @@ import type { ExcalidrawScene } from '../../shared/diagram.ts';
 import { createAutosave, type Autosave, type SaveStatus } from './autosave.ts';
 import { ArchPanel } from '../arch/ArchPanel.tsx';
 import { Logo } from '../brand/Logo.tsx';
-import { ChatPanel } from '../ai/ChatPanel.tsx';
-import { GeneratePanel } from '../ai/GeneratePanel.tsx';
+import { Assistant } from '../ai/assistant/Assistant.tsx';
 import { downloadBlob, exportScene, type ExportFormat } from './export.ts';
 import { createLibrarySync, type LibrarySync } from './library-sync.ts';
 import { SaveIndicator } from './SaveIndicator.tsx';
@@ -42,6 +41,8 @@ interface EditorProps {
   onExit: () => void;
   /** 'architecture' opens the map with its side panel. */
   mode?: 'diagram' | 'architecture';
+  /** Reopens the walkthrough. The button is shown only when this is given. */
+  onShowTour?: () => void;
 }
 
 /** The server validated the file; restore() performs Excalidraw's own normalization. */
@@ -54,14 +55,13 @@ function restoreScene(scene: ExcalidrawScene, style: DrawingStyle): RestoredScen
   };
 }
 
-export function Editor({ name, onExit, mode = 'diagram' }: EditorProps) {
+export function Editor({ name, onExit, mode = 'diagram', onShowTour }: EditorProps) {
   const [load, setLoad] = useState<LoadState>({ kind: 'loading' });
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
   const [prefs, setPrefs] = useState<Prefs>(loadPrefs);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [panel, setPanel] = useState<'arch' | 'generate' | 'chat' | null>(
-    mode === 'architecture' ? 'arch' : null,
-  );
+  const [panel, setPanel] = useState<'arch' | null>(mode === 'architecture' ? 'arch' : null);
+  const [assistantOpen, setAssistantOpen] = useState(true);
   const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const drawingInput = useRef<HTMLInputElement>(null);
@@ -272,6 +272,11 @@ export function Editor({ name, onExit, mode = 'diagram' }: EditorProps) {
             </button>
           ))}
         </div>
+        {onShowTour && (
+          <button type="button" className="button ghost" onClick={onShowTour}>
+            Tour
+          </button>
+        )}
         {mode === 'architecture' && (
           <button
             type="button"
@@ -283,18 +288,6 @@ export function Editor({ name, onExit, mode = 'diagram' }: EditorProps) {
             Architecture
           </button>
         )}
-        {(['generate', 'chat'] as const).map((which) => (
-          <button
-            key={which}
-            type="button"
-            className="button ghost"
-            aria-expanded={panel === which}
-            disabled={load.kind !== 'ready'}
-            onClick={() => setPanel((open) => (open === which ? null : which))}
-          >
-            {which === 'generate' ? 'Generate' : 'Chat'}
-          </button>
-        ))}
         <select
           className="export-select"
           aria-label="File actions"
@@ -378,16 +371,17 @@ export function Editor({ name, onExit, mode = 'diagram' }: EditorProps) {
             }
           />
         )}
-        {panel !== null &&
-          load.kind === 'ready' &&
-          (panel === 'arch' ? (
-            <ArchPanel name={name} getApi={() => apiRef.current} onClose={() => setPanel(null)} />
-          ) : panel === 'generate' ? (
-            <GeneratePanel getApi={() => apiRef.current} onClose={() => setPanel(null)} />
-          ) : (
-            <ChatPanel getApi={() => apiRef.current} onClose={() => setPanel(null)} />
-          ))}
+        {panel === 'arch' && load.kind === 'ready' && (
+          <ArchPanel name={name} getApi={() => apiRef.current} onClose={() => setPanel(null)} />
+        )}
       </div>
+      {load.kind === 'ready' && (
+        <Assistant
+          getApi={() => apiRef.current}
+          open={assistantOpen}
+          onToggle={() => setAssistantOpen((open) => !open)}
+        />
+      )}
     </div>
   );
 }

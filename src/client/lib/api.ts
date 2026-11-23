@@ -80,6 +80,51 @@ export const diagramApi = {
   },
 };
 
+export interface ProjectExclusion {
+  path: string;
+  reason: string;
+}
+
+export interface ProjectSummary {
+  id: string;
+  name: string;
+  createdAt: string;
+  consentAt: string;
+  fileCount: number;
+  bytes: number;
+  excluded: ProjectExclusion[];
+}
+
+export const projectsApi = {
+  list(): Promise<{ projects: ProjectSummary[] }> {
+    return request('/projects');
+  },
+  /** Sends a zip of a project. The privacy notice must have been accepted, which the query records. */
+  async upload(zipBytes: Uint8Array, name: string): Promise<ProjectSummary> {
+    const query = new URLSearchParams({ name, consent: 'yes' });
+    const response = await fetch(`/api/projects?${query.toString()}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/zip' },
+      body: zipBytes as BlobPart,
+    });
+    const body: unknown = await response.json().catch(() => null);
+    if (!response.ok) {
+      const message =
+        typeof body === 'object' &&
+        body !== null &&
+        'error' in body &&
+        typeof body.error === 'string'
+          ? body.error
+          : `The project could not be uploaded (status ${response.status}).`;
+      throw new ApiError(response.status, message);
+    }
+    return body as ProjectSummary;
+  },
+  remove(id: string): Promise<void> {
+    return request(`/projects/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  },
+};
+
 export const libraryApi = {
   get(): Promise<{ items: unknown[] }> {
     return request('/library');

@@ -1,6 +1,6 @@
 import { rm } from 'node:fs/promises';
 import path from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures.ts';
 
 const DIAGRAMS_DIR = path.resolve('data/e2e-diagrams');
 const NAME = 'e2e ai';
@@ -78,14 +78,14 @@ test('generates a diagram from a prompt and adds it to the drawing', async ({ pa
   await page.getByRole('button', { name: 'Create' }).click();
   await expect(page.locator('.excalidraw')).toBeVisible({ timeout: 30_000 });
 
-  await page.getByRole('button', { name: /Generate/ }).click();
-  const panel = page.getByRole('dialog', { name: 'Generate a diagram' });
-  await expect(panel.getByText('Claude Code', { exact: true })).toBeVisible();
+  // The assistant is docked under the drawing; “New diagram” is its generate mode.
+  await page.getByRole('combobox', { name: 'What the assistant does' }).selectOption('new');
+  await expect(page.locator('.composer-tool-name')).toHaveText('Claude Code');
 
-  await panel.getByLabel('Describe the diagram').fill('An API that reads from a database');
-  await panel.getByRole('button', { name: 'Generate' }).click();
-  await expect(panel.getByText(/2 shapes and 1 connections/)).toBeVisible();
-  await panel.getByRole('button', { name: 'Add to drawing' }).click();
+  await page.getByLabel('Message the assistant').fill('An API that reads from a database');
+  await page.getByRole('button', { name: 'Generate diagram' }).click();
+  await expect(page.getByText(/2 shapes and 1 connections/)).toBeVisible();
+  await page.getByRole('button', { name: 'Add to drawing' }).click();
 
   await expect
     .poll(
@@ -128,12 +128,11 @@ test('chat adds shapes and a glued arrow to the drawing', async ({ page, request
   await page.getByRole('button', { name: 'Create' }).click();
   await expect(page.locator('.excalidraw')).toBeVisible({ timeout: 30_000 });
 
-  await page.getByRole('button', { name: 'Chat' }).click();
-  const panel = page.getByRole('dialog', { name: 'Chat about this diagram' });
-  await panel.getByPlaceholder('Ask for a change…').fill('Add a cache that writes to a store');
-  await panel.getByRole('button', { name: 'Send' }).click();
+  // “Edit this drawing” is the assistant's default mode.
+  await page.getByLabel('Message the assistant').fill('Add a cache that writes to a store');
+  await page.getByRole('button', { name: 'Send' }).click();
   // Two shapes and one arrow are three changes.
-  await expect(panel.getByText(/3 change\(s\) applied/)).toBeVisible();
+  await expect(page.getByText(/3 change\(s\) applied/)).toBeVisible();
 
   await expect
     .poll(

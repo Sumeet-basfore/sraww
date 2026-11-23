@@ -39,6 +39,8 @@ afterEach(() => {
 async function openEditor(onExit = vi.fn()) {
   fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
     if (init?.method === 'PUT') return json(200, { ok: true });
+    if (url === '/api/ai/providers') return json(200, { defaultProvider: 'claude', providers: [] });
+    if (url === '/api/library') return json(200, { items: [] });
     return json(200, SCENE);
   });
   render(<Editor name="notes" onExit={onExit} />);

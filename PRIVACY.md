@@ -4,7 +4,7 @@ Last updated: 2026-11-23
 
 ## The short version
 
-sraww runs on your computer. It has no accounts, no analytics, no telemetry, and no servers of its own. Your drawings and settings stay in folders on your machine. Once the upload feature ships, your code will stay there too.
+sraww runs on your computer. It has no accounts, no analytics, no telemetry, and no servers of its own. Your drawings, settings and uploaded code projects stay in folders on your machine.
 
 When you use an AI feature, the text involved is sent by the Claude Code or Codex command-line tool you installed to that tool's provider (Anthropic or OpenAI), using your own account. Their terms and privacy policies apply to that traffic. sraww cannot see it, and it cannot change it.
 
@@ -25,15 +25,17 @@ You do not have to trust this document. Every claim below can be checked in the 
 
 Relative paths such as `./data/diagrams` are relative to the folder you start sraww from.
 
-| Data                                             | Where it is kept                                               | Setting             | How to delete it                                                          |
-| ------------------------------------------------ | -------------------------------------------------------------- | ------------------- | ------------------------------------------------------------------------- |
-| Drawings (`.excalidraw` files)                   | `DIAGRAMS_DIR`, default `./data/diagrams`                      | `DIAGRAMS_DIR`      | Delete the drawing in the app, or delete the folder                       |
-| Architecture maps and their layouts              | `DIAGRAMS_DIR`                                                 | `DIAGRAMS_DIR`      | Delete the map in the app, or delete the folder                           |
-| AI tool choices (which tool, model and effort)   | `AI_SETTINGS_FILE`, default `./data/ai-settings.json`          | `AI_SETTINGS_FILE`  | Delete the file. It holds no credentials                                  |
-| Working folder for the AI tools                  | `AI_WORKDIR`, default `./data/ai-workdir`                      | `AI_WORKDIR`        | Delete the folder. The app removes its temporary files after each request |
-| Excalidraw library (reusable shapes)             | `DIAGRAMS_DIR`, file `library.json`                            | `DIAGRAMS_DIR`      | Delete the file, or remove items in the editor's library panel            |
-| Display preferences (theme, drawing style)       | Your browser's local storage, key `sraww.prefs`                | Settings in the app | Clear the site's data in your browser                                     |
-| Editor drafts (library publishing, Mermaid text) | Your browser's local storage, written by the Excalidraw editor | None                | Clear the site's data in your browser. We have not confirmed these keys   |
+| Data                                               | Where it is kept                                               | Setting             | How to delete it                                                          |
+| -------------------------------------------------- | -------------------------------------------------------------- | ------------------- | ------------------------------------------------------------------------- |
+| Drawings (`.excalidraw` files)                     | `DIAGRAMS_DIR`, default `./data/diagrams`                      | `DIAGRAMS_DIR`      | Delete the drawing in the app, or delete the folder                       |
+| Architecture maps and their layouts                | `DIAGRAMS_DIR`                                                 | `DIAGRAMS_DIR`      | Delete the map in the app, or delete the folder                           |
+| AI tool choices (which tool, model and effort)     | `AI_SETTINGS_FILE`, default `./data/ai-settings.json`          | `AI_SETTINGS_FILE`  | Delete the file. It holds no credentials                                  |
+| Working folder for the AI tools                    | `AI_WORKDIR`, default `./data/ai-workdir`                      | `AI_WORKDIR`        | Delete the folder. The app removes its temporary files after each request |
+| Uploaded code projects (kept files and a manifest) | `PROJECTS_DIR`, default `./data/projects`                      | `PROJECTS_DIR`      | Click Delete beside the project on the start page, or delete its folder   |
+| Excalidraw library (reusable shapes)               | `DIAGRAMS_DIR`, file `library.json`                            | `DIAGRAMS_DIR`      | Delete the file, or remove items in the editor's library panel            |
+| Display preferences (theme, drawing style)         | Your browser's local storage, key `sraww.prefs`                | Settings in the app | Clear the site's data in your browser                                     |
+| Walkthrough status (seen or not)                   | Your browser's local storage, key `sraww.tourSeen`             | None                | Clear the site's data in your browser                                     |
+| Editor drafts (library publishing, Mermaid text)   | Your browser's local storage, written by the Excalidraw editor | None                | Clear the site's data in your browser. We have not confirmed these keys   |
 
 The drawings, architecture maps, AI settings and working folder are plain files on your machine. sraww does not upload them anywhere.
 
@@ -52,27 +54,30 @@ sraww never reads, stores or transmits a password, a sign-in token or an API key
 
 Each AI action below sends only the content listed. Nothing is sent for an AI action unless you press the button or send the message.
 
-| You do this                                   | What is sent to the provider                                                                                                                                                                           |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Press **Generate**                            | The text you typed in the prompt box                                                                                                                                                                   |
-| Send a **Chat** message                       | Your message; the last 12 messages of the chat; and a summary of the open drawing: each shape's identifier, kind and label, and each arrow's identifier and the identifiers of the shapes it connects  |
-| Press **Explain selection**                   | The same as a chat message, but the summary covers only the selected shapes and arrows, plus the identifiers of the shapes those arrows connect                                                        |
-| Press **Name with AI** on an architecture map | For each folder: its path relative to the project root; up to 15 file base names (names only, not paths); and the other folders and npm packages it imports, with counts. File contents are never sent |
+| You do this                                   | What is sent to the provider                                                                                                                                                                                           |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Press **Generate diagram** (New diagram mode) | The text you typed in the assistant's message box                                                                                                                                                                      |
+| Send a message (Edit this drawing mode)       | Your message; the last 12 messages of the chat; and a summary of the open drawing: each shape's identifier, kind and label, and each arrow's identifier, its label text, and the identifiers of the shapes it connects |
+| Press **+** to explain the selected shapes    | The same as a chat message, but the summary covers only the selected shapes and arrows, plus the identifiers of the shapes those arrows connect and their label text                                                   |
+| Press **Name with AI** on an architecture map | For each folder: its path relative to the project root; up to 15 file base names (names only, not paths); and the other folders and npm packages it imports, with counts. File contents are never sent                 |
 
 Architecture maps are built on your computer with no AI call. The map itself never leaves your machine.
 
 The provider sees the content of each request. Anthropic and OpenAI handle it under their own terms, retention periods and privacy policies. Check those before you use the AI features with private material. The CLI tools may also have their own usage and telemetry settings. sraww does not change those settings. Their documentation explains them.
 
-## Code upload (planned, not yet released)
+## Code upload
 
-A feature that lets you upload a project folder or zip file is planned. It is not part of the app today. When it is released, this policy will be updated before the release. It commits to the following:
+On the start page, under **Code projects**, you can upload a project folder or a zip file so that its structure can be mapped. Before the upload you tick a notice that says the code stays on this computer, and that an AI tool sees only folder paths and file names, and only when you press **Name with AI**.
 
-- Uploaded code is stored only in a folder on your machine, as a snapshot. The folder will be set in the configuration.
-- Dependency folders, build output, lockfiles, binary files, and files that look like secrets (for example `.env` files, private keys and credential files) are excluded by default. The list of excluded files is shown to you before anything is sent.
-- Code is sent to an AI provider only when you start an analysis, through the CLI you installed, and only after you accept a consent notice for that project.
-- You can delete a project and all of its snapshots and cached results in one step.
+- **Where it is kept.** Each upload is a snapshot of the files that were kept, stored under `PROJECTS_DIR` with a small manifest. The manifest records the project name, when it was uploaded, when you accepted the notice, how many files were kept and their total size, and the list of files left out with the reason for each. The paths of left-out files are therefore stored as well. Their contents are not.
+- **Skipped in the browser, not listed.** Before anything is sent, the browser leaves out the contents of package, build, cache and version-control folders (for example `node_modules`, `.git`, `dist`, `build`, `target`), and any file over 1 MB. These are the bulk of a project's size, and they are not named in the list on the start page.
+- **Left out by the server, and listed with a reason.** Credential, key and lock files (for example `.env`, `.npmrc`, `*.pem`, `package-lock.json`). Binary files such as images, fonts, archives and compiled code. Text files that match a known credential format: cloud access keys, private key blocks, and common API token prefixes. A password written in plain text in an ordinary file is not detected. Paths that try to leave the project are refused. The start page lists each of these with its reason.
+- **Limits.** At most 5,000 files, 50 MB after unpacking, and a 60 MB zip. Only the files that are kept count toward these limits.
+- **Where the checks happen.** The browser skips the files listed above before sending. The server checks every file again, so the rules hold even if the browser is changed.
+- **What is sent to an AI tool.** The upload sends nothing to an AI tool. Mapping a project builds the map on your computer with no AI call. Pressing **Name with AI** on the map sends the folder paths and file names listed in the table above, never file contents.
+- **Deleting.** Click **Delete** beside a project on the start page. That removes its kept files and its manifest. Architecture maps made from the project are drawings in `DIAGRAMS_DIR`, and they keep their folder and file paths until you delete them.
 
-If the released feature does not do what this section says, that is a bug. Please report it.
+If the upload does not do what this section says, that is a bug. Please report it.
 
 ## Third-party software inside the app
 
@@ -88,7 +93,7 @@ The drawing editor is [Excalidraw](https://excalidraw.com), bundled into the app
 
 - **Read the code.** sraww's own requests from the browser are made through `src/client/lib/api.ts`, which calls only the app's own `/api` routes. The server listens only on `127.0.0.1`, set in `src/server/index.ts`. The environment passed to the AI tools is set in `src/server/ai/services.ts` and `src/server/ai/runner.ts`.
 - **Watch the network.** Open the production build with your browser's developer tools on the Network tab. Every request should go to `127.0.0.1`. The AI tools make their own requests from their own processes, and those do not appear in the browser.
-- **Run the test.** `npm run test:e2e` runs `e2e/privacy.spec.ts`. It fails if, during the flows it covers, the browser makes a request to a host other than this machine, or if the Content Security Policy blocks such a request. The covered flows are: the drawing list, a new drawing with its Generate and Chat panels opened, and the AI tools page. It does not cover the main menu, the library or the Share option.
+- **Run the test.** `npm run test:e2e` runs `e2e/privacy.spec.ts`. It fails if, during the flows it covers, the browser makes a request to a host other than this machine, or if the Content Security Policy blocks such a request. The covered flows are: the drawing list, a new drawing with the assistant in both of its modes, and the AI tools page. It does not cover the main menu, the library or the Share option.
 
 ## Changes to this policy
 
