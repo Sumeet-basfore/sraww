@@ -49,19 +49,44 @@ export async function fetchRepoZip(
           .split('/')
           .map((segment) => encodeURIComponent(segment))
           .join('/')}`;
-  const response = await fetchImpl(url, { signal: AbortSignal.timeout(timeoutMs) });
+  const signal = AbortSignal.timeout(timeoutMs);
+  let currentUrl = url;
+  let redirects = 0;
+  let response: Response;
+  while (true) {
+    response = await fetchImpl(currentUrl, { redirect: 'manual', signal });
+    if (response.type === 'opaqueredirect') {
+      throw intakeError('The download did not come from GitHub.', 502);
+    }
 
-  if (response.url) {
-    let host: string;
-    try {
-      host = new URL(response.url).host;
-    } catch {
+    const isRedirect = [301, 302, 303, 307, 308].includes(response.status);
+    if (isRedirect) {
+      if (redirects >= 3) {
+        throw intakeError('GitHub redirected the download too many times.', 502);
+      }
+      const location = response.headers.get('Location');
+      if (!location) throw intakeError('The download did not come from GitHub.', 502);
+
+      let redirectUrl: URL;
+      try {
+        redirectUrl = new URL(location, currentUrl);
+      } catch {
+        throw intakeError('The download did not come from GitHub.', 502);
+      }
+      if (redirectUrl.protocol !== 'https:' || redirectUrl.host !== 'codeload.github.com') {
+        throw intakeError('The download did not come from GitHub.', 502);
+      }
+
+      currentUrl = redirectUrl.href;
+      redirects += 1;
+      continue;
+    }
+    if (response.status >= 300 && response.status < 400 && !response.headers.get('Location')) {
       throw intakeError('The download did not come from GitHub.', 502);
     }
-    if (host !== 'codeload.github.com') {
-      throw intakeError('The download did not come from GitHub.', 502);
-    }
+    break;
   }
+
   if (response.status === 404) throw intakeError('Repository or branch not found.', 404);
   if (!response.ok) throw intakeError('The GitHub archive could not be downloaded.', 502);
 

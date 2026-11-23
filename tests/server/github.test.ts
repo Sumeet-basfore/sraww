@@ -103,16 +103,78 @@ describe('fetchRepoZip', () => {
     });
   });
 
-  it('rejects a redirect whose final host is not codeload.github.com', async () => {
+  it('follows a redirect to codeload.github.com and returns its bytes', async () => {
     const fetchImpl = vi
       .fn<typeof fetch>()
-      .mockResolvedValue(
-        responseWithBody([new Uint8Array([1])], { url: 'https://example.com/archive.zip' }),
-      );
+      .mockResolvedValueOnce(
+        responseWithBody([], {
+          status: 302,
+          headers: { Location: 'https://codeload.github.com/owner/project/archive.zip' },
+        }),
+      )
+      .mockResolvedValueOnce(responseWithBody([new Uint8Array([1, 2, 3])]));
+    await expect(fetchRepoZip({ repo: 'owner/project' }, fetchImpl)).resolves.toEqual(
+      new Uint8Array([1, 2, 3]),
+    );
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(fetchImpl.mock.calls.map(([url]) => url)).toEqual([
+      'https://codeload.github.com/owner/project/zip/HEAD',
+      'https://codeload.github.com/owner/project/archive.zip',
+    ]);
+  });
+
+  it('rejects a redirect to another host without making another request', async () => {
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
+      responseWithBody([], {
+        status: 302,
+        headers: { Location: 'https://evil.example.com/x' },
+      }),
+    );
     await expect(fetchRepoZip({ repo: 'owner/project' }, fetchImpl)).rejects.toMatchObject({
       message: 'The download did not come from GitHub.',
       status: 502,
     });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects an insecure redirect to codeload.github.com', async () => {
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
+      responseWithBody([], {
+        status: 302,
+        headers: { Location: 'http://codeload.github.com/archive.zip' },
+      }),
+    );
+    await expect(fetchRepoZip({ repo: 'owner/project' }, fetchImpl)).rejects.toMatchObject({
+      message: 'The download did not come from GitHub.',
+      status: 502,
+    });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects more than three codeload redirects', async () => {
+    const fetchImpl = vi.fn<typeof fetch>().mockImplementation(async (input) => {
+      const url = new URL(String(input));
+      return responseWithBody([], {
+        status: 302,
+        headers: { Location: `${url.pathname}/next` },
+      });
+    });
+    await expect(fetchRepoZip({ repo: 'owner/project' }, fetchImpl)).rejects.toMatchObject({
+      message: 'GitHub redirected the download too many times.',
+      status: 502,
+    });
+    expect(fetchImpl).toHaveBeenCalledTimes(4);
+  });
+
+  it('rejects a redirect response without a Location header', async () => {
+    const fetchImpl = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(responseWithBody([], { status: 302 }));
+    await expect(fetchRepoZip({ repo: 'owner/project' }, fetchImpl)).rejects.toMatchObject({
+      message: 'The download did not come from GitHub.',
+      status: 502,
+    });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 });
 
