@@ -139,22 +139,21 @@ export function ProjectsSection({ onChanged }: ProjectsSectionProps) {
   return (
     <section className="projects" aria-labelledby="projects-title">
       <h2 id="projects-title">Code projects</h2>
-      <p className="muted">
-        Upload a project folder or a zip file to draw its structure. Package, build, cache and
-        version-control folders are skipped without being listed. For a folder upload, files over 1
-        MB are not read. For a zip upload, the browser reads the whole archive into memory, but
-        oversized files and skipped-folder entries are not decompressed or included in the upload.
-        They are listed with that reason. Other excluded files are listed with their reason. The
-        code stays in your data folder. An AI tool sees only folder paths and file names, and only
-        when you press “Name with AI” on the map. File contents are never sent.
-      </p>
+      <aside className="privacy-notice" aria-labelledby="privacy-notice-title">
+        <h3 id="privacy-notice-title">Your code stays on this computer</h3>
+        <p>
+          An AI tool sees only folder paths and file names, and only when you press Review with AI
+          or Name with AI.
+        </p>
+        <p>File contents are never sent.</p>
+        <a href="/PRIVACY.md">Details</a>
+      </aside>
 
       <label className="consent">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
         <span>
           I understand that this project’s code is kept on this computer, and that an AI tool sees
-          only folder paths and file names, and only when I press “Name with AI”. See the privacy
-          policy.
+          only folder paths and file names, and only when I press Review with AI or Name with AI.
         </span>
       </label>
 
@@ -194,55 +193,57 @@ export function ProjectsSection({ onChanged }: ProjectsSectionProps) {
         />
       </div>
 
-      <fieldset className="github-import">
-        <legend>From GitHub</legend>
-        <label>
-          <span>GitHub repository (owner/repo)</span>
-          <input
-            type="text"
-            value={githubRepo}
-            onChange={(e) => setGithubRepo(e.target.value)}
-            autoComplete="off"
-          />
-        </label>
-        <label>
-          <span>Branch (optional)</span>
-          <input
-            type="text"
-            value={githubRef}
-            onChange={(e) => setGithubRef(e.target.value)}
-            autoComplete="off"
-          />
-        </label>
-        <label>
-          <span>Project name</span>
-          <input
-            type="text"
-            value={githubName}
-            onChange={(e) => setGithubName(e.target.value)}
-            maxLength={80}
-          />
-        </label>
-        <label className="consent">
-          <input
-            type="checkbox"
-            checked={githubConsent}
-            onChange={(e) => setGithubConsent(e.target.checked)}
-          />
-          <span>
-            This downloads the public repository from GitHub (codeload.github.com). The code then
-            stays on this computer, and nothing is sent to an AI tool.
-          </span>
-        </label>
-        <button
-          type="button"
-          className="button primary"
-          disabled={!githubConsent || !githubRepo.trim() || !githubName.trim() || busy}
-          onClick={() => void importGithub()}
-        >
-          Import from GitHub
-        </button>
-      </fieldset>
+      <details className="github-import">
+        <summary>From GitHub</summary>
+        <div className="github-import-fields">
+          <label>
+            <span>GitHub repository (owner/repo)</span>
+            <input
+              type="text"
+              value={githubRepo}
+              onChange={(e) => setGithubRepo(e.target.value)}
+              autoComplete="off"
+            />
+          </label>
+          <label>
+            <span>Branch (optional)</span>
+            <input
+              type="text"
+              value={githubRef}
+              onChange={(e) => setGithubRef(e.target.value)}
+              autoComplete="off"
+            />
+          </label>
+          <label>
+            <span>Project name</span>
+            <input
+              type="text"
+              value={githubName}
+              onChange={(e) => setGithubName(e.target.value)}
+              maxLength={80}
+            />
+          </label>
+          <label className="consent">
+            <input
+              type="checkbox"
+              checked={githubConsent}
+              onChange={(e) => setGithubConsent(e.target.checked)}
+            />
+            <span>
+              This downloads the public repository from GitHub (codeload.github.com). The code then
+              stays on this computer, and nothing is sent to an AI tool.
+            </span>
+          </label>
+          <button
+            type="button"
+            className="button primary"
+            disabled={!githubConsent || !githubRepo.trim() || !githubName.trim() || busy}
+            onClick={() => void importGithub()}
+          >
+            Import from GitHub
+          </button>
+        </div>
+      </details>
 
       {status && (
         <p role="status" className="muted">

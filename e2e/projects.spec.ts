@@ -12,8 +12,18 @@ test.beforeAll(async () => {
 
 test('uploads a project zip after the privacy notice, lists what was left out, and deletes it', async ({
   page,
+  request,
 }) => {
   await page.goto('/');
+  await expect(
+    page.getByRole('heading', { name: 'Your code stays on this computer' }),
+  ).toBeVisible();
+  await expect(page.getByText(/only when you press Review with AI or Name with AI/)).toBeVisible();
+  await expect(page.getByText('File contents are never sent.')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Details' })).toHaveAttribute('href', '/PRIVACY.md');
+  const privacyPage = await request.get('/PRIVACY.md');
+  expect(privacyPage.ok()).toBeTruthy();
+  expect(await privacyPage.text()).toContain('Privacy');
   const zipButton = page.getByRole('button', { name: 'Upload a zip file' });
   await expect(zipButton).toBeDisabled();
   await page.getByRole('checkbox', { name: /I understand/ }).check();

@@ -1,0 +1,307 @@
+.start-page-container.page {
+  max-width: 1184px;
+  padding: 36px 32px 88px;
+}
+
+.start-page .masthead {
+  margin-bottom: 42px;
+}
+
+.start-page .masthead-links {
+  gap: 16px;
+}
+
+.ai-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 27px;
+  padding: 3px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.start-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.06fr) minmax(0, 0.94fr);
+  align-items: start;
+  gap: clamp(36px, 5vw, 68px);
+}
+
+.start-diagrams,
+.start-tools {
+  min-width: 0;
+}
+
+.start-page .intro {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.start-page .intro h1 {
+  font-size: clamp(42px, 5vw, 60px);
+  line-height: 1;
+}
+
+.start-page .meta {
+  flex: none;
+  margin: 0 0 5px;
+  font-size: 10px;
+}
+
+.start-page .new-diagram {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  margin: 32px 0 10px;
+}
+
+.start-page .new-diagram input {
+  font-size: 18px;
+}
+
+.start-page .import-row {
+  margin-bottom: 22px;
+}
+
+.start-page .empty {
+  padding: 28px 0;
+  font-size: 17px;
+}
+
+.start-diagrams > .rows {
+  border-top: 1px solid var(--line-strong);
+}
+
+.start-diagrams .row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 8px;
+  padding: 14px 0;
+}
+
+.start-diagrams .row-title {
+  grid-column: 1;
+  max-width: 100%;
+  font-size: 19px;
+  white-space: nowrap;
+}
+
+.start-diagrams .row-meta {
+  grid-column: 1;
+  font-size: 10px;
+  white-space: normal;
+}
+
+.start-diagrams .row-actions {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  gap: 2px;
+  opacity: 1;
+}
+
+.icon-button.button {
+  width: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 7px;
+}
+
+.icon-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.start-page .projects {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.start-page .projects h2,
+.start-page .arch-new h2 {
+  font-size: 25px;
+  letter-spacing: -0.025em;
+}
+
+.privacy-notice {
+  display: grid;
+  gap: 4px;
+  margin: 16px 0 14px;
+  padding: 15px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.privacy-notice h3 {
+  margin: 0 0 2px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.privacy-notice p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.privacy-notice a {
+  justify-self: start;
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.start-page .consent {
+  max-width: none;
+  margin: 12px 0 16px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.start-page .form-actions {
+  margin-bottom: 16px;
+}
+
+.start-page .github-import {
+  max-width: none;
+  margin: 0 0 20px;
+  border-radius: var(--radius);
+  background: color-mix(in oklch, var(--surface) 70%, transparent);
+}
+
+.start-page .github-import-fields input[type='text'] {
+  min-height: 40px;
+}
+
+.start-page .github-import-fields .consent {
+  margin: 4px 0;
+}
+
+.start-page .project-rows {
+  margin-top: 14px;
+}
+
+.start-page .project-rows .row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 13px 0;
+}
+
+.start-page .project-rows .row > div {
+  min-width: 0;
+}
+
+.start-page .row-title-static {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.start-page .project-rows .row-meta {
+  display: block;
+  margin-top: 3px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.start-page .arch-new {
+  margin: 28px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.start-page .arch-new-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.start-page .arch-new-form label {
+  min-width: 0;
+}
+
+.start-page .arch-new-form button {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+@media (max-width: 760px) {
+  .start-page-container.page {
+    padding: 28px 16px 64px;
+  }
+
+  .start-page .masthead {
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    margin-bottom: 32px;
+  }
+
+  .start-page .brand-lockup {
+    width: 126px;
+    height: 44px;
+  }
+
+  .start-page .masthead-links {
+    width: 100%;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+
+  .start-columns {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 42px;
+  }
+
+  .start-page .intro h1 {
+    font-size: clamp(42px, 12vw, 52px);
+  }
+
+  .start-page .new-diagram {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    margin-top: 28px;
+  }
+
+  .start-page .new-diagram .button {
+    width: auto;
+  }
+}
+
+@media (max-width: 420px) {
+  .start-page .masthead-links {
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .ai-status {
+    padding-inline: 7px;
+    font-size: 9px;
+  }
+
+  .start-page .arch-new-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .start-page .arch-new-form button {
+    grid-column: auto;
+  }
+}

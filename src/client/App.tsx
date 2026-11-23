@@ -23,7 +23,7 @@ function Pages({ route, onShowTour }: PagesProps) {
   if (route.view === 'list') {
     return (
       <div className="app">
-        <main className="page">
+        <main className="page start-page-container">
           <DiagramList
             onOpen={(name) => goTo(editorHash(name))}
             onOpenArchitecture={(name) => goTo(architectureHash(name))}

@@ -1,4 +1,6 @@
 /* sraww styles. Tokens first, then the screens in the order they appear in the app. */
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
 
 @font-face {
   font-family: 'Space Grotesk';
@@ -35,7 +37,7 @@
   --radius: 6px;
   --radius-lg: 12px;
   --font-sans: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
   --shadow-sheet: 0 1px 2px oklch(20% 0.02 265 / 0.06), 0 22px 44px -18px oklch(20% 0.03 265 / 0.3);
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
@@ -1487,20 +1489,27 @@ textarea:focus {
 
 .github-import {
   display: grid;
-  gap: 0.75rem;
+  gap: 0;
   max-width: 38rem;
   margin: 1.5rem 0;
-  padding: 1rem;
+  padding: 0;
   border: 1px solid var(--line);
   border-radius: 0.5rem;
 }
 
-.github-import legend {
-  padding: 0 0.35rem;
-  font-weight: 600;
+.github-import > summary {
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  font-weight: 500;
 }
 
-.github-import > label:not(.consent) {
+.github-import-fields {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0 1rem 1rem;
+}
+
+.github-import-fields > label:not(.consent) {
   display: grid;
   gap: 0.3rem;
 }
@@ -1510,11 +1519,11 @@ textarea:focus {
   min-width: 0;
 }
 
-.github-import .consent {
+.github-import-fields .consent {
   margin: 0.25rem 0;
 }
 
-.github-import button {
+.github-import-fields button {
   justify-self: start;
 }
 
