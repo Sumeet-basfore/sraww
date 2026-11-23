@@ -48,9 +48,62 @@ describe('ProjectsSection', () => {
     expect(folder).toBeDisabled();
     expect(zip).toBeDisabled();
 
-    await user.click(screen.getByRole('checkbox'));
+    await user.click(
+      screen.getByRole('checkbox', { name: /I understand that this project’s code/i }),
+    );
     expect(folder).toBeEnabled();
     expect(zip).toBeEnabled();
+  });
+
+  it('requires GitHub privacy consent and posts the repository details', async () => {
+    const imported = {
+      ...PROJECT,
+      name: 'shop',
+      source: { kind: 'github', repo: 'acme/shop', ref: 'main' },
+    };
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (url === '/api/projects' && !init?.method) return json(200, { projects: [imported] });
+      if (url === '/api/projects/github' && init?.method === 'POST') return json(201, imported);
+      return json(404, { error: 'not found' });
+    });
+    const onChanged = vi.fn();
+    render(<ProjectsSection onChanged={onChanged} />);
+    const user = userEvent.setup();
+    const button = screen.getByRole('button', { name: 'Import from GitHub' });
+    expect(button).toBeDisabled();
+    await user.type(screen.getByLabelText('GitHub repository (owner/repo)'), 'acme/shop');
+    await user.type(screen.getByLabelText('Branch (optional)'), 'main');
+    await user.type(screen.getByLabelText('Project name'), 'shop');
+    await user.click(screen.getByRole('checkbox', { name: /downloads the public repository/i }));
+    expect(button).toBeEnabled();
+    await user.click(button);
+
+    await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/projects/github',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ repo: 'acme/shop', ref: 'main', name: 'shop', consent: true }),
+      }),
+    );
+    expect((await screen.findAllByText(/acme\/shop \(GitHub\)/)).length).toBeGreaterThan(0);
+  });
+
+  it('shows GitHub import server errors inline', async () => {
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (url === '/api/projects' && !init?.method) return json(200, { projects: [] });
+      if (url === '/api/projects/github' && init?.method === 'POST') {
+        return json(404, { error: 'Repository or branch not found.' });
+      }
+      return json(404, { error: 'not found' });
+    });
+    render(<ProjectsSection onChanged={() => undefined} />);
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText('GitHub repository (owner/repo)'), 'acme/missing');
+    await user.type(screen.getByLabelText('Project name'), 'Missing');
+    await user.click(screen.getByRole('checkbox', { name: /downloads the public repository/i }));
+    await user.click(screen.getByRole('button', { name: 'Import from GitHub' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Repository or branch not found.');
   });
 
   it('lists each project with its file count and the files left out, and why', async () => {

@@ -2,6 +2,7 @@ import type { ExcalidrawScene } from '../../shared/diagram.ts';
 import type { DiagramGraph } from '../../shared/ai-schemas.ts';
 import type { ChatOp, ChatRequest } from '../../shared/chat-schemas.ts';
 import type { ArchDiff, ArchLayout, ArchModel } from '../../shared/arch-model.ts';
+import type { ArchFinding } from '../../shared/arch-findings.ts';
 import type {
   LoginFlow,
   ProviderId,
@@ -93,6 +94,7 @@ export interface ProjectSummary {
   fileCount: number;
   bytes: number;
   excluded: ProjectExclusion[];
+  source?: { kind: 'github'; repo: string; ref: string };
 }
 
 export const projectsApi = {
@@ -120,6 +122,14 @@ export const projectsApi = {
     }
     return body as ProjectSummary;
   },
+  importGithub(input: {
+    repo: string;
+    ref?: string;
+    name: string;
+    consent: true;
+  }): Promise<ProjectSummary> {
+    return request('/projects/github', { method: 'POST', body: JSON.stringify(input) });
+  },
   remove(id: string): Promise<void> {
     return request(`/projects/${encodeURIComponent(id)}`, { method: 'DELETE' });
   },
@@ -131,6 +141,18 @@ export const libraryApi = {
   },
   save(items: unknown[]): Promise<{ count: number }> {
     return request('/library', { method: 'PUT', body: JSON.stringify({ items }) });
+  },
+};
+
+export interface MathRenderResponse {
+  svg: string;
+  width: number;
+  height: number;
+}
+
+export const mathApi = {
+  render(input: { latex: string; fontSize: number }): Promise<MathRenderResponse> {
+    return request('/math/render', { method: 'POST', body: JSON.stringify(input) });
   },
 };
 
@@ -205,12 +227,41 @@ export interface ArchProjectInfo {
   label: string;
 }
 
+export interface ArchReviewFinding {
+  severity: 'high' | 'medium' | 'low';
+  title: string;
+  evidence: string[];
+  suggestion: string;
+}
+
+export interface ArchReview {
+  summary: string;
+  findings: ArchReviewFinding[];
+}
+
+export interface ArchReviewSidecar {
+  version: 1;
+  generatedAt: string;
+  modelGeneratedAt: string;
+  provider: ProviderId;
+  review: ArchReview;
+}
+
 export const archApi = {
   projects(): Promise<{ projects: ArchProjectInfo[] }> {
     return request('/arch/projects');
   },
   model(name: string): Promise<{ model: ArchModel; layout: ArchLayout | null }> {
     return request(`/arch/models/${encodeURIComponent(name)}`);
+  },
+  review(name: string): Promise<{ review: ArchReviewSidecar | null; stale: boolean }> {
+    return request(`/arch/models/${encodeURIComponent(name)}/review`);
+  },
+  runReview(name: string): Promise<{ review: ArchReviewSidecar; skipped: number }> {
+    return request(`/arch/models/${encodeURIComponent(name)}/review`, { method: 'POST' });
+  },
+  findings(name: string): Promise<{ findings: ArchFinding[] }> {
+    return request(`/arch/models/${encodeURIComponent(name)}/findings`);
   },
   scan(
     projectId: string,

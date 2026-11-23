@@ -21,6 +21,24 @@ const CHAT_REPLY = {
   ],
 };
 
+const REVIEW_REPLY = {
+  summary: 'Review summary',
+  findings: [
+    {
+      severity: 'high',
+      title: 'Unsupported claim',
+      evidence: ['ghost'],
+      suggestion: 'Split ghost by feature.',
+    },
+    {
+      severity: 'medium',
+      title: 'Split source',
+      evidence: ['src', 'ghost'],
+      suggestion: 'Split src by feature.',
+    },
+  ],
+};
+
 const NAMING_REPLY = {
   components: [
     { id: 'src', label: 'Source code', description: 'Application code.' },
@@ -84,6 +102,9 @@ function runClaude() {
       return;
     case 'naming':
       process.stdout.write(claudeEnvelope(NAMING_REPLY));
+      return;
+    case 'review':
+      process.stdout.write(claudeEnvelope(REVIEW_REPLY));
       return;
     case 'chat':
       process.stdout.write(claudeEnvelope(CHAT_REPLY));

@@ -14,9 +14,11 @@ import { createLibraryRouter } from './routes/library.ts';
 import { createLibraryStore } from './storage/library-store.ts';
 import { createProjectRouter } from './routes/projects.ts';
 import { createProjectStore } from './projects/store.ts';
+import type { fetchRepoZip } from './projects/github.ts';
 import { uploadedArchProjects } from './projects/arch-projects.ts';
 import type { ArchProject } from './arch/projects.ts';
 import { createDiagramStore, type DiagramStore } from './storage/diagram-store.ts';
+import { createMathRouter } from './routes/math.ts';
 
 export const JSON_BODY_LIMIT = '10mb';
 
@@ -41,6 +43,7 @@ export function createApp(
   store: DiagramStore = createDiagramStore(config.DIAGRAMS_DIR),
   clientDir: string = CLIENT_BUILD_DIR,
   ai: AiServices = createAiServices(config),
+  projects: { fetchRepo?: typeof fetchRepoZip } = {},
 ): express.Express {
   const app = express();
   const projectStore = createProjectStore(config.PROJECTS_DIR);
@@ -64,8 +67,9 @@ export function createApp(
   });
 
   app.use('/api/diagrams', createDiagramRouter(store));
+  app.use('/api/math', createMathRouter());
   app.use('/api/library', createLibraryRouter(createLibraryStore(store.dir)));
-  app.use('/api/projects', createProjectRouter(projectStore));
+  app.use('/api/projects', createProjectRouter(projectStore, projects));
   app.use('/api/arch', createArchRouter(createArchStore(store.dir), archProjects, ai));
   app.use('/api/ai', createAiRouter(ai));
 

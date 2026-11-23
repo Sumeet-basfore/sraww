@@ -55,6 +55,10 @@ export function ProjectsSection({ onChanged }: ProjectsSectionProps) {
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [last, setLast] = useState<ProjectSummary | null>(null);
+  const [githubRepo, setGithubRepo] = useState('');
+  const [githubRef, setGithubRef] = useState('');
+  const [githubName, setGithubName] = useState('');
+  const [githubConsent, setGithubConsent] = useState(false);
   const folderInput = useRef<HTMLInputElement>(null);
   const zipInput = useRef<HTMLInputElement>(null);
 
@@ -100,6 +104,27 @@ export function ProjectsSection({ onChanged }: ProjectsSectionProps) {
       onChanged();
     } catch (err) {
       setError(errorMessage(err));
+    }
+  }
+
+  async function importGithub(): Promise<void> {
+    setError(null);
+    setLast(null);
+    setStatus('Downloading and checking the GitHub repository…');
+    try {
+      const created = await projectsApi.importGithub({
+        repo: githubRepo.trim(),
+        ...(githubRef.trim() ? { ref: githubRef.trim() } : {}),
+        name: githubName.trim(),
+        consent: true,
+      });
+      setLast(created);
+      await load();
+      onChanged();
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setStatus(null);
     }
   }
 
@@ -169,6 +194,56 @@ export function ProjectsSection({ onChanged }: ProjectsSectionProps) {
         />
       </div>
 
+      <fieldset className="github-import">
+        <legend>From GitHub</legend>
+        <label>
+          <span>GitHub repository (owner/repo)</span>
+          <input
+            type="text"
+            value={githubRepo}
+            onChange={(e) => setGithubRepo(e.target.value)}
+            autoComplete="off"
+          />
+        </label>
+        <label>
+          <span>Branch (optional)</span>
+          <input
+            type="text"
+            value={githubRef}
+            onChange={(e) => setGithubRef(e.target.value)}
+            autoComplete="off"
+          />
+        </label>
+        <label>
+          <span>Project name</span>
+          <input
+            type="text"
+            value={githubName}
+            onChange={(e) => setGithubName(e.target.value)}
+            maxLength={80}
+          />
+        </label>
+        <label className="consent">
+          <input
+            type="checkbox"
+            checked={githubConsent}
+            onChange={(e) => setGithubConsent(e.target.checked)}
+          />
+          <span>
+            This downloads the public repository from GitHub (codeload.github.com). The code then
+            stays on this computer, and nothing is sent to an AI tool.
+          </span>
+        </label>
+        <button
+          type="button"
+          className="button primary"
+          disabled={!githubConsent || !githubRepo.trim() || !githubName.trim() || busy}
+          onClick={() => void importGithub()}
+        >
+          Import from GitHub
+        </button>
+      </fieldset>
+
       {status && (
         <p role="status" className="muted">
           {status}
@@ -183,8 +258,10 @@ export function ProjectsSection({ onChanged }: ProjectsSectionProps) {
       {last && (
         <div className="preview">
           <p>
-            Uploaded “{last.name}”: {last.fileCount} file{last.fileCount === 1 ? '' : 's'} kept. Map
-            it below under “Map a project”.
+            {last.source?.kind === 'github' ? 'Imported' : 'Uploaded'} “{last.name}”
+            {last.source?.kind === 'github' ? ` from ${last.source.repo} (GitHub)` : ''}:{' '}
+            {last.fileCount} file
+            {last.fileCount === 1 ? '' : 's'} kept. Map it below under “Map a project”.
           </p>
           <Excluded items={last.excluded} />
         </div>
@@ -198,8 +275,10 @@ export function ProjectsSection({ onChanged }: ProjectsSectionProps) {
                 <span className="row-title-static">{project.name}</span>
                 <span className="row-meta">
                   {' '}
-                  {project.fileCount} files · uploaded{' '}
+                  {project.fileCount} files ·{' '}
+                  {project.source?.kind === 'github' ? 'imported' : 'uploaded'}{' '}
                   {new Date(project.createdAt).toLocaleString()}
+                  {project.source?.kind === 'github' ? ` · ${project.source.repo} (GitHub)` : ''}
                 </span>
                 <Excluded items={project.excluded} />
               </div>
