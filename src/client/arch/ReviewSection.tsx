@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import type { ArchModel } from '../../shared/arch-model.ts';
 import { archApi, type ArchReviewSidecar } from '../lib/api.ts';
 import { errorMessage } from '../lib/errors.ts';
-import './ReviewSection.css';
 
 interface ReviewSectionProps {
   name: string;

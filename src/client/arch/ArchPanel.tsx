@@ -2,13 +2,17 @@ import { CaptureUpdateAction } from '@excalidraw/excalidraw';
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types';
 import { useEffect, useMemo, useState } from 'react';
 import type { ArchDiff, ArchModel, ArchNode } from '../../shared/arch-model.ts';
+import type { ArchFinding } from '../../shared/arch-findings.ts';
 import { archApi } from '../lib/api.ts';
 import { errorMessage } from '../lib/errors.ts';
 import { capturePositions } from './layout-capture.ts';
 import { elementIds } from './render.ts';
 import { architectureElements } from './to-scene.ts';
+import { InspectorMetrics } from './InspectorMetrics.tsx';
+import { ChangesCard } from './ChangesCard.tsx';
 import { FindingsSection } from './FindingsSection.tsx';
 import { ReviewSection } from './ReviewSection.tsx';
+import './inspector.css';
 
 const LIST_LIMIT = 12;
 
@@ -16,34 +20,6 @@ interface ArchPanelProps {
   name: string;
   getApi: () => ExcalidrawImperativeAPI | null;
   onClose: () => void;
-}
-
-function describeDiff(diff: ArchDiff): string {
-  if (!diff.hasBaseline) return 'First scan. Nothing to compare with yet.';
-  const parts = [
-    `${diff.addedNodes.length} new / ${diff.removedNodes.length} removed folders`,
-    `${diff.addedEdges.length} new / ${diff.removedEdges.length} removed links`,
-  ];
-  return parts.join(' · ');
-}
-
-function Names({ title, items }: { title: string; items: readonly string[] }) {
-  if (items.length === 0) return null;
-  return (
-    <>
-      <p className="small muted panel-sub">{title}</p>
-      <ul className="plain-list small">
-        {items.slice(0, LIST_LIMIT).map((item) => (
-          <li key={item}>
-            <code>{item}</code>
-          </li>
-        ))}
-        {items.length > LIST_LIMIT && (
-          <li className="muted">and {items.length - LIST_LIMIT} more</li>
-        )}
-      </ul>
-    </>
-  );
 }
 
 function NodeDetails({ model, node }: { model: ArchModel; node: ArchNode }) {
@@ -101,7 +77,9 @@ function NodeDetails({ model, node }: { model: ArchModel; node: ArchNode }) {
 export function ArchPanel({ name, getApi, onClose }: ArchPanelProps) {
   const [model, setModel] = useState<ArchModel | null>(null);
   const [diff, setDiff] = useState<ArchDiff | null>(null);
+  const [findings, setFindings] = useState<ArchFinding[] | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [collapsed, setCollapsed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -233,118 +211,120 @@ export function ArchPanel({ name, getApi, onClose }: ArchPanelProps) {
 
   const components = model?.nodes.filter((n) => n.kind === 'component').length ?? 0;
   const packages = model?.nodes.filter((n) => n.kind === 'external').length ?? 0;
+  const nodeLabels = Object.fromEntries(model?.nodes.map((node) => [node.id, node.label]) ?? []);
+  const orphanCount = findings?.filter((finding) => finding.kind === 'orphan').length ?? null;
 
   return (
-    <aside className="sheet arch-panel" role="dialog" aria-labelledby="arch-title">
-      <header className="sheet-header">
-        <h2 id="arch-title">Architecture</h2>
-        <button type="button" className="button ghost small" onClick={onClose} aria-label="Close">
-          Close
-        </button>
+    <aside
+      className={`sheet arch-panel${collapsed ? ' is-collapsed' : ''}`}
+      role="dialog"
+      aria-labelledby="arch-title"
+    >
+      <header className="arch-inspector-header">
+        <div className="arch-inspector-title">
+          <h2 id="arch-title">Architecture</h2>
+          {model && <span className="arch-project-chip">{model.sourceLabel}</span>}
+        </div>
+        <div className="arch-header-actions">
+          <button
+            type="button"
+            className="button ghost small arch-collapse-button"
+            onClick={() => setCollapsed((value) => !value)}
+            aria-expanded={!collapsed}
+            aria-label={collapsed ? 'Expand inspector' : 'Collapse inspector'}
+          >
+            {collapsed ? 'Expand' : 'Collapse'}
+          </button>
+          <button type="button" className="button ghost small" onClick={onClose} aria-label="Close">
+            Close
+          </button>
+        </div>
       </header>
 
-      {model && (
-        <>
-          <p className="small muted">
-            From {model.sourceLabel}, scanned {new Date(model.generatedAt).toLocaleString()}
+      <div className="arch-inspector-content">
+        {model && (
+          <>
+            <p className="arch-scanned small muted">
+              Scanned {new Date(model.generatedAt).toLocaleString()}
+            </p>
+            <InspectorMetrics
+              folders={components}
+              packages={packages}
+              dependencies={model.edges.length}
+              orphans={orphanCount}
+            />
+            {diff && <ChangesCard diff={diff} />}
+            <div className="arch-maintenance-actions" aria-label="Map actions">
+              <button
+                type="button"
+                className="button ghost small"
+                disabled={busy}
+                onClick={() => void rescan()}
+              >
+                Re-scan
+              </button>
+              <button
+                type="button"
+                className="button ghost small"
+                disabled={busy}
+                onClick={() => void saveLayout()}
+              >
+                Save layout
+              </button>
+              <button
+                type="button"
+                className="button ghost small danger"
+                disabled={busy}
+                onClick={() => void resetLayout()}
+              >
+                Reset layout
+              </button>
+            </div>
+            <FindingsSection
+              name={name}
+              getApi={getApi}
+              selectedIds={selectedIds}
+              onSelection={setSelectedIds}
+              nodeLabels={nodeLabels}
+              onFindingsChange={setFindings}
+              refreshKey={model.generatedAt}
+            />
+            <ReviewSection name={name} model={model} />
+            {selectedNode && (
+              <section className="arch-selected-folder">
+                <NodeDetails model={model} node={selectedNode} />
+                {selectedNode.members.length > 0 && (
+                  <button
+                    type="button"
+                    className="button ghost small"
+                    onClick={() => void copyFiles(selectedNode)}
+                  >
+                    Copy file list
+                  </button>
+                )}
+              </section>
+            )}
+          </>
+        )}
+        {error && (
+          <p role="alert" className="banner error">
+            {error}
           </p>
-          <dl className="arch-stats">
-            <div>
-              <dt>Folders</dt>
-              <dd>{components}</dd>
-            </div>
-            <div>
-              <dt>Links</dt>
-              <dd>{model.edges.length}</dd>
-            </div>
-            <div>
-              <dt>Packages</dt>
-              <dd>{packages}</dd>
-            </div>
-          </dl>
-          <FindingsSection
-            name={name}
-            getApi={getApi}
-            selectedIds={selectedIds}
-            onSelection={setSelectedIds}
-          />
-          <ReviewSection name={name} model={model} />
-        </>
-      )}
+        )}
+        {notice && <p className="banner notice">{notice}</p>}
+        {!model && !error && <p className="muted small">Loading architecture…</p>}
+      </div>
 
-      <div className="arch-actions">
+      <footer className="arch-inspector-footer">
         <button
           type="button"
           className="button primary small"
           disabled={busy || !model}
-          onClick={() => void rescan()}
-        >
-          {busy ? 'Working…' : 'Re-scan'}
-        </button>
-        <button
-          type="button"
-          className="button ghost small"
-          disabled={busy || !model}
-          onClick={() => void saveLayout()}
-        >
-          Save layout
-        </button>
-        <button
-          type="button"
-          className="button ghost small danger"
-          disabled={busy || !model}
-          onClick={() => void resetLayout()}
-        >
-          Reset layout
-        </button>
-        <button
-          type="button"
-          className="button ghost small"
-          disabled={busy || !model}
           onClick={() => void nameWithAi()}
         >
-          Name with AI
+          {busy ? 'Working…' : 'Name with AI'}
         </button>
-      </div>
-
-      {error && (
-        <p role="alert" className="banner error">
-          {error}
-        </p>
-      )}
-      {notice && <p className="banner notice">{notice}</p>}
-
-      {diff && (
-        <section aria-label="Changes since last scan">
-          <p className="small">{describeDiff(diff)}</p>
-          <Names title="New folders" items={diff.addedNodes} />
-          <Names title="Removed folders" items={diff.removedNodes} />
-          <Names title="New links" items={diff.addedEdges} />
-          <Names title="Removed links" items={diff.removedEdges} />
-        </section>
-      )}
-
-      {selectedNode && model ? (
-        <>
-          <NodeDetails model={model} node={selectedNode} />
-          {selectedNode.members.length > 0 && (
-            <button
-              type="button"
-              className="button ghost small"
-              onClick={() => void copyFiles(selectedNode)}
-            >
-              Copy file list
-            </button>
-          )}
-        </>
-      ) : (
-        <p className="muted small">Select a box in the map to see its files and links.</p>
-      )}
-
-      <p className="muted small">
-        Re-scan reads the project again. Use “Save layout” after moving boxes so the next scan keeps
-        them.
-      </p>
+      </footer>
     </aside>
   );
 }

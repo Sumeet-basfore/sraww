@@ -22,6 +22,17 @@ const MODEL = {
   groups: [{ id: 'src', label: 'src', members: ['src'] }],
 };
 
+const FINDINGS = [
+  {
+    id: 'orphan:src',
+    kind: 'orphan',
+    severity: 'low',
+    title: 'Isolated component',
+    detail: 'src has no connections.',
+    nodes: ['src'],
+  },
+];
+
 const fetchMock = vi.fn();
 
 function json(body: unknown): Response {
@@ -46,6 +57,7 @@ beforeEach(() => {
   fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
     if (url.endsWith('/name') && init?.method === 'POST') return json({ model: MODEL, applied: 1 });
     if (url.includes('/layout') && init?.method === 'PUT') return json({ ok: true });
+    if (url.endsWith('/findings')) return json({ findings: FINDINGS });
     return json({ model: MODEL, layout: null });
   });
   vi.stubGlobal('fetch', fetchMock);
@@ -59,16 +71,38 @@ afterEach(() => {
 });
 
 describe('ArchPanel', () => {
-  it('shows the map summary once the model has loaded', async () => {
+  it('shows the project chip and all four workspace metrics once data has loaded', async () => {
     render(<ArchPanel name="demo" getApi={() => fakeApi() as never} onClose={() => undefined} />);
-    expect(await screen.findByText(/From demo/)).toBeInTheDocument();
+    expect(await screen.findByText('demo')).toBeInTheDocument();
+    expect(screen.getByText('Folders').nextSibling).toHaveTextContent('1');
     expect(screen.getByText('Packages').nextSibling).toHaveTextContent('1');
+    expect(screen.getByText('Dependencies').nextSibling).toHaveTextContent('1');
+    expect(await screen.findByText('Orphans')).toBeInTheDocument();
+    expect(screen.getByText('Orphans').nextSibling).toHaveTextContent('1');
+  });
+
+  it('can collapse and expand the inspector sheet', async () => {
+    render(<ArchPanel name="demo" getApi={() => fakeApi() as never} onClose={() => undefined} />);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole('button', { name: 'Collapse inspector' }));
+    expect(screen.getByRole('button', { name: 'Expand inspector' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+    expect(document.querySelector('.arch-panel')).toHaveClass('is-collapsed');
+
+    await user.click(screen.getByRole('button', { name: 'Expand inspector' }));
+    expect(screen.getByRole('button', { name: 'Collapse inspector' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
   });
 
   it('names components with AI after saving the current layout, and reports that links were kept', async () => {
     render(<ArchPanel name="demo" getApi={() => fakeApi() as never} onClose={() => undefined} />);
     const user = userEvent.setup();
-    await screen.findByText(/From demo/);
+    await screen.findByText('demo');
     await user.click(screen.getByRole('button', { name: 'Name with AI' }));
 
     expect(await screen.findByText(/Named 1 folder\(s\) with AI/)).toBeInTheDocument();
@@ -85,7 +119,7 @@ describe('ArchPanel', () => {
     );
     render(<ArchPanel name="demo" getApi={() => fakeApi() as never} onClose={() => undefined} />);
     const user = userEvent.setup();
-    await screen.findByText(/From demo/);
+    await screen.findByText('demo');
     await user.click(screen.getByRole('button', { name: 'Re-scan' }));
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('no project to scan'));
   });

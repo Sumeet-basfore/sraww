@@ -1,0 +1,417 @@
+.editor-canvas:has(.arch-panel) > .excalidraw {
+  width: calc(100% - 384px) !important;
+  min-width: 0;
+}
+
+.arch-panel {
+  top: 12px;
+  right: 12px;
+  bottom: 12px;
+  width: 360px;
+  max-width: calc(100% - 24px);
+  z-index: 20;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+}
+
+@media (min-width: 641px) {
+  .editor:has(.arch-panel) > .assistant {
+    right: 384px;
+  }
+}
+
+.arch-inspector-header,
+.arch-inspector-footer {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px 18px;
+  background: var(--surface);
+}
+
+.arch-inspector-header {
+  border-bottom: 1px solid var(--line);
+}
+
+.arch-inspector-footer {
+  justify-content: stretch;
+  border-top: 1px solid var(--line);
+}
+
+.arch-inspector-footer .button {
+  width: 100%;
+  min-height: 42px;
+}
+
+.arch-inspector-title {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.arch-inspector-title h2 {
+  flex: none;
+  font-size: 20px;
+  letter-spacing: -0.025em;
+}
+
+.arch-project-chip {
+  display: inline-block;
+  min-width: 0;
+  max-width: 150px;
+  padding: 3px 8px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arch-header-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+}
+
+.arch-collapse-button {
+  display: none;
+}
+
+.arch-inspector-content {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  gap: 16px;
+  min-width: 0;
+  min-height: 0;
+  padding: 16px 18px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.arch-inspector-content > *,
+.arch-inspector-content section,
+.arch-inspector-content li {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.arch-scanned {
+  margin: -5px 0 -7px;
+  font-size: 11px;
+}
+
+.arch-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.arch-stat-card {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.arch-stat-card dt {
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.arch-stat-card dd {
+  margin: 1px 0 0;
+  font-size: 23px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1.2;
+}
+
+.arch-changes,
+.arch-selected-folder {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.arch-changes h3,
+.arch-findings h3,
+.arch-review h3 {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.arch-changes > p,
+.arch-change-list p,
+.arch-change-list ul {
+  margin: 0;
+}
+
+.arch-change-list ul {
+  padding-left: 16px;
+}
+
+.arch-change-list code,
+.arch-finding-folders,
+.arch-review-finding p {
+  overflow-wrap: anywhere;
+}
+
+.arch-maintenance-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  min-width: 0;
+  padding-block: 2px;
+}
+
+.arch-maintenance-actions .button {
+  min-width: 0;
+  padding-inline: 5px;
+  font-size: 12px;
+}
+
+.arch-findings,
+.arch-review {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.finding-counts,
+.arch-finding-list {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.finding-counts {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.finding-counts .finding-severity {
+  justify-content: space-between;
+}
+
+.finding-severity {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 3px 7px;
+  border: 1px solid color-mix(in oklch, currentColor 25%, var(--line));
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-transform: capitalize;
+}
+
+.finding-severity strong {
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.finding-high {
+  color: var(--danger);
+  background: color-mix(in oklch, var(--danger) 8%, var(--surface));
+}
+
+.finding-medium {
+  color: var(--warn);
+  background: color-mix(in oklch, var(--warn) 9%, var(--surface));
+}
+
+.finding-low {
+  color: var(--ok);
+  background: color-mix(in oklch, var(--ok) 8%, var(--surface));
+}
+
+.arch-finding {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.arch-finding-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.arch-finding-heading strong {
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.arch-finding > p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.arch-finding-folders {
+  display: grid;
+  gap: 2px;
+  font-size: 11px !important;
+}
+
+.arch-finding-folders span {
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.arch-finding-action {
+  justify-self: start;
+  min-height: 30px;
+  padding: 4px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.arch-finding-action:hover,
+.arch-finding-action[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.arch-review {
+  padding-top: 13px;
+  border-top: 1px solid var(--line);
+}
+
+.arch-review > p {
+  margin: 0;
+}
+
+.arch-review-finding {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.arch-review-finding p {
+  margin: 0;
+  font-size: 12px;
+}
+
+.arch-review .button {
+  justify-self: start;
+}
+
+.arch-selected-folder {
+  gap: 10px;
+}
+
+.arch-selected-folder .node-details h3 {
+  font-size: 17px;
+}
+
+.arch-selected-folder .node-details p {
+  margin-block: 5px;
+}
+
+@media (max-width: 640px) {
+  .editor-canvas:has(.arch-panel) > .excalidraw {
+    width: 100% !important;
+  }
+
+  .arch-panel {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-width: none;
+    height: min(78dvh, 680px);
+    padding-bottom: env(safe-area-inset-bottom);
+    border-radius: 18px 18px 0 0;
+    animation: inspector-up 200ms var(--ease) both;
+  }
+
+  .arch-inspector-header {
+    padding: 12px 14px;
+  }
+
+  .arch-inspector-title h2 {
+    font-size: 18px;
+  }
+
+  .arch-project-chip {
+    max-width: 115px;
+  }
+
+  .arch-collapse-button {
+    display: inline-flex;
+  }
+
+  .arch-inspector-content {
+    padding: 14px;
+  }
+
+  .arch-inspector-footer {
+    padding: 10px 14px;
+  }
+
+  .arch-panel.is-collapsed {
+    height: auto;
+  }
+
+  .arch-panel.is-collapsed .arch-inspector-content,
+  .arch-panel.is-collapsed .arch-inspector-footer {
+    display: none;
+  }
+}
+
+@keyframes inspector-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}

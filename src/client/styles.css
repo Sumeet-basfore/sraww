@@ -1117,43 +1117,6 @@ textarea:focus {
   word-break: break-all;
 }
 
-.arch-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin: 0;
-}
-
-.arch-stats div {
-  padding: 12px;
-  border-top: 1px solid var(--ink);
-}
-
-.arch-stats dt {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-
-.arch-stats dd {
-  margin: 4px 0 0;
-  font-size: 26px;
-  letter-spacing: -0.02em;
-}
-
-.arch-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.node-details h3 {
-  font-size: 22px;
-  letter-spacing: -0.02em;
-}
-
 /* Small screens: a 16px gutter, no horizontal scroll, and actions always visible */
 @media (max-width: 640px) {
   .editor-bar {
