@@ -59,7 +59,7 @@ The server listens on `127.0.0.1` only and rejects requests whose Host or Origin
 
 ## Using it
 
-**Drawings.** Create, open, rename, duplicate, delete and import `.excalidraw` files from the start page. Edits save automatically after a short pause, and the status line shows whether everything is saved. Scroll the mouse wheel over the canvas to zoom. The editor's File menu exports a drawing as PNG, SVG or `.excalidraw`, imports a `.excalidraw` file as a new drawing, and imports or exports your Excalidraw library (`.excalidrawlib`). The library is saved in the diagrams folder. **Math templates.** In a drawing, **Insert…** adds axes with a grid, a number line or a table, sized to where you are looking.
+**Drawings.** Create, open, rename, duplicate, delete and import `.excalidraw` files from the start page. Edits save automatically after a short pause, and the status line shows whether everything is saved. Scroll the mouse wheel over the canvas to zoom. The editor's File menu exports a drawing as PNG, SVG or `.excalidraw`, imports a `.excalidraw` file as a new drawing, and imports or exports your Excalidraw library (`.excalidrawlib`). The library is saved in the diagrams folder. **Math templates and formulas.** In a drawing, **Insert…** adds axes with a grid, a number line or a table, sized to where you are looking. Choose **Formula (LaTeX)…** to render a LaTeX expression as an image in the drawing; formulas are rendered locally and the source is saved with the image.
 
 **The assistant.** A single panel sits at the bottom of an open drawing. Its mode menu chooses what it does:
 

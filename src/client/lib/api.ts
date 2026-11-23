@@ -144,6 +144,18 @@ export const libraryApi = {
   },
 };
 
+export interface MathRenderResponse {
+  svg: string;
+  width: number;
+  height: number;
+}
+
+export const mathApi = {
+  render(input: { latex: string; fontSize: number }): Promise<MathRenderResponse> {
+    return request('/math/render', { method: 'POST', body: JSON.stringify(input) });
+  },
+};
+
 // Above the worst case of the server's CLI checks: one 20 s probe for the provider list, and up to
 // two 20 s probes for a Codex save (its model list, then its status). A slow but working server is
 // therefore never cut off before it answers.

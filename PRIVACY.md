@@ -85,6 +85,8 @@ If the upload does not do what this section says, that is a bug. Please report i
 
 ## Third-party software inside the app
 
+MathJax renders formulas locally on the server. The LaTeX source stays on this machine and is stored in the drawing.
+
 The drawing editor is [Excalidraw](https://excalidraw.com), bundled into the app. Its source contains addresses for its own online services. What we have done and checked:
 
 - **AI features in the editor are turned off.** Excalidraw's text-to-diagram and similar AI options are disabled in sraww.

@@ -23,6 +23,7 @@ import { SaveIndicator } from './SaveIndicator.tsx';
 import { sceneFingerprint, toSavedScene } from './scene.ts';
 import { attachWheelZoom } from './wheel-zoom.ts';
 import { insertTemplate, type TemplateKind } from '../math/insert-template.ts';
+import { FormulaDialog } from '../math/FormulaDialog.tsx';
 
 export const AUTOSAVE_DELAY_MS = 800;
 
@@ -63,6 +64,7 @@ export function Editor({ name, onExit, mode = 'diagram', onShowTour }: EditorPro
   const [actionError, setActionError] = useState<string | null>(null);
   const [panel, setPanel] = useState<'arch' | null>(mode === 'architecture' ? 'arch' : null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [formulaDialogOpen, setFormulaDialogOpen] = useState(false);
   const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const drawingInput = useRef<HTMLInputElement>(null);
@@ -315,15 +317,17 @@ export function Editor({ name, onExit, mode = 'diagram', onShowTour }: EditorPro
               value=""
               disabled={load.kind !== 'ready'}
               onChange={(e) => {
-                const kind = e.target.value as TemplateKind | '';
+                const value = e.target.value;
                 e.target.value = '';
-                if (kind) runTemplateAction(kind);
+                if (value === 'formula') setFormulaDialogOpen(true);
+                else if (value) runTemplateAction(value as TemplateKind);
               }}
             >
               <option value="">Insert…</option>
               <option value="axes">Axes</option>
               <option value="number-line">Number line</option>
               <option value="table">Table</option>
+              <option value="formula">Formula (LaTeX)…</option>
             </select>
             <select
               className="export-select"
@@ -412,6 +416,9 @@ export function Editor({ name, onExit, mode = 'diagram', onShowTour }: EditorPro
         )}
         {panel === 'arch' && load.kind === 'ready' && (
           <ArchPanel name={name} getApi={() => apiRef.current} onClose={() => setPanel(null)} />
+        )}
+        {formulaDialogOpen && apiRef.current && (
+          <FormulaDialog api={apiRef.current} onClose={() => setFormulaDialogOpen(false)} />
         )}
       </div>
       {load.kind === 'ready' && <Assistant getApi={() => apiRef.current} />}
