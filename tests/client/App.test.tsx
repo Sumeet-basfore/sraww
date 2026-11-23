@@ -38,7 +38,7 @@ describe('App', () => {
     serve([]);
     render(<App />);
     expect(screen.getByRole('heading', { name: 'Diagrams' })).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText(/No diagrams yet/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Nothing drawn yet/i)).toBeInTheDocument());
   });
 
   it('lists saved diagrams and opens one on click', async () => {

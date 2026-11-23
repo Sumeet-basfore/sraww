@@ -49,17 +49,17 @@
 
 ## 7. Required assets
 
-| # | Asset | Default format and size |
-|---|-------|-------------------------|
-| 1 | Primary logo (symbol + wordmark) | SVG, PNG 1024 px wide |
-| 2 | Light version | SVG, PNG |
-| 3 | Dark version | SVG, PNG |
-| 4 | Symbol only | SVG, PNG 512 px |
-| 5 | Wordmark only | SVG, PNG |
-| 6 | App icon | SVG, PNG 512, 192, 180 px |
-| 7 | Favicon | SVG, PNG 32 and 16 px, ICO optional |
-| 8 | Social avatar | PNG 1024 × 1024 |
-| 9 | Brand guidelines | `brand/guidelines.md` with the assets exported alongside |
+| #   | Asset                            | Default format and size                                  |
+| --- | -------------------------------- | -------------------------------------------------------- |
+| 1   | Primary logo (symbol + wordmark) | SVG, PNG 1024 px wide                                    |
+| 2   | Light version                    | SVG, PNG                                                 |
+| 3   | Dark version                     | SVG, PNG                                                 |
+| 4   | Symbol only                      | SVG, PNG 512 px                                          |
+| 5   | Wordmark only                    | SVG, PNG                                                 |
+| 6   | App icon                         | SVG, PNG 512, 192, 180 px                                |
+| 7   | Favicon                          | SVG, PNG 32 and 16 px, ICO optional                      |
+| 8   | Social avatar                    | PNG 1024 × 1024                                          |
+| 9   | Brand guidelines                 | `brand/guidelines.md` with the assets exported alongside |
 
 ## 8. Constraints
 

@@ -233,8 +233,8 @@ export function ArchPanel({ name, getApi, onClose }: ArchPanelProps) {
   const packages = model?.nodes.filter((n) => n.kind === 'external').length ?? 0;
 
   return (
-    <aside className="ai-panel arch-panel" role="dialog" aria-labelledby="arch-title">
-      <header className="ai-panel-header">
+    <aside className="sheet arch-panel" role="dialog" aria-labelledby="arch-title">
+      <header className="sheet-header">
         <h2 id="arch-title">Architecture</h2>
         <button type="button" className="button ghost small" onClick={onClose} aria-label="Close">
           Close

@@ -12,6 +12,8 @@ const envSchema = z.object({
   CLAUDE_MODEL: z.string().optional(),
   CODEX_MODEL: z.string().optional(),
   AI_TIMEOUT_MS: z.coerce.number().int().min(1000).default(120_000),
+  /** Which AI tool, model and effort are chosen in the AI settings page. */
+  AI_SETTINGS_FILE: z.string().min(1).default('./data/ai-settings.json'),
 });
 
 export type AppConfig = z.infer<typeof envSchema>;

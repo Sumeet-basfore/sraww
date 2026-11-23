@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { DiagramList } from './diagrams/DiagramList.tsx';
-import { architectureHash, editorHash } from './lib/route.ts';
+import { AiAccountPage } from './ai/account/AiAccountPage.tsx';
+import { aiSettingsHash, architectureHash, editorHash } from './lib/route.ts';
 import { loadPrefs } from './lib/prefs.ts';
 import { useRoute } from './lib/useRoute.ts';
 
@@ -25,10 +26,15 @@ export function App() {
           <DiagramList
             onOpen={(name) => goTo(editorHash(name))}
             onOpenArchitecture={(name) => goTo(architectureHash(name))}
+            onOpenAi={() => goTo(aiSettingsHash())}
           />
         </main>
       </div>
     );
+  }
+
+  if (route.view === 'ai') {
+    return <AiAccountPage onBack={() => goTo('#/')} />;
   }
 
   const isArchitecture = route.view === 'architecture';

@@ -1,6 +1,10 @@
 export type Route =
-  { view: 'list' } | { view: 'editor'; name: string } | { view: 'architecture'; name: string };
+  | { view: 'list' }
+  | { view: 'ai' }
+  | { view: 'editor'; name: string }
+  | { view: 'architecture'; name: string };
 
+const AI_HASH = '#/ai';
 const EDITOR_HASH = /^#\/diagram\/(.+)$/;
 const ARCH_HASH = /^#\/arch\/(.+)$/;
 
@@ -15,6 +19,7 @@ function decodeName(encoded: string | undefined): string | null {
 
 /** Parses the URL hash so that reloading the page reopens the same diagram or architecture map. */
 export function parseRoute(hash: string): Route {
+  if (hash === AI_HASH) return { view: 'ai' };
   const arch = ARCH_HASH.exec(hash);
   if (arch) {
     const name = decodeName(arch[1]);
@@ -31,4 +36,8 @@ export function editorHash(name: string): string {
 
 export function architectureHash(name: string): string {
   return `#/arch/${encodeURIComponent(name)}`;
+}
+
+export function aiSettingsHash(): string {
+  return AI_HASH;
 }

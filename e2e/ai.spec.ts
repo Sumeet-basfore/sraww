@@ -26,8 +26,32 @@ async function liveElements(
 const STATUS = {
   defaultProvider: 'claude',
   providers: [
-    { id: 'claude', installed: true, loggedIn: true, detail: 'Claude Code is logged in.' },
-    { id: 'codex', installed: true, loggedIn: false, detail: 'Codex is not logged in.' },
+    {
+      id: 'claude',
+      label: 'Claude Code',
+      installed: true,
+      loggedIn: true,
+      detail: 'Signed in.',
+      account: { email: null, plan: null, organization: null, method: 'Claude subscription' },
+      models: [],
+      selection: { model: null, effort: null },
+      cliDefault: { model: null, effort: null },
+      canPasteCode: true,
+      login: null,
+    },
+    {
+      id: 'codex',
+      label: 'Codex',
+      installed: true,
+      loggedIn: false,
+      detail: 'Not signed in.',
+      account: null,
+      models: [],
+      selection: { model: null, effort: null },
+      cliDefault: { model: null, effort: null },
+      canPasteCode: false,
+      login: null,
+    },
   ],
 };
 
@@ -44,19 +68,19 @@ test.beforeAll(async () => {
 });
 
 test('generates a diagram from a prompt and adds it to the drawing', async ({ page, request }) => {
-  await page.route('**/api/ai/status', (route) => route.fulfill({ json: STATUS }));
+  await page.route('**/api/ai/providers', (route) => route.fulfill({ json: STATUS }));
   await page.route('**/api/ai/generate', (route) =>
     route.fulfill({ json: { provider: 'claude', graph: GRAPH } }),
   );
 
   await page.goto('/');
-  await page.getByPlaceholder('Name a new diagram').fill(NAME);
+  await page.getByPlaceholder('Name a new drawing').fill(NAME);
   await page.getByRole('button', { name: 'Create' }).click();
   await expect(page.locator('.excalidraw')).toBeVisible({ timeout: 30_000 });
 
   await page.getByRole('button', { name: /Generate/ }).click();
-  const panel = page.getByRole('dialog', { name: 'Generate with AI' });
-  await expect(panel.getByRole('option', { name: /Codex/ })).toBeDisabled();
+  const panel = page.getByRole('dialog', { name: 'Generate a diagram' });
+  await expect(panel.getByText('Claude Code', { exact: true })).toBeVisible();
 
   await panel.getByLabel('Describe the diagram').fill('An API that reads from a database');
   await panel.getByRole('button', { name: 'Generate' }).click();
@@ -78,7 +102,7 @@ test('generates a diagram from a prompt and adds it to the drawing', async ({ pa
 });
 
 test('chat adds shapes and a glued arrow to the drawing', async ({ page, request }) => {
-  await page.route('**/api/ai/status', (route) => route.fulfill({ json: STATUS }));
+  await page.route('**/api/ai/providers', (route) => route.fulfill({ json: STATUS }));
   await page.route('**/api/ai/chat', (route) =>
     route.fulfill({
       json: {
@@ -100,7 +124,7 @@ test('chat adds shapes and a glued arrow to the drawing', async ({ page, request
   );
 
   await page.goto('/');
-  await page.getByPlaceholder('Name a new diagram').fill('e2e chat');
+  await page.getByPlaceholder('Name a new drawing').fill('e2e chat');
   await page.getByRole('button', { name: 'Create' }).click();
   await expect(page.locator('.excalidraw')).toBeVisible({ timeout: 30_000 });
 

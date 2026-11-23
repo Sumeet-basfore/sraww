@@ -7,7 +7,7 @@ import { createApp } from '../../src/server/app.ts';
 import { loadConfig } from '../../src/server/config.ts';
 import { createClaudeProvider } from '../../src/server/ai/providers/claude-cli.ts';
 import { createCodexProvider } from '../../src/server/ai/providers/codex-cli.ts';
-import type { AiServices } from '../../src/server/ai/services.ts';
+import { testServices } from '../fixtures/ai-services.ts';
 import { createDiagramStore } from '../../src/server/storage/diagram-store.ts';
 
 const HOST = '127.0.0.1:4317';
@@ -24,13 +24,10 @@ afterEach(async () => {
 
 function appWith(claudeBin: string, codexBin: string, timeoutMs = 10_000) {
   const workdir = path.join(dir, 'work');
-  const ai: AiServices = {
-    defaultProvider: 'claude',
-    providers: {
-      claude: createClaudeProvider({ bin: claudeBin, workdir, timeoutMs }),
-      codex: createCodexProvider({ bin: codexBin, workdir, timeoutMs }),
-    },
-  };
+  const ai = testServices({
+    claude: createClaudeProvider({ bin: claudeBin, workdir, timeoutMs }),
+    codex: createCodexProvider({ bin: codexBin, workdir, timeoutMs }),
+  });
   return createApp(loadConfig({}), createDiagramStore(dir), path.join(dir, 'no-client'), ai);
 }
 

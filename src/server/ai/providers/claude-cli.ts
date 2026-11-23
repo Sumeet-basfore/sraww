@@ -6,10 +6,12 @@ import type { AiProvider, ProviderHealth } from '../provider.ts';
 import { withHealthCache } from '../provider.ts';
 import { runCommand } from '../runner.ts';
 import { generateStructured } from '../structured.ts';
+import type { ProviderSelection } from '../../../shared/ai-account.ts';
 
 export interface ClaudeCliOptions {
   bin: string;
-  model?: string | undefined;
+  /** Read on every call, so a change in the AI settings applies to the next request. */
+  selection?: () => ProviderSelection;
   workdir: string;
   timeoutMs: number;
 }
@@ -63,7 +65,9 @@ export function createClaudeProvider(options: ClaudeCliOptions): AiProvider {
       '--tools',
       '',
     ];
-    if (options.model) args.push('--model', options.model);
+    const selection = options.selection?.() ?? { model: null, effort: null };
+    if (selection.model) args.push('--model', selection.model);
+    if (selection.effort) args.push('--effort', selection.effort);
 
     const result = await runCommand({
       command: options.bin,

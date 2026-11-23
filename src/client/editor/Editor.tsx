@@ -185,7 +185,7 @@ export function Editor({ name, onExit, mode = 'diagram' }: EditorProps) {
             disabled={load.kind !== 'ready'}
             onClick={() => setPanel((open) => (open === which ? null : which))}
           >
-            {which === 'generate' ? '✦ Generate' : 'Chat'}
+            {which === 'generate' ? 'Generate' : 'Chat'}
           </button>
         ))}
         <select

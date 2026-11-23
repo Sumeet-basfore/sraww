@@ -3,25 +3,11 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatPanel } from '../../src/client/ai/ChatPanel.tsx';
+import { PROVIDERS, json } from './ai-fixtures.ts';
 
 vi.mock('@excalidraw/excalidraw', () => import('../mocks/excalidraw.tsx'));
 
-const STATUS = {
-  defaultProvider: 'claude',
-  providers: [
-    { id: 'claude', installed: true, loggedIn: true, detail: 'Claude Code is logged in.' },
-    { id: 'codex', installed: true, loggedIn: false, detail: 'Codex is not logged in.' },
-  ],
-};
-
 const fetchMock = vi.fn();
-
-function json(body: unknown): Response {
-  return new Response(JSON.stringify(body), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
 
 function fakeApi(selected: string[] = []) {
   return {
@@ -38,7 +24,7 @@ function fakeApi(selected: string[] = []) {
 
 beforeEach(() => {
   fetchMock.mockImplementation(async (url: string) => {
-    if (url === '/api/ai/status') return json(STATUS);
+    if (url === '/api/ai/providers') return json(PROVIDERS);
     if (url === '/api/ai/chat')
       return json({
         provider: 'claude',
@@ -61,8 +47,9 @@ describe('ChatPanel', () => {
   it('applies the reply’s edits and lists rejected ones as notes', async () => {
     const api = fakeApi();
     render(<ChatPanel getApi={() => api as never} onClose={() => undefined} />);
+    await screen.findByText('Claude Code');
     const user = userEvent.setup();
-    await user.type(await screen.findByPlaceholderText('Ask for a change…'), 'Add a cache');
+    await user.type(screen.getByPlaceholderText('Ask for a change…'), 'Add a cache');
     await user.click(screen.getByRole('button', { name: 'Send' }));
 
     expect(await screen.findByText('Added a cache.')).toBeInTheDocument();
@@ -74,21 +61,24 @@ describe('ChatPanel', () => {
   it('explains a selection without changing the drawing', async () => {
     const api = fakeApi(['api']);
     render(<ChatPanel getApi={() => api as never} onClose={() => undefined} />);
+    await screen.findByText('Claude Code');
     const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: 'Explain selection' }));
+    await user.click(screen.getByRole('button', { name: 'Explain selection' }));
 
     expect(await screen.findByText('No changes made.')).toBeInTheDocument();
     expect(api.updateScene).not.toHaveBeenCalled();
     const call = fetchMock.mock.calls.find((c) => c[0] === '/api/ai/chat');
     const body = JSON.parse(call?.[1]?.body as string);
     expect(body.summary.shapes.map((s: { id: string }) => s.id)).toEqual(['api']);
+    expect(body.provider).toBe('claude');
   });
 
   it('asks for a selection before explaining', async () => {
     const api = fakeApi([]);
     render(<ChatPanel getApi={() => api as never} onClose={() => undefined} />);
+    await screen.findByText('Claude Code');
     const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: 'Explain selection' }));
+    await user.click(screen.getByRole('button', { name: 'Explain selection' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Select one or more shapes');
     expect(fetchMock.mock.calls.some((c) => c[0] === '/api/ai/chat')).toBe(false);
   });
