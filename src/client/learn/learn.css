@@ -136,4 +136,9 @@
   .lesson-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .lesson-canvas {
+    height: 360px;
+    min-height: 0;
+  }
 }

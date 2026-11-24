@@ -1,5 +1,6 @@
 import '@excalidraw/excalidraw/index.css';
 import { convertToExcalidrawElements, Excalidraw } from '@excalidraw/excalidraw';
+import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types';
 import { useEffect, useState } from 'react';
 import type { LessonReply } from '../../shared/learn.ts';
 import { layoutGraph } from '../ai/layout.ts';
@@ -17,6 +18,18 @@ type Drawing =
 
 export function LessonCanvas({ diagram }: LessonCanvasProps) {
   const [drawing, setDrawing] = useState<Drawing>({ status: 'drawing' });
+  const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null);
+
+  // The canvas measures itself after it mounts, so the fit waits briefly, as the architecture view does.
+  useEffect(() => {
+    if (!api || drawing.status !== 'ready') return undefined;
+    const elements = drawing.elements;
+    const timer = window.setTimeout(
+      () => api.scrollToContent(elements, { fitToContent: true }),
+      300,
+    );
+    return () => window.clearTimeout(timer);
+  }, [api, drawing]);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,9 +54,10 @@ export function LessonCanvas({ diagram }: LessonCanvasProps) {
     <div className="lesson-canvas">
       {drawing.status === 'ready' && (
         <Excalidraw
-          initialData={{ elements: drawing.elements, scrollToContent: true }}
+          initialData={{ elements: drawing.elements }}
           viewModeEnabled
           theme={loadPrefs().theme}
+          excalidrawAPI={setApi}
         />
       )}
       {drawing.status === 'drawing' && (
