@@ -89,6 +89,27 @@ describe('LessonView', () => {
     expect(screen.getByText('Read the sources to check this explanation.')).toBeInTheDocument();
   });
 
+  it.each([
+    ['mozilla.org/x', 'Relative source'],
+    ['javascript:alert(1)', 'Script source'],
+  ])(
+    'shows a source with the address %s as plain text, with no link and no crash',
+    async (url, title) => {
+      const withBadSource = {
+        ...lesson,
+        sources: [{ title, url, points: ['Freshness is set by max-age.'] }],
+      };
+      fetchMock.mockResolvedValueOnce(reply(200, { lesson: withBadSource }));
+      renderLesson();
+      expect(
+        await screen.findByRole('heading', { level: 1, name: lesson.title }),
+      ).toBeInTheDocument();
+      expect(screen.getByText(title)).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: title })).not.toBeInTheDocument();
+      expect(screen.getByText('Freshness is set by max-age.')).toBeInTheDocument();
+    },
+  );
+
   it('keeps a Learn link back to the Learn tab', async () => {
     fetchMock.mockResolvedValueOnce(reply(200, { lesson }));
     renderLesson();
