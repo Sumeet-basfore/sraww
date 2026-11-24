@@ -67,10 +67,7 @@ export function ArchNewForm({ existingNames, onOpen }: ArchNewFormProps) {
         Draws the folders of a project and how they depend on each other, from its imports.
       </p>
       {projects && projects.length === 0 && (
-        <p className="banner">
-          No project folders are allowed yet. Set <code>ARCH_PROJECTS</code> in your{' '}
-          <code>.env</code> to the folders you want mapped.
-        </p>
+        <p className="banner">Upload a project above, then map it here.</p>
       )}
       {projects && projects.length > 0 && (
         <form className="arch-new-form" onSubmit={(e) => void handleMap(e)}>

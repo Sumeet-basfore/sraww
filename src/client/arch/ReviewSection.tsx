@@ -1,15 +1,21 @@
 import { useEffect, useState } from 'react';
 import type { ArchModel } from '../../shared/arch-model.ts';
+import { reviewScope } from '../../shared/arch-review-scope.ts';
 import { archApi, type ArchReviewSidecar } from '../lib/api.ts';
 import { errorMessage } from '../lib/errors.ts';
-import './ReviewSection.css';
 
 interface ReviewSectionProps {
   name: string;
   model: ArchModel | null;
+  /** Computed findings that the review will include; null until they have loaded. */
+  findingCount: number | null;
 }
 
-export function ReviewSection({ name, model }: ReviewSectionProps) {
+function plural(count: number, word: string): string {
+  return `${count} ${word}${count === 1 ? '' : 's'}`;
+}
+
+export function ReviewSection({ name, model, findingCount }: ReviewSectionProps) {
   const [saved, setSaved] = useState<ArchReviewSidecar | null>(null);
   const [stale, setStale] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -74,7 +80,7 @@ export function ReviewSection({ name, model }: ReviewSectionProps) {
     }
   }
 
-  const componentCount = model?.nodes.filter((node) => node.kind === 'component').length ?? 0;
+  const scope = model && findingCount !== null ? reviewScope(model, findingCount) : null;
   const labels = new Map(model?.nodes.map((node) => [node.id, node.label]) ?? []);
   const isStale = stale || (saved !== null && saved.modelGeneratedAt !== model?.generatedAt);
 
@@ -112,13 +118,14 @@ export function ReviewSection({ name, model }: ReviewSectionProps) {
       {confirming && (
         <>
           <p className="small muted">
-            Send {componentCount} folder paths and labels and their findings, no file contents or
-            file names.
+            {scope
+              ? `Send ${plural(scope.folders, 'folder')} (paths and labels), ${plural(scope.files, 'file')} (counts only), ${plural(scope.importLinks, 'import link')} and ${plural(scope.findings, 'finding')}. No file contents or file names.`
+              : 'Loading the findings for this map…'}
           </p>
           <button
             type="button"
             className="button primary small"
-            disabled={busy || !model}
+            disabled={busy || !scope}
             onClick={() => void runReview()}
           >
             {busy ? 'Reviewing…' : 'Confirm and send'}

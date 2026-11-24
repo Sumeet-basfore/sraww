@@ -39,5 +39,6 @@ test('maps the sample project, keeps stable ids and glued arrows, and re-scans',
 
   await page.getByRole('button', { name: 'Re-scan' }).click();
   await expect(page.getByText(/Re-scanned/)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('heading', { name: 'Changes since last scan' })).toBeVisible();
   await expect(page.getByText(/First scan/)).toHaveCount(0);
 });

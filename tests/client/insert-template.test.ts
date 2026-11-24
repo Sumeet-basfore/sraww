@@ -24,10 +24,13 @@ describe('insertTemplate', () => {
     expect(update).toMatchObject({ captureUpdate: CaptureUpdateAction.IMMEDIATELY });
     expect(update?.elements).toEqual(expect.arrayContaining(existing));
     expect(update?.elements.length).toBeGreaterThan(existing.length + 2);
-    const created = update?.elements.slice(existing.length) as { x: number; y: number }[] | undefined;
-    expect(created?.every((element) =>
-      element.x >= 0 && element.x <= 800 && element.y >= 0 && element.y <= 600,
-    )).toBe(true);
+    const created = update?.elements.slice(existing.length) as
+      { x: number; y: number }[] | undefined;
+    expect(
+      created?.every(
+        (element) => element.x >= 0 && element.x <= 800 && element.y >= 0 && element.y <= 600,
+      ),
+    ).toBe(true);
     expect(scrollToContent).toHaveBeenCalledWith(created, {
       fitToContent: false,
     });

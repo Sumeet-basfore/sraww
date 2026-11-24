@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import express from 'express';
 import type { AppConfig } from './config.ts';
@@ -79,6 +80,14 @@ export function createApp(
 
   // In production the built client is served from the same origin. The dev server proxies /api instead.
   if (existsSync(path.join(clientDir, 'index.html'))) {
+    const privacyFile = path.resolve('PRIVACY.md');
+    app.get('/PRIVACY.md', async (_req, res, next) => {
+      try {
+        res.type('text/markdown').send(await readFile(privacyFile, 'utf8'));
+      } catch (err) {
+        next(err);
+      }
+    });
     app.use(express.static(clientDir));
     app.get('/{*splat}', (_req, res) => {
       res.sendFile(path.join(clientDir, 'index.html'));

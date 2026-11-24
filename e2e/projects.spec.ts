@@ -3,7 +3,7 @@ import path from 'node:path';
 import { zipSync } from 'fflate';
 import { expect, test } from './fixtures.ts';
 
-const PROJECTS_DIR = path.resolve('data/e2e-projects');
+const PROJECTS_DIR = path.resolve(process.env.E2E_DATA_DIR ?? '/tmp/sraww-e2e', 'projects');
 const encoder = new TextEncoder();
 
 test.beforeAll(async () => {
@@ -12,8 +12,23 @@ test.beforeAll(async () => {
 
 test('uploads a project zip after the privacy notice, lists what was left out, and deletes it', async ({
   page,
+  request,
 }) => {
   await page.goto('/');
+  await expect(
+    page.getByRole('heading', { name: 'Your code stays on this computer' }),
+  ).toBeVisible();
+  await expect(
+    page
+      .locator('.privacy-notice')
+      .getByText(
+        /Name with AI sends each folder path, up to 15 file names per folder, and the other folders and packages it imports, with counts\. Review with AI sends folder paths, folder labels, file and import counts, and computed findings\. Neither sends file contents\./,
+      ),
+  ).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Details' })).toHaveAttribute('href', '/PRIVACY.md');
+  const privacyPage = await request.get('/PRIVACY.md');
+  expect(privacyPage.ok()).toBeTruthy();
+  expect(await privacyPage.text()).toContain('Privacy');
   const zipButton = page.getByRole('button', { name: 'Upload a zip file' });
   await expect(zipButton).toBeDisabled();
   await page.getByRole('checkbox', { name: /I understand/ }).check();

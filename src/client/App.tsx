@@ -23,7 +23,7 @@ function Pages({ route, onShowTour }: PagesProps) {
   if (route.view === 'list') {
     return (
       <div className="app">
-        <main className="page">
+        <main className="page start-page-container">
           <DiagramList
             onOpen={(name) => goTo(editorHash(name))}
             onOpenArchitecture={(name) => goTo(architectureHash(name))}
@@ -36,7 +36,7 @@ function Pages({ route, onShowTour }: PagesProps) {
   }
 
   if (route.view === 'ai') {
-    return <AiAccountPage onBack={() => goTo('#/')} />;
+    return <AiAccountPage onBack={() => goTo('#/')} onShowTour={onShowTour} />;
   }
 
   const isArchitecture = route.view === 'architecture';
@@ -49,6 +49,7 @@ function Pages({ route, onShowTour }: PagesProps) {
           mode={isArchitecture ? 'architecture' : 'diagram'}
           onExit={() => goTo('#/')}
           onShowTour={onShowTour}
+          onOpenArchitecture={() => goTo(architectureHash(route.name))}
         />
       </Suspense>
     </div>

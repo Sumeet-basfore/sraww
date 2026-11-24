@@ -2,7 +2,7 @@ import { rm } from 'node:fs/promises';
 import path from 'node:path';
 import { expect, test } from './fixtures.ts';
 
-const DIAGRAMS_DIR = path.resolve('data/e2e-diagrams');
+const DIAGRAMS_DIR = path.resolve(process.env.E2E_DATA_DIR ?? '/tmp/sraww-e2e', 'diagrams');
 const NAME = 'e2e ai';
 
 interface SavedElement {
@@ -65,6 +65,60 @@ const GRAPH = {
 
 test.beforeAll(async () => {
   await rm(DIAGRAMS_DIR, { recursive: true, force: true });
+});
+
+test('AI tools page shows both accounts and saves the default tool from its radio group', async ({
+  page,
+}) => {
+  let defaultProvider = 'claude';
+  const providers = STATUS.providers.map((provider) => ({
+    ...provider,
+    loggedIn: true,
+    detail: 'Signed in.',
+  }));
+  await page.route('**/api/ai/providers', (route) =>
+    route.fulfill({ json: { defaultProvider, providers } }),
+  );
+  await page.route('**/api/ai/default', async (route) => {
+    const body = route.request().postDataJSON() as { provider: string };
+    defaultProvider = body.provider;
+    await route.fulfill({ json: { defaultProvider } });
+  });
+
+  await page.goto('/#/ai');
+
+  await expect(page.getByRole('heading', { name: 'AI tools' })).toBeVisible();
+  await expect(page.getByRole('link', { name: '← Drawings' })).toHaveCount(1);
+  await expect(page.getByRole('link', { name: 'AI tools' })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  await expect(page.getByRole('article', { name: 'Claude Code' })).toBeVisible();
+  await expect(page.getByRole('article', { name: 'Codex' })).toBeVisible();
+  await expect(page.getByText('Installed', { exact: true })).toHaveCount(2);
+  await expect(page.getByText('Signed in', { exact: true })).toHaveCount(2);
+  await expect(page.getByRole('group', { name: 'Default tool' })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Model' })).toHaveCount(2);
+
+  await page.getByRole('radio', { name: /Codex.*Signed in/ }).check();
+  await expect(page.getByRole('radio', { name: /Codex.*Signed in/ })).toBeChecked();
+  await expect(page.getByText('Codex now answers Generate and Chat.')).toBeVisible();
+});
+
+test('AI tools page can retry when account status fails to load', async ({ page }) => {
+  let requests = 0;
+  await page.route('**/api/ai/providers', (route) => {
+    requests += 1;
+    if (requests === 1) return route.fulfill({ status: 503, json: { error: 'CLI unavailable' } });
+    return route.fulfill({ json: STATUS });
+  });
+
+  await page.goto('/#/ai');
+
+  await expect(page.getByRole('alert')).toContainText('CLI unavailable');
+  await page.getByRole('button', { name: 'Retry' }).click();
+  await expect(page.getByRole('article', { name: 'Claude Code' })).toBeVisible();
+  expect(requests).toBe(2);
 });
 
 test('generates a diagram from a prompt and adds it to the drawing', async ({ page, request }) => {

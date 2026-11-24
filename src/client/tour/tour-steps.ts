@@ -38,7 +38,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
   },
   {
     title: 'Your privacy',
-    body: 'Drawings and uploaded code stay in the data folder on this computer. An AI tool receives only what you send through the assistant, and for a project map only the folder paths and file names, when you press “Name with AI”. File contents are never sent.',
+    body: 'Drawings and uploaded code stay in the data folder on this computer. Name with AI sends each folder path, up to 15 file names per folder, and the other folders and packages it imports, with counts. Review with AI sends folder paths, folder labels, file and import counts, and computed findings. Neither sends file contents.',
     where: 'PRIVACY.md in the project',
   },
   {

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AiAccountPage } from '../../src/client/ai/account/AiAccountPage.tsx';
@@ -29,14 +29,18 @@ afterEach(() => {
 describe('AiAccountPage', () => {
   it('shows the signed-in account, plan and model for the default tool', async () => {
     serve({ 'GET /api/ai/providers': () => json(PROVIDERS) });
-    render(<AiAccountPage onBack={() => undefined} />);
+    render(<AiAccountPage onBack={() => undefined} onShowTour={() => undefined} />);
 
-    expect(await screen.findByText('Claude subscription')).toBeInTheDocument();
+    const claude = await screen.findByRole('article', { name: 'Claude Code' });
+    expect(await within(claude).findByText('Claude subscription')).toBeInTheDocument();
     expect(screen.getByText('person@example.test', { selector: 'dd' })).toBeInTheDocument();
     expect(screen.getByText('Claude subscription')).toBeInTheDocument();
     expect(screen.getByText('Example Org')).toBeInTheDocument();
-    expect(screen.getByLabelText('Model')).toHaveValue('opus');
-    expect(screen.getByRole('button', { name: 'high' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(claude).getByLabelText('Model')).toHaveValue('opus');
+    expect(within(claude).getByRole('button', { name: 'high' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
   });
 
   it('keeps Save disabled until a choice changes, then saves the new effort', async () => {
@@ -45,14 +49,15 @@ describe('AiAccountPage', () => {
       'PUT /api/ai/providers/claude/selection': () =>
         json({ ...PROVIDERS.providers[0], selection: { model: 'opus', effort: null } }),
     });
-    render(<AiAccountPage onBack={() => undefined} />);
-    await screen.findByText('Claude subscription');
+    render(<AiAccountPage onBack={() => undefined} onShowTour={() => undefined} />);
+    const claude = await screen.findByRole('article', { name: 'Claude Code' });
+    await within(claude).findByText('Claude subscription');
 
-    const save = screen.getByRole('button', { name: 'Save model and effort' });
+    const save = within(claude).getByRole('button', { name: 'Save model and effort' });
     expect(save).toBeDisabled();
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: 'Default' }));
+    await user.click(within(claude).getByRole('button', { name: 'Default' }));
     expect(save).toBeEnabled();
     await user.click(save);
 
@@ -82,12 +87,11 @@ describe('AiAccountPage', () => {
           },
         }),
     });
-    render(<AiAccountPage onBack={() => undefined} />);
-    await screen.findByText('Claude subscription');
+    render(<AiAccountPage onBack={() => undefined} onShowTour={() => undefined} />);
+    const codex = await screen.findByRole('article', { name: 'Codex' });
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: /^Codex/ }));
-    await user.click(await screen.findByRole('button', { name: 'Sign in' }));
+    await user.click(await within(codex).findByRole('button', { name: 'Sign in' }));
 
     expect(await screen.findByText('ABCD-1234')).toBeInTheDocument();
     expect(
@@ -113,9 +117,10 @@ describe('AiAccountPage', () => {
       'POST /api/ai/providers/claude/login/code': () =>
         json({ login: { ...waiting.login, status: 'pending' } }),
     });
-    render(<AiAccountPage onBack={() => undefined} />);
+    render(<AiAccountPage onBack={() => undefined} onShowTour={() => undefined} />);
 
-    const input = await screen.findByLabelText('Sign-in code');
+    const claude = await screen.findByRole('article', { name: 'Claude Code' });
+    const input = await within(claude).findByLabelText('Sign-in code');
     const user = userEvent.setup();
     await user.type(input, 'test-code#state');
     await user.click(screen.getByRole('button', { name: 'Submit code' }));
@@ -132,11 +137,11 @@ describe('AiAccountPage', () => {
 
   it('lists the tools and marks the default one', async () => {
     serve({ 'GET /api/ai/providers': () => json(PROVIDERS) });
-    render(<AiAccountPage onBack={() => undefined} />);
+    render(<AiAccountPage onBack={() => undefined} onShowTour={() => undefined} />);
     await screen.findByText('Claude subscription');
 
-    const claude = screen.getByRole('button', { name: /^Claude Code/ });
-    expect(claude).toHaveTextContent('Default');
-    expect(screen.getByRole('button', { name: /^Codex/ })).toHaveTextContent('Not signed in');
+    expect(screen.getByRole('radio', { name: /Claude Code.*Signed in/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /Codex.*Sign-in needed/ })).toBeDisabled();
+    expect(screen.getByText('Sign-in needed', { exact: true })).toBeInTheDocument();
   });
 });

@@ -16,13 +16,14 @@ function json(status: number, body?: unknown): Response {
   });
 }
 
-/** The code-projects list loads on mount too; these tests look only at diagram requests. */
-function isProjectsRequest(url: unknown): boolean {
-  return String(url).startsWith('/api/projects');
+/** Other page data loads on mount too; these tests look only at diagram requests. */
+function isOtherRequest(url: unknown): boolean {
+  const path = String(url);
+  return path.startsWith('/api/projects') || path.startsWith('/api/ai/providers');
 }
 
 function diagramCalls(): Array<[string, RequestInit?]> {
-  return fetchMock.mock.calls.filter(([url]) => !isProjectsRequest(url)) as Array<
+  return fetchMock.mock.calls.filter(([url]) => !isOtherRequest(url)) as Array<
     [string, RequestInit?]
   >;
 }
@@ -31,7 +32,13 @@ function diagramCalls(): Array<[string, RequestInit?]> {
 function queueDiagramResponses(...responses: Response[]): void {
   const queue = [...responses];
   fetchMock.mockImplementation(async (url: unknown) => {
-    if (isProjectsRequest(url)) return json(200, { projects: [] });
+    if (String(url).startsWith('/api/projects')) return json(200, { projects: [] });
+    if (String(url).startsWith('/api/ai/providers')) {
+      return json(200, {
+        defaultProvider: 'claude',
+        providers: [{ id: 'claude', label: 'Claude Code', installed: true, loggedIn: true }],
+      });
+    }
     return queue.shift() ?? json(200, { diagrams: [] });
   });
 }
@@ -82,7 +89,7 @@ describe('DiagramList', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(false);
     renderList();
     const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: 'Delete' }));
+    await user.click(await screen.findByRole('button', { name: 'Delete keep' }));
     expect(window.confirm).toHaveBeenCalled();
     expect(diagramCalls()).toHaveLength(1);
   });
@@ -98,9 +105,31 @@ describe('DiagramList', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     renderList();
     const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: 'Delete' }));
+    await user.click(await screen.findByRole('button', { name: 'Delete gone' }));
     expect(await screen.findByText(/Nothing drawn yet/i)).toBeInTheDocument();
     expect(diagramCalls()[1]?.[1]).toMatchObject({ method: 'DELETE' });
+  });
+
+  it('renames a drawing after prompting and refreshes the list', async () => {
+    queueDiagramResponses(
+      json(200, {
+        diagrams: [{ name: 'before', updatedAt: '2026-01-01T00:00:00Z', sizeBytes: 1 }],
+      }),
+      json(200, { name: 'after' }),
+      json(200, {
+        diagrams: [{ name: 'after', updatedAt: '2026-01-01T00:00:00Z', sizeBytes: 1 }],
+      }),
+    );
+    vi.spyOn(window, 'prompt').mockReturnValue('after');
+    renderList();
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Rename before' }));
+    expect(window.prompt).toHaveBeenCalledWith('Rename diagram', 'before');
+    expect(await screen.findByRole('button', { name: 'Rename after' })).toBeInTheDocument();
+    expect(diagramCalls()[1]).toEqual([
+      '/api/diagrams/before',
+      expect.objectContaining({ method: 'PATCH', body: JSON.stringify({ name: 'after' }) }),
+    ]);
   });
 
   it('imports a drawing under a free name when the name is taken', async () => {
@@ -113,7 +142,7 @@ describe('DiagramList', () => {
     const onOpen = vi.fn();
     renderList(onOpen);
     const user = userEvent.setup();
-    await screen.findByRole('button', { name: 'Delete' });
+    await screen.findByRole('button', { name: 'Delete Sketch' });
     const input = screen.getByLabelText('Choose a drawing to import');
     const file = new File(
       [JSON.stringify({ type: 'excalidraw', elements: [] })],

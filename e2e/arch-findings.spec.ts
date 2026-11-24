@@ -23,7 +23,7 @@ test('shows structural findings, selects their boxes and makes no AI request', a
   await expect(page.getByRole('heading', { name: 'Architecture' })).toBeVisible({
     timeout: 30_000,
   });
-  const finding = page.getByRole('button', { name: /Dependency cycle/ });
+  const finding = page.getByRole('button', { name: 'Show Dependency cycle on map' });
   await expect(finding).toBeVisible();
   await finding.click();
 

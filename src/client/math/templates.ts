@@ -106,7 +106,14 @@ export function numberLineSkeleton({ x, y, width, step }: NumberLineBox): MathSk
   return items;
 }
 
-export function tableSkeleton({ x, y, width, height, rows = 3, cols = 3 }: TableBox): MathSkeleton[] {
+export function tableSkeleton({
+  x,
+  y,
+  width,
+  height,
+  rows = 3,
+  cols = 3,
+}: TableBox): MathSkeleton[] {
   const items: MathSkeleton[] = [];
   for (let row = 0; row <= rows; row += 1) {
     const lineY = y + (height * row) / rows;

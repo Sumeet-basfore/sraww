@@ -2,7 +2,7 @@ import { rm } from 'node:fs/promises';
 import path from 'node:path';
 import { expect, test } from './fixtures.ts';
 
-const DIAGRAMS_DIR = path.resolve('data/e2e-diagrams');
+const DIAGRAMS_DIR = path.resolve(process.env.E2E_DATA_DIR ?? '/tmp/sraww-e2e', 'diagrams');
 const NAME = 'e2e formula';
 
 test.beforeAll(async () => {
@@ -16,7 +16,11 @@ test('inserts and renders a LaTeX formula image', async ({ page, request }) => {
   await expect(page.getByRole('heading', { name: NAME })).toBeVisible();
   await expect(page.locator('.excalidraw')).toBeVisible({ timeout: 30_000 });
 
-  await page.getByRole('combobox', { name: 'Insert' }).selectOption('formula');
+  await page.getByRole('button', { name: 'Insert', exact: true }).click();
+  await page
+    .getByRole('menu', { name: 'Insert' })
+    .getByRole('menuitem', { name: 'Formula (LaTeX)…' })
+    .click();
   const dialog = page.getByRole('dialog', { name: 'Insert formula' });
   await expect(dialog).toBeVisible();
   await dialog.getByRole('textbox', { name: 'LaTeX formula' }).fill('x^2');

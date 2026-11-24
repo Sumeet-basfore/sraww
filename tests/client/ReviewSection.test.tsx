@@ -66,13 +66,13 @@ describe('ReviewSection', () => {
           resolvePost = resolve;
         }),
     );
-    render(<ReviewSection name="demo" model={model} />);
+    render(<ReviewSection name="demo" model={model} findingCount={1} />);
     await screen.findByRole('button', { name: 'Review with AI' });
     const user = userEvent.setup();
     await user.click(screen.getByRole('button', { name: 'Review with AI' }));
     expect(
       screen.getByText(
-        'Send 2 folder paths and labels and their findings, no file contents or file names.',
+        'Send 2 folders (paths and labels), 2 files (counts only), 1 import link and 1 finding. No file contents or file names.',
       ),
     ).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -89,7 +89,7 @@ describe('ReviewSection', () => {
     fetchMock.mockResolvedValueOnce(json({ review: saved, stale: false }));
     const writeText = vi.fn().mockResolvedValue(undefined);
     const user = userEvent.setup();
-    render(<ReviewSection name="demo" model={model} />);
+    render(<ReviewSection name="demo" model={model} findingCount={1} />);
     await screen.findByText('Split source');
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
     await user.click(screen.getByRole('button', { name: 'Copy as Markdown' }));
@@ -102,7 +102,7 @@ describe('ReviewSection', () => {
 
   it('hides a stale review and explains why', async () => {
     fetchMock.mockResolvedValueOnce(json({ review: saved, stale: true }));
-    render(<ReviewSection name="demo" model={model} />);
+    render(<ReviewSection name="demo" model={model} findingCount={1} />);
     expect(
       await screen.findByText('The map changed since this review. Run it again.'),
     ).toBeInTheDocument();
@@ -113,13 +113,24 @@ describe('ReviewSection', () => {
     fetchMock
       .mockResolvedValueOnce(json({ review: saved, stale: false }))
       .mockResolvedValueOnce(json({ review: saved, stale: true }));
-    const { rerender } = render(<ReviewSection name="demo" model={model} />);
+    const { rerender } = render(<ReviewSection name="demo" model={model} findingCount={1} />);
     expect(await screen.findByText('Split source')).toBeInTheDocument();
-    rerender(<ReviewSection name="demo" model={{ ...model, generatedAt: 'rescanned' }} />);
+    rerender(
+      <ReviewSection name="demo" model={{ ...model, generatedAt: 'rescanned' }} findingCount={1} />,
+    );
     expect(
       await screen.findByText('The map changed since this review. Run it again.'),
     ).toBeInTheDocument();
     expect(screen.queryByText('Split source')).not.toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not offer to send until the findings it would include have loaded', async () => {
+    fetchMock.mockResolvedValueOnce(json({ review: null, stale: false }));
+    const user = userEvent.setup();
+    render(<ReviewSection name="demo" model={model} findingCount={null} />);
+    await user.click(await screen.findByRole('button', { name: 'Review with AI' }));
+    expect(screen.getByText('Loading the findings for this map…')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Confirm and send' })).toBeDisabled();
   });
 });
