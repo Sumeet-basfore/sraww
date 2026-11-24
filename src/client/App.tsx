@@ -3,6 +3,7 @@ import { DiagramList } from './diagrams/DiagramList.tsx';
 import { AiAccountPage } from './ai/account/AiAccountPage.tsx';
 import { ArchitecturePage } from './arch/ArchitecturePage.tsx';
 import { LearnPage } from './learn/LearnPage.tsx';
+import { LessonView } from './learn/LessonView.tsx';
 import { architectureHash, editorHash, mapsHash, type Route } from './lib/route.ts';
 import { loadPrefs } from './lib/prefs.ts';
 import { useRoute } from './lib/useRoute.ts';
@@ -26,9 +27,12 @@ function Pages({ route, onShowTour }: PagesProps) {
   if (route.view === 'list') {
     return <DiagramList onOpen={(name) => goTo(editorHash(name))} onShowTour={onShowTour} />;
   }
-  // A lesson page is added in a later step; until then a lesson hash shows the Learn tab.
-  if (route.view === 'learn' || route.view === 'lesson') {
+  if (route.view === 'learn') {
     return <LearnPage onShowTour={onShowTour} />;
+  }
+  if (route.view === 'lesson') {
+    // Keyed by id, so one lesson never shows the previous lesson while its own request loads.
+    return <LessonView key={route.id} id={route.id} onShowTour={onShowTour} />;
   }
   if (route.view === 'maps') {
     return (

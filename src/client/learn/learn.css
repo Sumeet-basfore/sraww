@@ -1,0 +1,139 @@
+.lesson-page .lesson-head {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.lesson-back {
+  justify-self: start;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.lesson-back:hover,
+.lesson-back:focus-visible {
+  color: var(--ink);
+}
+
+.lesson-page h1 {
+  margin: 0;
+  font-size: clamp(30px, 4vw, 46px);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+
+.lesson-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  align-items: start;
+  gap: clamp(28px, 4vw, 56px);
+}
+
+.lesson-canvas-column {
+  min-width: 0;
+}
+
+.lesson-canvas {
+  position: relative;
+  height: 70vh;
+  min-height: 420px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sheet);
+}
+
+.lesson-canvas .excalidraw {
+  height: 100%;
+}
+
+.lesson-canvas-status {
+  margin: 0;
+  padding: 24px;
+}
+
+.lesson-panel {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.lesson-panel > p {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.lesson-panel h2 {
+  margin: 14px 0 0;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.key-terms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.key-terms li {
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.source-list {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.source-list > li {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.source-list > li > a {
+  color: var(--accent);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.source-host {
+  margin-left: 8px;
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.source-list ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+@media (max-width: 760px) {
+  .lesson-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
