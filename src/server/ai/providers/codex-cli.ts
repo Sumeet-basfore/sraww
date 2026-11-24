@@ -4,7 +4,7 @@ import path from 'node:path';
 import type { z } from 'zod';
 import { AiError } from '../ai-error.ts';
 import { parseJsonOutput } from '../parse-output.ts';
-import type { AiProvider, ProviderHealth } from '../provider.ts';
+import type { AiProvider, GenerateOptions, ProviderHealth } from '../provider.ts';
 import { withHealthCache } from '../provider.ts';
 import { runCommand } from '../runner.ts';
 import { generateStructured } from '../structured.ts';
@@ -57,14 +57,20 @@ export function createCodexProvider(options: CodexCliOptions): AiProvider {
     }
   }
 
-  async function invoke(prompt: string, jsonSchema: Record<string, unknown>): Promise<unknown> {
+  async function invoke(
+    prompt: string,
+    jsonSchema: Record<string, unknown>,
+    callOptions?: GenerateOptions,
+  ): Promise<unknown> {
     await mkdir(options.workdir, { recursive: true });
     const token = randomUUID();
     const schemaFile = path.join(options.workdir, `schema-${token}.json`);
     const outFile = path.join(options.workdir, `out-${token}.json`);
     try {
       await writeFile(schemaFile, JSON.stringify(jsonSchema), 'utf8');
+      // --search is a top-level flag: it must come before the exec subcommand.
       const args = [
+        ...(callOptions?.webSearch ? ['--search'] : []),
         'exec',
         '--sandbox',
         'read-only',
@@ -107,8 +113,8 @@ export function createCodexProvider(options: CodexCliOptions): AiProvider {
   return {
     id: 'codex',
     health: withHealthCache(health),
-    generate<T>(prompt: string, schema: z.ZodType<T>): Promise<T> {
-      return generateStructured(invoke, prompt, schema);
+    generate<T>(prompt: string, schema: z.ZodType<T>, callOptions?: GenerateOptions): Promise<T> {
+      return generateStructured(invoke, prompt, schema, callOptions);
     },
   };
 }

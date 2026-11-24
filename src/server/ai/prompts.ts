@@ -10,7 +10,7 @@ const GRAPH_RULES = [
 
 /** Removes anything that could close a data delimiter early. */
 export function quoteAsData(text: string): string {
-  return text.replace(/<\/?(request|message|diagram|project|findings)>/gi, '');
+  return text.replace(/<\/?(request|message|diagram|project|findings|topic)>/gi, '');
 }
 
 export function buildGeneratePrompt(request: string): string {
