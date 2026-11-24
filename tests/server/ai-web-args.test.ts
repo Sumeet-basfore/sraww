@@ -55,18 +55,17 @@ describe('web search is opt-in per call', () => {
     expect(args).not.toContain('--allowedTools');
   });
 
-  it('puts Codex search before the exec subcommand and keeps the read-only sandbox', async () => {
+  it('refuses a web-enabled call on Codex and starts no Codex process', async () => {
     const provider = createCodexProvider({
       bin: fixture('codex-args'),
       workdir,
       timeoutMs: 10_000,
       selection: () => ({ model: null, effort: null }),
     });
-    await provider.generate('learn', diagramGraphSchema, { webSearch: true });
-    const args = await recordedArgs();
-    expect(args[0]).toBe('--search');
-    expect(args[1]).toBe('exec');
-    expect(valueAfter(args, '--sandbox')).toBe('read-only');
+    await expect(
+      provider.generate('learn', diagramGraphSchema, { webSearch: true }),
+    ).rejects.toMatchObject({ code: 'FAILED' });
+    await expect(readFile(path.join(workdir, 'args.json'), 'utf8')).rejects.toThrow();
   });
 
   it('does not add Codex search to ordinary calls', async () => {

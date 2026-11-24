@@ -74,11 +74,11 @@ function fakeProvider(reply: unknown, calls: { prompt: string; options?: Generat
 /** Source checks: the MDN page exists, the made-up one does not. */
 const deps: SourceCheckDeps = {
   lookup: async () => ['93.184.216.34'],
-  fetch: async (url: string) =>
-    new Response(null, {
-      status: url === GOOD_SOURCE.url ? 200 : 404,
-      headers: { 'content-type': 'text/html' },
-    }),
+  request: async (url) => ({
+    status: url.href === GOOD_SOURCE.url ? 200 : 404,
+    location: null,
+    contentType: 'text/html',
+  }),
 };
 
 function appWith(provider: AiProvider) {

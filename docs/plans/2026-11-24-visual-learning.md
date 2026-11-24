@@ -68,10 +68,12 @@ provider approval (Anthropic) or a check against the business terms (OpenAI). Se
   **Spike result (2026-11-24): both CLIs can search with file and shell tools off.**
   - Claude Code: `claude -p --tools "WebSearch,WebFetch" --allowedTools "WebSearch,WebFetch"`. The run
     reported one web search request and no permission denials.
-  - Codex: `codex --search exec --sandbox read-only --ephemeral`. `--search` must come before `exec`. The
-    run returned a page with its URL. The tool-call log was not inspected, so re-check this in tests.
-  - Codex's read-only sandbox still lets the model read files, so the prompt must not contain anything
-    beyond the topic. Confirm the sandbox's read scope in Phase 1.
+  - Codex: search works with `codex --search exec --sandbox read-only --ephemeral`, but **Codex is not
+    used for lessons.** The review of PR #11 found that the model keeps a command tool inside that
+    sandbox. Listing its tools with `--disable shell_tool --disable unified_exec` still showed
+    `functions.exec`, and the read-only sandbox does not stop reads. A steered page could make Codex
+    read a local file and put its contents into a search query. The Codex provider's `generate` (in `src/server/ai/providers/codex-cli.ts`) now refuses
+    web-enabled calls. Codex lessons wait for a way to remove the command tool.
 - The model must return sources as a list: title, URL, and the points it took from each. Limits: at most
   5 sources per topic, https only, each URL at most 200 characters.
 - The server checks each URL before the lesson is saved: it fetches the page with a timeout, a byte cap
@@ -174,12 +176,14 @@ steps, each a small batch of scene elements.
 ## Phases
 
 ### Phase 0 — Tabs and minimal shell (3 days)
+
 - Top-level navigation: Drawings, Learn, Architecture, AI tools. Architecture stays reachable from the
   editor too.
 - Plain-language copy for the existing screens, reviewed against the minimal design rules.
 - **Done when:** the four tabs work at phone and desktop width and the copy passes the plain-words rule.
 
 ### Phase 1 — Sourced lesson, static (5 days)
+
 - Spike first (half a day): confirm the Claude and Codex CLIs can search and fetch under our flags, and
   record the result in this plan.
 - Source schema, URL checks (timeout, byte cap, redirect limit), lesson route with a fake provider in tests.
@@ -187,10 +191,12 @@ steps, each a small batch of scene elements.
 - **Done when:** a topic produces a validated lesson with resolvable sources and renders as a static diagram.
 
 ### Phase 2 — Course outline and progress (3 days)
+
 - Outline with research, outline validation, course list, progress save and restore.
 - **Done when:** a course can be created, reopened and resumed at the saved topic.
 
 ### Phase 3 — Build-up animation (4 days)
+
 - Step planner with unit tests (ordering, batch size, determinism, groups before nodes, arrows after
   endpoints).
 - Playback engine and controls: Replay, Pause/Play, Skip to end, arrow keys, reduced motion.
@@ -198,6 +204,7 @@ steps, each a small batch of scene elements.
   works at any point.
 
 ### Phase 4 — Polish, privacy and tests (3 days)
+
 - Key terms, failure states (a failed topic can be retried), the time estimate before a course is built.
 - Mobile layout: explanation below the canvas at phone width.
 - `PRIVACY.md` and the README security notes updated for web research (see Sources).
@@ -206,14 +213,17 @@ steps, each a small batch of scene elements.
 - **Done when:** the e2e spec passes, and the layout works at 390px and 1440px in light and dark themes.
 
 ### Phase 5 — Quizzes (future)
+
 - Quiz per module, generated only on request, retrieval-style questions after a step. Results stay local.
   Never required to move on.
 
 ### Phase 6 — Bigger courses and plan limits (future)
+
 - More modules and topics per course, and per-plan limits (for example, topics or courses per month).
   Limits depend on the user and on what the paid plan covers.
 
 ### Phase 7 — Hosted subscription (future track, not planned)
+
 - sraww-hosted model access sold as a monthly plan, like OpenCode Go.
 - Prerequisites: written approval or a commercial agreement from each model provider; accounts; payments;
   a new privacy policy because sraww would hold keys and user content; consumer-law review (EU withdrawal
@@ -237,14 +247,14 @@ steps, each a small batch of scene elements.
 
 ## Risks
 
-| Risk | Mitigation |
-|------|-----------|
-| A cited source does not support the point | Check each URL exists; summarise, do not quote; show the sources so the learner can check. |
-| Web tools widen what the CLI can reach | Allowlist search and fetch only; no shell or file tools; empty working folder; tested in Phase 1. |
-| Fetched pages carry hidden instructions | Page text is quoted as data; output must match the schema; the model has no action tools. |
-| Highest effort is slow and uses more usage | Time estimate before building; the user can lower effort on the AI tools page. |
-| Build-up feels slow on long lessons | Batches of up to 3 elements; Skip to end; 700 ms default. |
-| Scope creep into a full learning platform | MVP is one course at a time, no accounts, no grading; quizzes and plans come later. |
+| Risk                                       | Mitigation                                                                                                   |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| A cited source does not support the point  | Check each URL exists; summarise, do not quote; show the sources so the learner can check.                   |
+| Web tools widen what the CLI can reach     | Allowlist search and fetch only; no shell or file tools; empty working folder; tested in Phase 1.            |
+| Fetched pages carry hidden instructions    | Page text is quoted as data; output must match the schema; the model has no action tools.                    |
+| Highest effort is slow and uses more usage | Time estimate before building; the user can lower effort on the AI tools page.                               |
+| Build-up feels slow on long lessons        | Batches of up to 3 elements; Skip to end; 700 ms default.                                                    |
+| Scope creep into a full learning platform  | MVP is one course at a time, no accounts, no grading; quizzes and plans come later.                          |
 | The hosted plan is started before approval | Phase 7 is blocked on written provider approval; nothing in the MVP stores keys or user content on a server. |
 
 ---

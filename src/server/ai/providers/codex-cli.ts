@@ -57,20 +57,14 @@ export function createCodexProvider(options: CodexCliOptions): AiProvider {
     }
   }
 
-  async function invoke(
-    prompt: string,
-    jsonSchema: Record<string, unknown>,
-    callOptions?: GenerateOptions,
-  ): Promise<unknown> {
+  async function invoke(prompt: string, jsonSchema: Record<string, unknown>): Promise<unknown> {
     await mkdir(options.workdir, { recursive: true });
     const token = randomUUID();
     const schemaFile = path.join(options.workdir, `schema-${token}.json`);
     const outFile = path.join(options.workdir, `out-${token}.json`);
     try {
       await writeFile(schemaFile, JSON.stringify(jsonSchema), 'utf8');
-      // --search is a top-level flag: it must come before the exec subcommand.
       const args = [
-        ...(callOptions?.webSearch ? ['--search'] : []),
         'exec',
         '--sandbox',
         'read-only',
@@ -114,6 +108,17 @@ export function createCodexProvider(options: CodexCliOptions): AiProvider {
     id: 'codex',
     health: withHealthCache(health),
     generate<T>(prompt: string, schema: z.ZodType<T>, callOptions?: GenerateOptions): Promise<T> {
+      // Codex cannot be limited to search alone: its shell tool stays available inside the
+      // read-only sandbox, and the flags we tested do not remove it. A web-enabled call would let
+      // a steered page make Codex read local files, so it is refused until that changes.
+      if (callOptions?.webSearch) {
+        return Promise.reject(
+          new AiError(
+            'FAILED',
+            'Lessons need Claude Code. Codex cannot be limited to web search alone yet.',
+          ),
+        );
+      }
       return generateStructured(invoke, prompt, schema, callOptions);
     },
   };

@@ -1,20 +1,64 @@
 import { lookup as dnsLookup } from 'node:dns/promises';
+import https from 'node:https';
 import net from 'node:net';
 import { LEARN_LIMITS } from '../../shared/learn.ts';
 
 export const SOURCE_CHECK = { timeoutMs: 8_000, maxRedirects: 3 } as const;
 
-export type FetchLike = (url: string, init: RequestInit) => Promise<Response>;
-export type HostLookup = (hostname: string) => Promise<string[]>;
+/** What the check needs from one answer: the status, any redirect target, and the content type. */
+export interface SourceAnswer {
+  status: number;
+  location: string | null;
+  contentType: string | null;
+}
 
 export interface SourceCheckDeps {
-  fetch: FetchLike;
-  lookup: HostLookup;
+  /** Resolves a host name to its addresses. */
+  lookup: (hostname: string) => Promise<string[]>;
+  /**
+   * One GET to `url`, connected only to `address`. Pinning the connection to the address that was
+   * checked means a name cannot resolve to a different address between the check and the request.
+   */
+  request: (url: URL, address: string, timeoutMs: number) => Promise<SourceAnswer>;
+}
+
+function firstHeader(value: string | string[] | undefined): string | null {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
+
+/** Sends the GET and reads only the answer's headers; the body is discarded without being read. */
+function requestPinned(url: URL, address: string, timeoutMs: number): Promise<SourceAnswer> {
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      url,
+      {
+        method: 'GET',
+        headers: { accept: 'text/html,text/plain;q=0.9' },
+        signal: AbortSignal.timeout(timeoutMs),
+        lookup: (_hostname, options, callback) => {
+          const family = net.isIP(address);
+          if (options.all) callback(null, [{ address, family }]);
+          else callback(null, address, family);
+        },
+      },
+      (res) => {
+        resolve({
+          status: res.statusCode ?? 0,
+          location: firstHeader(res.headers.location),
+          contentType: firstHeader(res.headers['content-type']),
+        });
+        res.destroy();
+      },
+    );
+    req.on('error', reject);
+    req.end();
+  });
 }
 
 export const defaultSourceCheckDeps: SourceCheckDeps = {
-  fetch: (url, init) => fetch(url, init),
   lookup: async (hostname) => (await dnsLookup(hostname, { all: true })).map((r) => r.address),
+  request: requestPinned,
 };
 
 /** Accepts only https URLs without credentials, within the length limit. */
@@ -29,45 +73,56 @@ export function parseSourceUrl(raw: string): URL | null {
   }
 }
 
-const PRIVATE_IPV4 = [
+/** IPv4 ranges that are not public: this network, private, shared, loopback, link-local, test,
+ * benchmarking, documentation, multicast and reserved. */
+const NON_PUBLIC_IPV4 = [
   /^0\./,
   /^10\./,
+  /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./,
   /^127\./,
   /^169\.254\./,
   /^172\.(1[6-9]|2\d|3[01])\./,
+  /^192\.0\.0\./,
+  /^192\.0\.2\./,
   /^192\.168\./,
-  /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./,
+  /^198\.(1[89])\./,
+  /^198\.51\.100\./,
+  /^203\.0\.113\./,
+  /^(22[4-9]|23\d|24\d|25[0-5])\./,
 ];
 
+function isPublicIPv6(lower: string): boolean {
+  // The first 16-bit group decides the block for each prefix checked below.
+  const first = Number.parseInt(lower.split(':')[0] || '0', 16);
+  if (first === 0) return false; // ::/8: unspecified, loopback and IPv4-compatible forms
+  if ((first & 0xffc0) === 0xfe80) return false; // link-local fe80::/10
+  if ((first & 0xffc0) === 0xfec0) return false; // site-local fec0::/10 (deprecated)
+  if ((first & 0xfe00) === 0xfc00) return false; // unique local fc00::/7
+  if ((first & 0xff00) === 0xff00) return false; // multicast ff00::/8
+  if (lower.startsWith('2001:db8:') || lower === '2001:db8::') return false; // documentation
+  return true;
+}
+
 /**
- * True only for addresses on the public internet. Loopback, private and link-local ranges are
- * refused so that a steered model cannot make the server fetch the user's own network.
+ * True only for addresses on the public internet. Loopback, private, link-local, shared, reserved
+ * and documentation ranges are refused, so that a steered model cannot make the server fetch the
+ * user's own network or any other non-public address.
  */
 export function isPublicAddress(address: string): boolean {
   const lower = address.toLowerCase();
   const family = net.isIP(lower);
-  if (family === 4) return !PRIVATE_IPV4.some((range) => range.test(lower));
+  if (family === 4) return !NON_PUBLIC_IPV4.some((range) => range.test(lower));
   if (family === 6) {
     if (lower.startsWith('::ffff:')) return isPublicAddress(lower.slice('::ffff:'.length));
-    return !(
-      lower === '::' ||
-      lower === '::1' ||
-      lower.startsWith('fc') ||
-      lower.startsWith('fd') ||
-      lower.startsWith('fe80')
-    );
+    return isPublicIPv6(lower);
   }
   return false;
 }
 
-async function hostIsPublic(hostname: string, deps: SourceCheckDeps): Promise<boolean> {
-  const addresses = await deps.lookup(hostname).catch(() => []);
-  return addresses.length > 0 && addresses.every(isPublicAddress);
-}
-
 /**
- * Checks that a cited source exists: https, a public host, a 200 answer with a text type. Redirects
- * are followed only as far as the same checks allow. The body is not read, so a check is cheap.
+ * Checks that a cited source exists: https, a public host, a 200 answer with a text type. Every
+ * address the host resolves to must be public, and the request is made to one of those addresses.
+ * Redirects are followed only as far as the same checks allow.
  */
 export async function checkSourceUrl(
   raw: string,
@@ -75,25 +130,20 @@ export async function checkSourceUrl(
 ): Promise<boolean> {
   let current = parseSourceUrl(raw);
   for (let hop = 0; hop <= SOURCE_CHECK.maxRedirects; hop += 1) {
-    if (!current || !(await hostIsPublic(current.hostname, deps))) return false;
-    const response = await deps
-      .fetch(current.href, {
-        redirect: 'manual',
-        signal: AbortSignal.timeout(SOURCE_CHECK.timeoutMs),
-        headers: { accept: 'text/html,text/plain;q=0.9' },
-      })
+    if (!current) return false;
+    const addresses = await deps.lookup(current.hostname).catch(() => []);
+    if (addresses.length === 0 || !addresses.every(isPublicAddress)) return false;
+    const answer = await deps
+      .request(current, addresses[0] as string, SOURCE_CHECK.timeoutMs)
       .catch(() => null);
-    if (!response) return false;
-    await response.body?.cancel().catch(() => undefined);
+    if (!answer) return false;
 
-    if (response.status >= 300 && response.status < 400) {
-      const location = response.headers.get('location');
-      if (!location) return false;
-      current = parseLocation(location, current);
+    if (answer.status >= 300 && answer.status < 400) {
+      if (!answer.location) return false;
+      current = parseLocation(answer.location, current);
       continue;
     }
-    if (response.status !== 200) return false;
-    return /^text\/(html|plain)\b/i.test(response.headers.get('content-type') ?? '');
+    return answer.status === 200 && /^text\/(html|plain)\b/i.test(answer.contentType ?? '');
   }
   return false;
 }

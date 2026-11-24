@@ -11,8 +11,9 @@ export interface ProviderHealth {
 
 export interface GenerateOptions {
   /**
-   * Lets the CLI search the web and read pages. Only search and page-reading tools are enabled;
-   * file editing and shell access stay off. Off by default, so ordinary calls have no web access.
+   * Lets the CLI search the web and read pages. Claude Code offers only its search and page-reading
+   * tools for such a call. Codex cannot be limited that way, so it refuses the call. Off by default,
+   * so ordinary calls have no web access.
    */
   webSearch?: boolean;
 }
