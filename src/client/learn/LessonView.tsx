@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import type { Lesson } from '../../shared/learn.ts';
-import { ApiError, learnApi } from '../lib/api.ts';
+import { ApiError } from '../lib/api.ts';
+import { learnApi } from '../lib/learn-api.ts';
 import { errorMessage } from '../lib/errors.ts';
 import { learnHash } from '../lib/route.ts';
 import { PageHeader } from '../nav/PageHeader.tsx';

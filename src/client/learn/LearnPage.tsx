@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { LEARN_LIMITS } from '../../shared/learn.ts';
 import { defaultView } from '../ai/toolSummary.ts';
 import { useAiProviders } from '../ai/useAiProviders.ts';
-import { learnApi } from '../lib/api.ts';
+import { learnApi } from '../lib/learn-api.ts';
 import { errorMessage } from '../lib/errors.ts';
 import { lessonHash } from '../lib/route.ts';
 import { PageHeader } from '../nav/PageHeader.tsx';

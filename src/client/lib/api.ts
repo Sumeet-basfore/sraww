@@ -10,7 +10,6 @@ import type {
   ProviderView,
   ProvidersView,
 } from '../../shared/ai-account.ts';
-import type { Lesson } from '../../shared/learn.ts';
 
 export interface ChatResponse {
   provider: ProviderId;
@@ -35,7 +34,7 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(`/api${path}`, {
     ...init,
     headers: { 'Content-Type': 'application/json', ...init.headers },
@@ -281,14 +280,5 @@ export const archApi = {
   },
   resetLayout(name: string): Promise<void> {
     return request(`/arch/models/${encodeURIComponent(name)}/layout`, { method: 'DELETE' });
-  },
-};
-
-export const learnApi = {
-  create(topic: string): Promise<{ lesson: Lesson; skippedSources: number }> {
-    return request('/learn/lessons', { method: 'POST', body: JSON.stringify({ topic }) });
-  },
-  get(id: string): Promise<{ lesson: Lesson }> {
-    return request(`/learn/lessons/${encodeURIComponent(id)}`);
   },
 };
