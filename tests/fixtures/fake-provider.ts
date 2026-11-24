@@ -10,6 +10,8 @@ export interface GenerateCall {
 export interface FakeReplies {
   outline?: unknown;
   lesson?: unknown;
+  /** Delays only the lesson answer, so tests can make two requests overlap. */
+  lessonDelayMs?: number;
 }
 
 /**
@@ -32,6 +34,9 @@ export function fakeProvider(replies: FakeReplies, calls: GenerateCall[] = []): 
     ): Promise<T> => {
       calls.push({ prompt, options });
       const isOutline = (schema as unknown) === outlineReplySchema;
+      if (!isOutline && replies.lessonDelayMs) {
+        await new Promise((resolve) => setTimeout(resolve, replies.lessonDelayMs));
+      }
       return schema.parse(isOutline ? replies.outline : replies.lesson);
     },
   };

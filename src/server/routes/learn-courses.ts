@@ -28,6 +28,11 @@ function topicsOf(course: Course): CourseTopic[] {
   return course.modules.flatMap((module) => module.topics);
 }
 
+interface TopicLesson {
+  lesson: Lesson;
+  skippedSources: number;
+}
+
 /**
  * Course routes. The outline is planned without web access. A topic's lesson is built, with the
  * same web research and source checks as a single lesson, the first time that topic is opened.
@@ -40,6 +45,7 @@ export function createCourseRouter(
   now: () => Date = () => new Date(),
 ): Router {
   const router = Router();
+  const pendingBuilds = new Map<string, Promise<TopicLesson>>();
 
   async function loadCourse(id: string): Promise<Course> {
     const course = await courses.read(id);
@@ -81,26 +87,53 @@ export function createCourseRouter(
     res.json({ course, builtLessons: await builtLessonsOf(course) });
   });
 
+  function buildTopicLesson(course: Course, topic: CourseTopic): Promise<TopicLesson> {
+    return (async () => {
+      const providerId = ai.currentDefault();
+      const topicLabel = `${course.title}: ${topic.title}`;
+      const built = await buildLesson(ai.providers[providerId], topicLabel, deps);
+      const lesson: Lesson = {
+        ...toStoredLesson(built, topicLabel, providerId, now()),
+        courseId: course.id,
+        topicId: topic.id,
+      };
+      await lessons.save(lesson);
+      return { lesson, skippedSources: built.skippedSources };
+    })();
+  }
+
   router.post('/courses/:id/topics/:topicId/lesson', async (req, res) => {
     const course = await loadCourse(req.params.id);
     const topic = topicsOf(course).find((item) => item.id === req.params.topicId);
     if (!topic) throw new DiagramError('NOT_FOUND', 'That topic does not exist in this course.');
 
+    // A second open of the same topic while its lesson is still being built waits for that build,
+    // so two tabs share one lesson instead of paying for two web-research calls.
+    const key = `${course.id}/${topic.id}`;
+    const running = pendingBuilds.get(key);
+    if (running) {
+      res.json({ lesson: (await running).lesson });
+      return;
+    }
     const existing = await lessons.findForTopic(course.id, topic.id);
     if (existing) {
       res.json({ lesson: existing });
       return;
     }
-    const providerId = ai.currentDefault();
-    const topicLabel = `${course.title}: ${topic.title}`;
-    const built = await buildLesson(ai.providers[providerId], topicLabel, deps);
-    const lesson: Lesson = {
-      ...toStoredLesson(built, topicLabel, providerId, now()),
-      courseId: course.id,
-      topicId: topic.id,
-    };
-    await lessons.save(lesson);
-    res.status(201).json({ lesson, skippedSources: built.skippedSources });
+    // Another request may have started the build while the lookup above was running.
+    const started = pendingBuilds.get(key);
+    if (started) {
+      res.json({ lesson: (await started).lesson });
+      return;
+    }
+    const build = buildTopicLesson(course, topic);
+    pendingBuilds.set(key, build);
+    try {
+      const built = await build;
+      res.status(201).json(built);
+    } finally {
+      pendingBuilds.delete(key);
+    }
   });
 
   router.put('/courses/:id/progress', async (req, res) => {
