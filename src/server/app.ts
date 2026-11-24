@@ -10,7 +10,9 @@ import { createArchRouter } from './routes/arch.ts';
 import { createAiRouter } from './routes/ai.ts';
 import { createArchStore } from './storage/arch-store.ts';
 import { createLessonStore } from './storage/lesson-store.ts';
+import { createCourseStore } from './storage/course-store.ts';
 import { createLearnRouter } from './routes/learn.ts';
+import { createCourseRouter } from './routes/learn-courses.ts';
 import { listArchProjects } from './arch/projects.ts';
 import { createDiagramRouter } from './routes/diagrams.ts';
 import { createLibraryRouter } from './routes/library.ts';
@@ -74,7 +76,9 @@ export function createApp(
   app.use('/api/library', createLibraryRouter(createLibraryStore(store.dir)));
   app.use('/api/projects', createProjectRouter(projectStore, projects));
   app.use('/api/arch', createArchRouter(createArchStore(store.dir), archProjects, ai));
-  app.use('/api/learn', createLearnRouter(createLessonStore(store.dir), ai));
+  const lessons = createLessonStore(store.dir);
+  app.use('/api/learn', createLearnRouter(lessons, ai));
+  app.use('/api/learn', createCourseRouter(createCourseStore(store.dir), lessons, ai));
   app.use('/api/ai', createAiRouter(ai));
 
   app.use('/api', (_req, res) => {
