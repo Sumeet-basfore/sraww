@@ -85,6 +85,7 @@ const NON_PUBLIC_IPV4 = [
   /^192\.0\.0\./,
   /^192\.0\.2\./,
   /^192\.168\./,
+  /^192\.88\.99\./,
   /^198\.(1[89])\./,
   /^198\.51\.100\./,
   /^203\.0\.113\./,
@@ -99,7 +100,9 @@ function isPublicIPv6(lower: string): boolean {
   if ((first & 0xffc0) === 0xfec0) return false; // site-local fec0::/10 (deprecated)
   if ((first & 0xfe00) === 0xfc00) return false; // unique local fc00::/7
   if ((first & 0xff00) === 0xff00) return false; // multicast ff00::/8
-  if (lower.startsWith('2001:db8:') || lower === '2001:db8::') return false; // documentation
+  // Compare the numeric groups, so every spelling of 2001:db8::/32 is caught (for example 2001:0db8::1).
+  const second = Number.parseInt(lower.split(':')[1] || '0', 16);
+  if (first === 0x2001 && second === 0x0db8) return false; // documentation 2001:db8::/32
   return true;
 }
 
