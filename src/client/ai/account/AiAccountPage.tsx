@@ -3,14 +3,13 @@ import { aiApi } from '../../lib/api.ts';
 import { errorMessage } from '../../lib/errors.ts';
 import type { ProviderId, ProviderSelection } from '../../../shared/ai-account.ts';
 import { useAiProviders } from '../useAiProviders.ts';
-import { Logo } from '../../brand/Logo.tsx';
+import { PageHeader } from '../../nav/PageHeader.tsx';
 import { AccountCard } from './AccountCard.tsx';
 import { ModelControls } from './ModelControls.tsx';
 import { SignInSection } from './SignInSection.tsx';
 import './ai-tools.css';
 
 interface AiAccountPageProps {
-  onBack: () => void;
   onShowTour: () => void;
 }
 
@@ -19,7 +18,7 @@ function providerStatus(view: { installed: boolean; loggedIn: boolean }): string
 }
 
 /** Settings for the AI tools: account, model and effort for both supported providers. */
-export function AiAccountPage({ onBack, onShowTour }: AiAccountPageProps) {
+export function AiAccountPage({ onShowTour }: AiAccountPageProps) {
   const { state, reload } = useAiProviders();
   const [pickedDefaultId, setPickedDefaultId] = useState<ProviderId | null>(null);
   const [busy, setBusy] = useState(false);
@@ -62,20 +61,11 @@ export function AiAccountPage({ onBack, onShowTour }: AiAccountPageProps) {
   return (
     <div className="app">
       <main className="ai-page">
-        <header className="masthead ai-masthead">
-          <Logo className="brand-lockup" />
-          <nav className="masthead-links" aria-label="Main navigation">
-            <a className="link-button" href="#/" onClick={onBack}>
-              ← Drawings
-            </a>
-            <button type="button" className="link-button" onClick={onShowTour}>
-              Take the tour
-            </button>
-            <a className="link-button ai-current-link" href="#/ai" aria-current="page">
-              AI tools
-            </a>
-          </nav>
-        </header>
+        <PageHeader current="ai">
+          <button type="button" className="link-button" onClick={onShowTour}>
+            Take the tour
+          </button>
+        </PageHeader>
 
         <header className="ai-title-block">
           <p className="ai-eyebrow">Accounts &amp; preferences</p>

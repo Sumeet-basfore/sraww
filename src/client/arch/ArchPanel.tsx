@@ -166,7 +166,7 @@ export function ArchPanel({ name, getApi, onClose }: ArchPanelProps) {
       if (!api || !model) throw new Error('The drawing is not ready yet.');
       if (!model.projectId) {
         throw new Error(
-          'This map has no project to scan. Map the project again from the start page.',
+          'This map has no project to scan. Map the project again from the Architecture tab.',
         );
       }
       await archApi.saveLayout(name, capturePositions(api.getSceneElementsIncludingDeleted()));

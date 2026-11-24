@@ -88,7 +88,9 @@ test('AI tools page shows both accounts and saves the default tool from its radi
   await page.goto('/#/ai');
 
   await expect(page.getByRole('heading', { name: 'AI tools' })).toBeVisible();
-  await expect(page.getByRole('link', { name: '← Drawings' })).toHaveCount(1);
+  await expect(
+    page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Drawings' }),
+  ).toHaveCount(1);
   await expect(page.getByRole('link', { name: 'AI tools' })).toHaveAttribute(
     'aria-current',
     'page',

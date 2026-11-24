@@ -15,7 +15,7 @@ test('a first visit opens the walkthrough once, and Escape keeps it closed after
   await expect(page.getByRole('dialog')).toHaveCount(0);
 
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Diagrams' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Drawings' })).toBeVisible();
   await expect(page.getByRole('dialog')).toHaveCount(0);
 });
 

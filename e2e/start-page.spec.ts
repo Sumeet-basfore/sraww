@@ -8,7 +8,7 @@ const readyProviders = {
   ],
 };
 
-test('the start page shows a quiet default AI status and keeps GitHub import collapsed', async ({
+test('the drawings page shows a quiet default AI status, the tour and the four tabs', async ({
   page,
 }) => {
   await page.route('**/api/ai/providers', (route) =>
@@ -24,7 +24,20 @@ test('the start page shows a quiet default AI status and keeps GitHub import col
     'Claude ready',
   );
   await expect(page.getByRole('button', { name: 'Take the tour' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'AI tools' })).toBeVisible();
+
+  const tabs = page.getByRole('navigation', { name: 'Main' });
+  await expect(tabs.getByRole('link', { name: 'Drawings' })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  await expect(tabs.getByRole('link', { name: 'Learn' })).toBeVisible();
+  await expect(tabs.getByRole('link', { name: 'Architecture' })).toBeVisible();
+  await expect(tabs.getByRole('link', { name: 'AI tools' })).toBeVisible();
+});
+
+test('the architecture tab keeps GitHub import collapsed until it is opened', async ({ page }) => {
+  await page.goto('/#/architecture');
+  await expect(page.getByRole('heading', { name: 'Code projects' })).toBeVisible();
 
   const github = page.locator('details.github-import');
   await expect(github).not.toHaveAttribute('open', '');
@@ -55,27 +68,31 @@ test('drawing actions remain visible and accessible at desktop and phone widths'
   await request.delete(`/api/diagrams/${encodeURIComponent(name)}`);
 });
 
-test('the start page stacks diagrams, code projects, and project mapping on mobile', async ({
+test('the architecture tab stacks code projects above project mapping on mobile', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/');
-  const diagram = await page.getByRole('heading', { name: 'Diagrams' }).boundingBox();
+  await page.goto('/#/architecture');
   const projects = await page.getByRole('heading', { name: 'Code projects' }).boundingBox();
   const mapping = await page.getByRole('heading', { name: 'Map a project' }).boundingBox();
 
-  expect(diagram).not.toBeNull();
   expect(projects).not.toBeNull();
   expect(mapping).not.toBeNull();
-  expect(diagram!.y).toBeLessThan(projects!.y);
   expect(projects!.y).toBeLessThan(mapping!.y);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
 
-test('a failed providers request leaves the start page usable', async ({ page }) => {
+test('the tabs fit a phone without horizontal scrolling', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await expect(page.getByRole('link', { name: 'AI tools' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
+
+test('a failed providers request leaves the drawings page usable', async ({ page }) => {
   await page.route('**/api/ai/providers', (route) => route.abort());
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Diagrams' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Drawings' })).toBeVisible();
   await expect(page.getByRole('status', { name: 'Default AI tool status' })).toHaveText(
     'AI status unavailable',
   );
@@ -89,7 +106,13 @@ test('an empty project list uses end-user mapping guidance', async ({ page }) =>
       body: JSON.stringify({ projects: [] }),
     }),
   );
-  await page.goto('/');
+  await page.goto('/#/architecture');
   await expect(page.getByText('Upload a project above, then map it here.')).toBeVisible();
   await expect(page.getByText(/ARCH_PROJECTS|\.env/)).toHaveCount(0);
+});
+
+test('the learn tab says it is not ready yet', async ({ page }) => {
+  await page.goto('/#/learn');
+  await expect(page.getByRole('heading', { name: 'Learn' })).toBeVisible();
+  await expect(page.getByText(/It is not ready yet/)).toBeVisible();
 });

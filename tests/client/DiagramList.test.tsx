@@ -4,9 +4,6 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DiagramList } from '../../src/client/diagrams/DiagramList.tsx';
 
-// The map form has its own tests; here it is stubbed so only the diagram list is exercised.
-vi.mock('../../src/client/arch/ArchNewForm.tsx', () => ({ ArchNewForm: () => null }));
-
 const fetchMock = vi.fn();
 
 function json(status: number, body?: unknown): Response {
@@ -44,9 +41,7 @@ function queueDiagramResponses(...responses: Response[]): void {
 }
 
 function renderList(onOpen: (name: string) => void = () => undefined) {
-  return render(
-    <DiagramList onOpen={onOpen} onOpenArchitecture={() => undefined} onOpenAi={() => undefined} />,
-  );
+  return render(<DiagramList onOpen={onOpen} />);
 }
 
 beforeEach(() => {
@@ -154,12 +149,11 @@ describe('DiagramList', () => {
     expect(JSON.parse(createCall?.[1]?.body as string).name).toBe('Sketch (2)');
   });
 
-  it('shows the code-projects section above the map form', async () => {
+  it('shows the drawings heading with the Drawings tab marked as the current page', async () => {
     queueDiagramResponses(json(200, { diagrams: [] }));
     renderList();
-    expect(
-      await screen.findByRole('heading', { name: 'Code projects', level: 2 }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Upload a project folder' })).toBeDisabled();
+    expect(await screen.findByRole('heading', { name: 'Drawings', level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Drawings' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Architecture' })).not.toHaveAttribute('aria-current');
   });
 });

@@ -15,7 +15,7 @@ test('maps the sample project, keeps stable ids and glued arrows, and re-scans',
   request,
 }) => {
   await request.delete(`/api/diagrams/${encodeURIComponent(NAME)}`);
-  await page.goto('/');
+  await page.goto('/#/architecture');
   await expect(page.getByRole('heading', { name: 'Map a project' })).toBeVisible();
   await page.getByLabel('Diagram name', { exact: true }).fill(NAME);
   await page.getByRole('button', { name: 'Map project' }).click();

@@ -8,7 +8,7 @@ test('shows structural findings, selects their boxes and makes no AI request', a
 }) => {
   const aiRequests: string[] = [];
   await request.delete(`/api/diagrams/${encodeURIComponent(NAME)}`);
-  await page.goto('/');
+  await page.goto('/#/architecture');
   await expect(page.getByRole('heading', { name: 'Map a project' })).toBeVisible();
   await page.waitForLoadState('networkidle');
   page.on('request', (request) => {
