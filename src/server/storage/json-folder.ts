@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { mkdir, readdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { z } from 'zod';
@@ -19,8 +20,9 @@ export function createJsonFolder<T>(folder: string, schema: z.ZodType<T>) {
       const file = fileFor(id);
       if (!file) throw new Error('Invalid id.');
       await mkdir(folder, { recursive: true });
-      // Write to a temporary file first, so a crash never leaves half a record behind.
-      const temp = `${file}.tmp`;
+      // Write to a temporary file first, so a crash never leaves half a record behind. The name is
+      // unique per write, so two saves of one record cannot rename each other's file.
+      const temp = `${file}.${randomUUID()}.tmp`;
       await writeFile(temp, JSON.stringify(value, null, 2), 'utf8');
       await rename(temp, file);
     },
