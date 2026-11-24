@@ -78,7 +78,8 @@ describe('ArchPanel', () => {
     expect(screen.getByText('Packages').nextSibling).toHaveTextContent('1');
     expect(screen.getByText('Dependencies').nextSibling).toHaveTextContent('1');
     expect(await screen.findByText('Orphans')).toBeInTheDocument();
-    expect(screen.getByText('Orphans').nextSibling).toHaveTextContent('1');
+    // The orphan count shows a dash until the findings have loaded.
+    await waitFor(() => expect(screen.getByText('Orphans').nextSibling).toHaveTextContent('1'));
   });
 
   it('can collapse and expand the inspector sheet', async () => {

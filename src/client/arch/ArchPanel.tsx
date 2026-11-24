@@ -1,6 +1,6 @@
 import { CaptureUpdateAction } from '@excalidraw/excalidraw';
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ArchDiff, ArchModel, ArchNode } from '../../shared/arch-model.ts';
 import type { ArchFinding } from '../../shared/arch-findings.ts';
 import { archApi } from '../lib/api.ts';
@@ -75,6 +75,7 @@ function NodeDetails({ model, node }: { model: ArchModel; node: ArchNode }) {
 }
 
 export function ArchPanel({ name, getApi, onClose }: ArchPanelProps) {
+  const panelRef = useRef<HTMLElement>(null);
   const [model, setModel] = useState<ArchModel | null>(null);
   const [diff, setDiff] = useState<ArchDiff | null>(null);
   const [findings, setFindings] = useState<ArchFinding[] | null>(null);
@@ -83,6 +84,11 @@ export function ArchPanel({ name, getApi, onClose }: ArchPanelProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
+  // A dialog takes focus when it opens, so keyboard users land inside the inspector.
+  useEffect(() => {
+    panelRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -216,6 +222,8 @@ export function ArchPanel({ name, getApi, onClose }: ArchPanelProps) {
 
   return (
     <aside
+      ref={panelRef}
+      tabIndex={-1}
       className={`sheet arch-panel${collapsed ? ' is-collapsed' : ''}`}
       role="dialog"
       aria-labelledby="arch-title"
@@ -289,7 +297,7 @@ export function ArchPanel({ name, getApi, onClose }: ArchPanelProps) {
               onFindingsChange={setFindings}
               refreshKey={model.generatedAt}
             />
-            <ReviewSection name={name} model={model} />
+            <ReviewSection name={name} model={model} findingCount={findings?.length ?? null} />
             {selectedNode && (
               <section className="arch-selected-folder">
                 <NodeDetails model={model} node={selectedNode} />

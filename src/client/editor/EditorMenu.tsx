@@ -12,6 +12,13 @@ interface EditorMenuProps {
   disabled?: boolean;
 }
 
+function enabledMenuItems(wrapper: HTMLElement | null): HTMLButtonElement[] {
+  return [
+    ...(wrapper?.querySelectorAll<HTMLButtonElement>('[role="menuitem"], [role="menuitemradio"]') ??
+      []),
+  ].filter((item) => !item.disabled);
+}
+
 export function EditorMenu({
   id,
   label,
@@ -29,14 +36,21 @@ export function EditorMenu({
   useEffect(() => {
     if (!open) return undefined;
     function onPointerDown(event: PointerEvent): void {
-      if (!wrapperRef.current?.contains(event.target as Node)) {
-        onClose();
-        window.setTimeout(() => triggerRef.current?.focus(), 0);
-      }
+      const target = event.target;
+      if (!(target instanceof Element) || wrapperRef.current?.contains(target)) return;
+      onClose();
+      // A click on another menu opens that menu, which must keep focus, so only reclaim it here.
+      if (target.closest('.editor-dropdown')) return;
+      window.setTimeout(() => triggerRef.current?.focus(), 0);
     }
     document.addEventListener('pointerdown', onPointerDown);
     return () => document.removeEventListener('pointerdown', onPointerDown);
   }, [open, onClose]);
+
+  // Move focus into the menu when it opens, as the ARIA menu button pattern expects.
+  useEffect(() => {
+    if (open) enabledMenuItems(wrapperRef.current)[0]?.focus();
+  }, [open]);
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
     if (event.key === 'Escape') {
@@ -46,11 +60,7 @@ export function EditorMenu({
       return;
     }
     if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
-    const items = [
-      ...(wrapperRef.current?.querySelectorAll<HTMLButtonElement>(
-        '[role="menuitem"], [role="menuitemradio"]',
-      ) ?? []),
-    ].filter((item) => !item.disabled);
+    const items = enabledMenuItems(wrapperRef.current);
     if (items.length === 0) return;
     event.preventDefault();
     const current = items.indexOf(document.activeElement as HTMLButtonElement);

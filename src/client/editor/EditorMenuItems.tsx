@@ -120,7 +120,7 @@ export function MoreMenuItems({
         <FileMenuItems disabled={disabled} onSelect={onFileAction} />
       </div>
       {architecture && (
-        <EditorMenuItem disabled={disabled} onClick={onArchitecture}>
+        <EditorMenuItem disabled={disabled} focusManaged onClick={onArchitecture}>
           Architecture
         </EditorMenuItem>
       )}
