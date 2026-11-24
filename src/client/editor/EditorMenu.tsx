@@ -39,8 +39,9 @@ export function EditorMenu({
       const target = event.target;
       if (!(target instanceof Element) || wrapperRef.current?.contains(target)) return;
       onClose();
-      // A click on another menu opens that menu, which must keep focus, so only reclaim it here.
-      if (target.closest('.editor-dropdown')) return;
+      // A click on another menu opens that menu, and a click into a text field must keep its
+      // focus, so only reclaim focus for the other outside clicks.
+      if (target.closest('.editor-dropdown, input, textarea, select, [contenteditable]')) return;
       window.setTimeout(() => triggerRef.current?.focus(), 0);
     }
     document.addEventListener('pointerdown', onPointerDown);

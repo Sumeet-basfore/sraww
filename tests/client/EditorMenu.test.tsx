@@ -91,6 +91,24 @@ describe('EditorMenu', () => {
     await expect.poll(() => document.activeElement).toBe(secondAction);
   });
 
+  it('keeps focus in a text field that is clicked while a menu is open', async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <MenuPair />
+        <textarea aria-label="Assistant" />
+      </>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'First' }));
+    await screen.findByRole('menuitem', { name: 'First action' });
+    await user.click(screen.getByRole('textbox', { name: 'Assistant' }));
+
+    await expect
+      .poll(() => document.activeElement)
+      .toBe(screen.getByRole('textbox', { name: 'Assistant' }));
+  });
+
   it('moves focus into the inspector that the Architecture action opens', async () => {
     const user = userEvent.setup();
     render(<MoreMenuWithArchitecture />);
