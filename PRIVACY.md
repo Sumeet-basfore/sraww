@@ -37,9 +37,11 @@ Relative paths such as `./data/diagrams` are relative to the folder you start sr
 | Walkthrough status (seen or not)                   | Your browser's local storage, key `sraww.tourSeen`             | None                | Clear the site's data in your browser                                         |
 | Editor drafts (library publishing, Mermaid text)   | Your browser's local storage, written by the Excalidraw editor | None                | Clear the site's data in your browser. We have not confirmed these keys       |
 
-Lessons, when you create them, are saved as one JSON file each under `DIAGRAMS_DIR/lessons`. A lesson holds the topic you asked for, its title, explanation, key terms, diagram and the source addresses it cites. To delete one, delete its file from that folder. The Learn tab has no delete button for this yet.
+Lessons, when you create them, are saved as one JSON file each under `DIAGRAMS_DIR/lessons`. A lesson holds the topic you asked for, its title, explanation, key terms, diagram and the source addresses it cites. A lesson opened from a course holds the course title and topic title in place of the topic you asked for, and the ids of its course and topic. To delete one, delete its file from that folder. The Learn tab has no delete button for this yet.
 
-The drawings, architecture maps, lessons, AI settings and working folder are plain files on your machine. sraww does not upload them anywhere.
+Courses and their progress are saved as one JSON file each under `DIAGRAMS_DIR/courses`. A course holds the topic you asked for, its title, its modules and topics with their summaries, and the topic you opened last. To delete one, delete its file from that folder. The Learn tab has no delete button for this yet.
+
+The drawings, architecture maps, lessons, courses, AI settings and working folder are plain files on your machine. sraww does not upload them anywhere.
 
 The server writes its status messages to its console only. It does not write a log file.
 
@@ -49,7 +51,7 @@ sraww never reads, stores or transmits a password, a sign-in token or an API key
 
 - **Claude Code** and **Codex** each sign you in through their own login flow. They keep the credentials in their own locations, under their own control.
 - sraww runs the tools' status and sign-in commands. Checking your sign-in status, listing models and starting a sign-in run those tools' own commands. sraww reads the account details they report: the email address, the plan, the workspace or organisation name, and the sign-in method. It shows these to you and does not store them. Those commands may contact the provider over the network. We have not measured what they send, and they carry no drawings or code.
-- Opening a page that shows AI status, such as the drawings page or the Learn tab, runs these status commands.
+- Opening a page that shows AI status, such as the drawings page, runs these status commands.
 - For a Claude sign-in, sraww shows the sign-in link that Claude Code prints. When you paste the code the browser gives you, sraww passes that code to Claude Code and does not keep it. For a Codex sign-in, sraww shows the code and link that Codex provides.
 - The tools run with only two environment variables from sraww, `PATH` and `HOME`. Any API key variable in your shell is not passed to them.
 
@@ -67,7 +69,9 @@ Each AI action below sends only the content listed. Nothing is sent for an AI ac
 
 Architecture maps are built on your computer with no AI call. The map itself never leaves your machine.
 
-**Building a lesson** (started from the Learn tab, which calls `POST /api/learn/lessons`) sends the topic you enter, and asks the tool to research it on the web. For this one call, Claude Code may search the web and read pages it chooses. Those searches and page reads are made by the tool, from its own process, under the provider's terms. For Claude, the call allows only web search and page reading as tools. Codex is not used for lessons. Its shell tool cannot be switched off for a web-enabled call, and a read-only sandbox does not stop it reading files on this computer. A lesson request made while Codex is the chosen tool is refused with a message, and nothing is sent. The tool's answer is saved as a lesson (see the lessons paragraph in [What is stored on your computer](#what-is-stored-on-your-computer)). sraww then checks each source address the lesson cites, as described in [Lesson sources](#lesson-sources).
+**Building a course outline** (started from the Learn tab, which calls `POST /api/learn/courses`) sends the topic you enter, with fixed instructions for the outline, to the tool you chose, with no web search. The outline is written from the tool's own knowledge. With Claude Code the call offers no tools at all. With Codex the call runs in a read-only sandbox whose shell tool stays available, so Codex can still read files on this computer during the call. The answer is saved as a course (see the courses paragraph in [What is stored on your computer](#what-is-stored-on-your-computer)).
+
+**Building a lesson** (started by opening a topic on a course page, which calls `POST /api/learn/courses/:id/topics/:topicId/lesson`) sends the course title and the topic title, and asks the tool to research it on the web. For this one call, Claude Code may search the web and read pages it chooses. Those searches and page reads are made by the tool, from its own process, under the provider's terms. For Claude, the call allows only web search and page reading as tools. Codex is not used for lessons. Its shell tool cannot be switched off for a web-enabled call, and a read-only sandbox does not stop it reading files on this computer. A lesson request made while Codex is the chosen tool is refused with a message, and nothing is sent. The tool's answer is saved as a lesson (see the lessons paragraph in [What is stored on your computer](#what-is-stored-on-your-computer)). sraww then checks each source address the lesson cites, as described in [Lesson sources](#lesson-sources). A topic opened from a course page gets the same research and checks.
 
 The provider sees the content of each request. Anthropic and OpenAI handle it under their own terms, retention periods and privacy policies. Check those before you use the AI features with private material. The CLI tools may also have their own usage and telemetry settings. sraww does not change those settings. Their documentation explains them.
 

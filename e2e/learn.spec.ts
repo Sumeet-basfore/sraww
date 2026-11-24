@@ -3,7 +3,7 @@ import { expect, test } from './fixtures.ts';
 
 const lesson = {
   id: 'lesson-e2e-1',
-  topic: 'How HTTP caching works',
+  topic: 'HTTP caching: What a cache is',
   title: 'HTTP caching: keep a copy, check it is fresh',
   explanation:
     'A cache keeps a copy of a response.\n\nCache-Control says how long the copy stays fresh.',
@@ -25,76 +25,136 @@ const lesson = {
   },
   createdAt: '2026-11-24T10:00:00.000Z',
   provider: 'claude',
+  courseId: 'course-e2e-1',
+  topicId: 'topic-1',
 };
 
-const readyProviders = {
-  defaultProvider: 'claude',
-  providers: [
-    { id: 'claude', label: 'Claude Code', installed: true, loggedIn: true },
-    { id: 'codex', label: 'Codex', installed: true, loggedIn: false },
+const course = {
+  id: 'course-e2e-1',
+  title: 'HTTP caching',
+  prompt: 'How HTTP caching works',
+  createdAt: '2026-11-24T10:00:00.000Z',
+  modules: [
+    {
+      id: 'module-1',
+      title: 'Basics',
+      topics: [
+        { id: 'topic-1', title: 'What a cache is', summary: 'A cache keeps a copy of a response.' },
+        { id: 'topic-2', title: 'Freshness', summary: 'A copy stays fresh for a set time.' },
+      ],
+    },
+    {
+      id: 'module-2',
+      title: 'Checking copies',
+      topics: [
+        {
+          id: 'topic-3',
+          title: 'Validators',
+          summary: 'A validator asks whether a copy is still good.',
+        },
+      ],
+    },
   ],
-};
-
-const codexProviders = {
-  defaultProvider: 'codex',
-  providers: [
-    { id: 'claude', label: 'Claude Code', installed: true, loggedIn: true },
-    { id: 'codex', label: 'Codex', installed: true, loggedIn: true },
-  ],
+  progress: { topicId: null },
 };
 
 function json(body: unknown, status = 200) {
   return { status, contentType: 'application/json', body: JSON.stringify(body) };
 }
 
-async function stubProviders(page: Page, providers: unknown): Promise<void> {
-  await page.route('**/api/ai/providers', (route) => route.fulfill(json(providers)));
+function topicRow(page: Page, title: string) {
+  return page.locator('li', { has: page.getByRole('heading', { level: 3, name: title }) });
 }
 
-test('a topic is built into a lesson with its diagram, explanation, key term and source', async ({
-  page,
-}) => {
-  let sent: unknown = null;
-  await stubProviders(page, readyProviders);
-  await page.route('**/api/learn/lessons', async (route) => {
-    sent = route.request().postDataJSON();
+/**
+ * Stubs the course endpoints as one small server. The course keeps its progress and the lessons
+ * built for it, so reopening the course shows what the learner did before.
+ */
+async function stubCourseApi(page: Page, listed: unknown[] = []) {
+  let progress: { topicId: string | null } = { topicId: null };
+  let builtLessons: Record<string, string> = {};
+  const created: unknown[] = [];
+  const progressSaved: unknown[] = [];
+
+  await page.route('**/api/learn/courses', async (route) => {
+    if (route.request().method() === 'POST') {
+      created.push(route.request().postDataJSON());
+      await route.fulfill(json({ course }, 201));
+      return;
+    }
+    await route.fulfill(json({ courses: listed }));
+  });
+  await page.route(`**/api/learn/courses/${course.id}`, (route) =>
+    route.fulfill(json({ course: { ...course, progress }, builtLessons })),
+  );
+  await page.route(`**/api/learn/courses/${course.id}/topics/topic-1/lesson`, async (route) => {
+    builtLessons = { ...builtLessons, 'topic-1': lesson.id };
     await route.fulfill(json({ lesson, skippedSources: 0 }, 201));
+  });
+  await page.route(`**/api/learn/courses/${course.id}/progress`, async (route) => {
+    progress = route.request().postDataJSON() as { topicId: string | null };
+    progressSaved.push(progress);
+    await route.fulfill(json({ course: { ...course, progress } }));
   });
   await page.route(`**/api/learn/lessons/${lesson.id}`, (route) => route.fulfill(json({ lesson })));
 
-  await page.goto('/#/learn');
-  await page.getByLabel('Topic').fill('  How HTTP caching works  ');
-  await page.getByRole('button', { name: 'Build lesson' }).click();
+  return { created, progressSaved };
+}
 
-  await expect(page).toHaveURL(/#\/learn\/lesson-e2e-1$/);
-  await expect(page.getByRole('heading', { level: 1, name: lesson.title })).toBeVisible();
-  await expect(page.getByText('A cache keeps a copy of a response.')).toBeVisible();
-  await expect(page.getByText('Cache-Control', { exact: true })).toBeVisible();
-
-  const source = page.getByRole('link', { name: 'HTTP caching guide' });
-  await expect(source).toHaveAttribute(
-    'href',
-    'https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching',
-  );
-  await expect(source).toHaveAttribute('target', '_blank');
-  await expect(source).toHaveAttribute('rel', /noopener/);
-
-  await expect(page.locator('.excalidraw')).toBeVisible();
-  await expect(page.getByRole('link', { name: '← Learn' })).toBeVisible();
-  expect(sent).toEqual({ topic: 'How HTTP caching works' });
-});
-
-test('with Codex as the default tool, the Learn tab explains the switch and locks the form', async ({
+test('a topic becomes a course outline, opens as a lesson, and the course resumes at it', async ({
   page,
 }) => {
-  await stubProviders(page, codexProviders);
-  await page.goto('/#/learn');
+  const { created, progressSaved } = await stubCourseApi(page);
 
-  await expect(
-    page.getByText('Lessons use Claude Code. Choose Claude Code under AI tools.'),
-  ).toBeVisible();
-  await expect(page.getByLabel('Topic')).toBeDisabled();
-  await expect(page.getByRole('button', { name: 'Build lesson' })).toBeDisabled();
+  await page.goto('/#/learn');
+  await page.getByLabel('Topic').fill('  How HTTP caching works  ');
+  await page.getByRole('button', { name: 'Build course' }).click();
+
+  await expect(page).toHaveURL(/#\/course\/course-e2e-1$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'HTTP caching' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Basics' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Checking copies' })).toBeVisible();
+  await expect(topicRow(page, 'What a cache is').getByText('Not built yet')).toBeVisible();
+
+  await topicRow(page, 'What a cache is').getByRole('button', { name: 'Open lesson' }).click();
+  await expect(page).toHaveURL(/#\/learn\/lesson-e2e-1$/);
+  await expect(page.getByRole('heading', { level: 1, name: lesson.title })).toBeVisible();
+  await expect(page.getByText('Cache-Control says how long')).toBeVisible();
+  await expect(page.getByRole('link', { name: '← Course' })).toHaveAttribute(
+    'href',
+    '#/course/course-e2e-1',
+  );
+
+  await page.getByRole('link', { name: '← Course' }).click();
+  await expect(page).toHaveURL(/#\/course\/course-e2e-1$/);
+  await expect(topicRow(page, 'What a cache is').getByText('Ready')).toBeVisible();
+  await expect(topicRow(page, 'What a cache is').getByText('Last opened')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Continue' })).toBeVisible();
+
+  expect(created).toEqual([{ topic: 'How HTTP caching works' }]);
+  expect(progressSaved).toEqual([{ topicId: 'topic-1' }]);
+});
+
+test('a saved course on the Learn tab opens its course page', async ({ page }) => {
+  await stubCourseApi(page, [
+    { id: course.id, title: course.title, createdAt: course.createdAt, topicCount: 3 },
+  ]);
+
+  await page.goto('/#/learn');
+  await page.getByRole('link', { name: 'HTTP caching' }).click();
+
+  await expect(page).toHaveURL(/#\/course\/course-e2e-1$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'HTTP caching' })).toBeVisible();
+});
+
+test('the course page fits a phone without sideways scrolling', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await stubCourseApi(page);
+
+  await page.goto(`/#/course/${course.id}`);
+  await expect(page.getByRole('heading', { level: 1, name: 'HTTP caching' })).toBeVisible();
+  await expect(topicRow(page, 'Validators')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
 
 test('the lesson page stacks the drawing above the explanation and fits a phone', async ({

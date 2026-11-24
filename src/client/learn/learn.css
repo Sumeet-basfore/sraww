@@ -1,4 +1,5 @@
-.lesson-page .lesson-head {
+.lesson-page .lesson-head,
+.course-page .lesson-head {
   display: grid;
   gap: 12px;
   margin-bottom: 30px;
@@ -17,7 +18,8 @@
   color: var(--ink);
 }
 
-.lesson-page h1 {
+.lesson-page h1,
+.course-page h1 {
   margin: 0;
   font-size: clamp(30px, 4vw, 46px);
   line-height: 1.08;
@@ -130,6 +132,120 @@
   color: var(--ink-soft);
   font-size: 15px;
   line-height: 1.5;
+}
+
+.course-section-title {
+  margin: 14px 0 0;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.course-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.course-list > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.course-list a {
+  color: var(--accent);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.course-list time {
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.course-continue {
+  justify-self: start;
+}
+
+.course-outline {
+  display: grid;
+  gap: 32px;
+}
+
+.course-module {
+  display: grid;
+  gap: 12px;
+}
+
+.course-module h2 {
+  margin: 0;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.course-topics {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.course-topics > li {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.course-topics h3 {
+  margin: 0;
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+
+.course-topic-summary {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.course-topic-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.course-topic-tag {
+  padding: 2px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  color: var(--accent);
 }
 
 @media (max-width: 760px) {

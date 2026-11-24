@@ -178,6 +178,18 @@ describe('LessonView', () => {
     expect(screen.getByRole('link', { name: 'Learn' })).toHaveAttribute('aria-current', 'page');
   });
 
+  it('links a lesson built for a course back to that course', async () => {
+    fetchMock.mockResolvedValueOnce(
+      reply(200, { lesson: { ...lesson, courseId: 'course-1', topicId: 'topic-2' } }),
+    );
+    renderLesson();
+    expect(await screen.findByRole('link', { name: '← Course' })).toHaveAttribute(
+      'href',
+      '#/course/course-1',
+    );
+    expect(screen.queryByRole('link', { name: '← Learn' })).not.toBeInTheDocument();
+  });
+
   it('says the lesson could not be found when the server answers 404', async () => {
     fetchMock.mockResolvedValueOnce(reply(404, { error: 'That lesson does not exist.' }));
     renderLesson();
