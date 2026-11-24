@@ -4,6 +4,7 @@ import { ApiError, learnApi } from '../lib/api.ts';
 import { errorMessage } from '../lib/errors.ts';
 import { learnHash } from '../lib/route.ts';
 import { PageHeader } from '../nav/PageHeader.tsx';
+import { describeDiagram } from './describe-diagram.ts';
 import { LessonPanel } from './LessonPanel.tsx';
 import './learn.css';
 
@@ -95,6 +96,7 @@ function LessonBody({ load }: { load: LoadState }) {
   return (
     <div className="lesson-grid">
       <div className="lesson-canvas-column">
+        <p className="visually-hidden">{describeDiagram(load.lesson.diagram)}</p>
         <Suspense
           fallback={
             <p className="muted" role="status">

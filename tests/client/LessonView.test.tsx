@@ -110,6 +110,32 @@ describe('LessonView', () => {
     },
   );
 
+  it('describes the diagram in words, hidden on screen, for people who cannot see the drawing', async () => {
+    const withDiagram = {
+      ...lesson,
+      diagram: {
+        direction: 'right',
+        nodes: [
+          { id: 'client', label: 'Client', shape: 'rounded' },
+          { id: 'cache', label: 'Cache', shape: 'rounded' },
+          { id: 'server', label: 'Server', shape: 'rounded' },
+        ],
+        edges: [
+          { from: 'client', to: 'cache', label: 'request' },
+          { from: 'cache', to: 'server', label: 'miss' },
+        ],
+      },
+    };
+    fetchMock.mockResolvedValueOnce(reply(200, { lesson: withDiagram }));
+    renderLesson();
+    await screen.findByRole('heading', { level: 1, name: lesson.title });
+    expect(
+      screen.getByText(
+        'Boxes: Client, Cache, Server. Arrows: Client to Cache, labelled request. Cache to Server, labelled miss.',
+      ),
+    ).toHaveClass('visually-hidden');
+  });
+
   it('keeps a Learn link back to the Learn tab', async () => {
     fetchMock.mockResolvedValueOnce(reply(200, { lesson }));
     renderLesson();
