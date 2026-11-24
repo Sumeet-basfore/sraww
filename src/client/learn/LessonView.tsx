@@ -3,7 +3,7 @@ import type { Lesson } from '../../shared/learn.ts';
 import { ApiError } from '../lib/api.ts';
 import { learnApi } from '../lib/learn-api.ts';
 import { errorMessage } from '../lib/errors.ts';
-import { learnHash } from '../lib/route.ts';
+import { courseHash, learnHash } from '../lib/route.ts';
 import { PageHeader } from '../nav/PageHeader.tsx';
 import { describeDiagram } from './describe-diagram.ts';
 import { LessonPanel } from './LessonPanel.tsx';
@@ -47,6 +47,7 @@ export function LessonView({ id, onShowTour }: LessonViewProps) {
   }, [id]);
 
   const title = load.status === 'ready' ? load.lesson.title : 'Lesson';
+  const back = backLinkOf(load);
 
   return (
     <div className="app">
@@ -59,8 +60,8 @@ export function LessonView({ id, onShowTour }: LessonViewProps) {
           </PageHeader>
 
           <div className="lesson-head">
-            <a className="lesson-back" href={learnHash()}>
-              ← Learn
+            <a className="lesson-back" href={back.href}>
+              {back.label}
             </a>
             <h1 id="lesson-title">{title}</h1>
           </div>
@@ -70,6 +71,14 @@ export function LessonView({ id, onShowTour }: LessonViewProps) {
       </main>
     </div>
   );
+}
+
+/** A lesson built for a course goes back to that course. Any other lesson goes back to the Learn tab. */
+function backLinkOf(load: LoadState): { href: string; label: string } {
+  if (load.status === 'ready' && load.lesson.courseId) {
+    return { href: courseHash(load.lesson.courseId), label: '← Course' };
+  }
+  return { href: learnHash(), label: '← Learn' };
 }
 
 function LessonBody({ load }: { load: LoadState }) {
