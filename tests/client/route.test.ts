@@ -3,6 +3,7 @@ import {
   architectureHash,
   editorHash,
   learnHash,
+  lessonHash,
   mapsHash,
   parseRoute,
 } from '../../src/client/lib/route.ts';
@@ -38,5 +39,26 @@ describe('parseRoute', () => {
     const name = 'Auth & billing v2';
     expect(parseRoute(editorHash(name))).toEqual({ view: 'editor', name });
     expect(parseRoute(architectureHash(name))).toEqual({ view: 'architecture', name });
+  });
+
+  it('opens a lesson for a learn hash with a valid id', () => {
+    expect(parseRoute('#/learn/Lesson_2026-01')).toEqual({ view: 'lesson', id: 'Lesson_2026-01' });
+  });
+
+  it('accepts an id of the longest allowed length', () => {
+    const id = 'a'.repeat(64);
+    expect(parseRoute(`#/learn/${id}`)).toEqual({ view: 'lesson', id });
+  });
+
+  it('falls back to the Learn tab for an empty or invalid lesson id', () => {
+    expect(parseRoute('#/learn/')).toEqual({ view: 'learn' });
+    expect(parseRoute('#/learn/bad.id')).toEqual({ view: 'learn' });
+    expect(parseRoute('#/learn/a/b')).toEqual({ view: 'learn' });
+    expect(parseRoute(`#/learn/${'a'.repeat(65)}`)).toEqual({ view: 'learn' });
+  });
+
+  it('round-trips a lesson id with the hash builder', () => {
+    expect(parseRoute(lessonHash('lesson-1'))).toEqual({ view: 'lesson', id: 'lesson-1' });
+    expect(lessonHash('lesson-1')).toBe('#/learn/lesson-1');
   });
 });

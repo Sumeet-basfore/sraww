@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError, diagramApi } from '../../src/client/lib/api.ts';
+import { ApiError, diagramApi, learnApi } from '../../src/client/lib/api.ts';
 
 const fetchMock = vi.fn();
 
@@ -43,5 +43,34 @@ describe('diagramApi', () => {
   it('falls back to a generic message when the body is not JSON', async () => {
     fetchMock.mockResolvedValueOnce(new Response('<html>', { status: 502 }));
     await expect(diagramApi.list()).rejects.toMatchObject({ status: 502 });
+  });
+});
+
+describe('learnApi', () => {
+  it('posts the topic and returns the lesson with its skipped-source count', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(201, { lesson: { id: 'l1' }, skippedSources: 2 }));
+    await expect(learnApi.create('HTTP caching')).resolves.toEqual({
+      lesson: { id: 'l1' },
+      skippedSources: 2,
+    });
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/learn/lessons');
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+      method: 'POST',
+      body: '{"topic":"HTTP caching"}',
+    });
+  });
+
+  it('reads a lesson by its id', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { lesson: { id: 'l1' } }));
+    await expect(learnApi.get('l1')).resolves.toEqual({ lesson: { id: 'l1' } });
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/learn/lessons/l1');
+  });
+
+  it('reports a missing lesson as a 404 with the server message', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(404, { error: 'That lesson does not exist.' }));
+    await expect(learnApi.get('missing')).rejects.toMatchObject({
+      status: 404,
+      message: 'That lesson does not exist.',
+    });
   });
 });

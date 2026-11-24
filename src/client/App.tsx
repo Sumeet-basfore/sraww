@@ -3,6 +3,7 @@ import { DiagramList } from './diagrams/DiagramList.tsx';
 import { AiAccountPage } from './ai/account/AiAccountPage.tsx';
 import { ArchitecturePage } from './arch/ArchitecturePage.tsx';
 import { LearnPage } from './learn/LearnPage.tsx';
+import { LessonView } from './learn/LessonView.tsx';
 import { architectureHash, editorHash, mapsHash, type Route } from './lib/route.ts';
 import { loadPrefs } from './lib/prefs.ts';
 import { useRoute } from './lib/useRoute.ts';
@@ -28,6 +29,10 @@ function Pages({ route, onShowTour }: PagesProps) {
   }
   if (route.view === 'learn') {
     return <LearnPage onShowTour={onShowTour} />;
+  }
+  if (route.view === 'lesson') {
+    // Keyed by id, so one lesson never shows the previous lesson while its own request loads.
+    return <LessonView key={route.id} id={route.id} onShowTour={onShowTour} />;
   }
   if (route.view === 'maps') {
     return (

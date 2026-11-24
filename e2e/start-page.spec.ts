@@ -111,8 +111,8 @@ test('an empty project list uses end-user mapping guidance', async ({ page }) =>
   await expect(page.getByText(/ARCH_PROJECTS|\.env/)).toHaveCount(0);
 });
 
-test('the learn tab says it is not ready yet', async ({ page }) => {
+test('the learn tab shows the topic field', async ({ page }) => {
   await page.goto('/#/learn');
   await expect(page.getByRole('heading', { name: 'Learn' })).toBeVisible();
-  await expect(page.getByText(/It is not ready yet/)).toBeVisible();
+  await expect(page.getByLabel('Topic')).toBeVisible();
 });
