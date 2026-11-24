@@ -37,7 +37,9 @@ Relative paths such as `./data/diagrams` are relative to the folder you start sr
 | Walkthrough status (seen or not)                   | Your browser's local storage, key `sraww.tourSeen`             | None                | Clear the site's data in your browser                                     |
 | Editor drafts (library publishing, Mermaid text)   | Your browser's local storage, written by the Excalidraw editor | None                | Clear the site's data in your browser. We have not confirmed these keys   |
 
-The drawings, architecture maps, AI settings and working folder are plain files on your machine. sraww does not upload them anywhere.
+Lessons, when you create them, are saved as one JSON file each under `DIAGRAMS_DIR/lessons`. A lesson holds the topic you asked for, its title, explanation, key terms, diagram and the source addresses it cites. To delete one, delete its file from that folder. The app has no screen for this yet.
+
+The drawings, architecture maps, lessons, AI settings and working folder are plain files on your machine. sraww does not upload them anywhere.
 
 The server writes its status messages to its console only. It does not write a log file.
 
@@ -64,7 +66,19 @@ Each AI action below sends only the content listed. Nothing is sent for an AI ac
 
 Architecture maps are built on your computer with no AI call. The map itself never leaves your machine.
 
+**Building a lesson** (the Learn feature, reached through the API at `POST /api/learn/lessons`; its screen is not built yet) sends the topic you enter, and asks the tool to research it on the web. For this one call, Claude Code may search the web and read pages it chooses. Those searches and page reads are made by the tool, from its own process, under the provider's terms. For Claude, the call allows only web search and page reading as tools. Codex is not used for lessons. Its shell tool cannot be switched off for a web-enabled call, and a read-only sandbox does not stop it reading files on this computer. A lesson request made while Codex is the chosen tool is refused with a message, and nothing is sent. The tool's answer is saved as a lesson (see the lessons paragraph below the table). sraww then checks each source address the lesson cites, as described in [Lesson sources](#lesson-sources).
+
 The provider sees the content of each request. Anthropic and OpenAI handle it under their own terms, retention periods and privacy policies. Check those before you use the AI features with private material. The CLI tools may also have their own usage and telemetry settings. sraww does not change those settings. Their documentation explains them.
+
+## Lesson sources
+
+Lessons are the only feature where an AI tool reads web pages. After a lesson is written, sraww checks each source address the lesson cites. A check is one request from the sraww server process on your computer to that address. It asks for the page, follows at most three redirects, and uses only addresses that are https and do not carry a username or password. Every address that the host name resolves to must be on the public internet; if any is not, the source is dropped without a request. The request connects to the address that was checked, so the name cannot point somewhere else in between. Addresses on your own network, loopback addresses and link-local addresses are never contacted.
+
+- The request contains only the address and two HTTP headers: a fixed `accept` header that asks for HTML or plain text, and the standard headers that the HTTP library adds. It does not contain your topic, drawings, files or lesson text.
+- sraww reads only the status code and content type of the answer. It does not keep the page.
+- A source that fails the check is dropped from the lesson. The reply to the request says how many were dropped. The saved lesson does not keep that count.
+
+These requests are the only ones the sraww server makes to other websites. They do not pass through your browser, so the browser's network panel will not show them. The code is in `src/server/learn/sources.ts`.
 
 ## Code upload
 
@@ -98,6 +112,7 @@ The drawing editor is [Excalidraw](https://excalidraw.com), bundled into the app
 ## How to check this yourself
 
 - **Read the code.** sraww's own requests from the browser are made through `src/client/lib/api.ts`, which calls only the app's own `/api` routes. The server listens only on `127.0.0.1`, set in `src/server/index.ts`. The environment passed to the AI tools is set in `src/server/ai/services.ts` and `src/server/ai/runner.ts`.
+- **Lesson sources are checked by the server.** Source checks from a lesson are made by the sraww server process, not the browser, so they are not in the browser's network panel. The code that makes them is in `src/server/learn/sources.ts`, and its tests are in `tests/server/learn-sources.test.ts`.
 - **Watch the network.** Open the production build with your browser's developer tools on the Network tab. Every request should go to `127.0.0.1`. The AI tools make their own requests from their own processes, and those do not appear in the browser.
 - **Run the test.** `npm run test:e2e` runs `e2e/privacy.spec.ts`. It fails if, during the flows it covers, the browser makes a request to a host other than this machine, or if the Content Security Policy blocks such a request. The covered flows are: the drawing list, a new drawing with the assistant in both of its modes, and the AI tools page. It does not cover the main menu, the library or the Share option.
 

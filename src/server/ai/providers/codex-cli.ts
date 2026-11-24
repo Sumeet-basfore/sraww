@@ -4,7 +4,7 @@ import path from 'node:path';
 import type { z } from 'zod';
 import { AiError } from '../ai-error.ts';
 import { parseJsonOutput } from '../parse-output.ts';
-import type { AiProvider, ProviderHealth } from '../provider.ts';
+import type { AiProvider, GenerateOptions, ProviderHealth } from '../provider.ts';
 import { withHealthCache } from '../provider.ts';
 import { runCommand } from '../runner.ts';
 import { generateStructured } from '../structured.ts';
@@ -107,8 +107,19 @@ export function createCodexProvider(options: CodexCliOptions): AiProvider {
   return {
     id: 'codex',
     health: withHealthCache(health),
-    generate<T>(prompt: string, schema: z.ZodType<T>): Promise<T> {
-      return generateStructured(invoke, prompt, schema);
+    generate<T>(prompt: string, schema: z.ZodType<T>, callOptions?: GenerateOptions): Promise<T> {
+      // Codex cannot be limited to search alone: its shell tool stays available inside the
+      // read-only sandbox, and the flags we tested do not remove it. A web-enabled call would let
+      // a steered page make Codex read local files, so it is refused until that changes.
+      if (callOptions?.webSearch) {
+        return Promise.reject(
+          new AiError(
+            'FAILED',
+            'Lessons need Claude Code. Codex cannot be limited to web search alone yet.',
+          ),
+        );
+      }
+      return generateStructured(invoke, prompt, schema, callOptions);
     },
   };
 }

@@ -9,11 +9,20 @@ export interface ProviderHealth {
   detail: string;
 }
 
+export interface GenerateOptions {
+  /**
+   * Lets the CLI search the web and read pages. Claude Code offers only its search and page-reading
+   * tools for such a call. Codex cannot be limited that way, so it refuses the call. Off by default,
+   * so ordinary calls have no web access.
+   */
+  webSearch?: boolean;
+}
+
 /** A local AI CLI that answers with structured JSON. Implementations never see API keys. */
 export interface AiProvider {
   readonly id: ProviderId;
   health(): Promise<ProviderHealth>;
-  generate<T>(prompt: string, schema: z.ZodType<T>): Promise<T>;
+  generate<T>(prompt: string, schema: z.ZodType<T>, options?: GenerateOptions): Promise<T>;
 }
 
 export const HEALTH_CACHE_MS = 30_000;

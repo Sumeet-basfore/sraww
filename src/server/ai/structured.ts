@@ -1,7 +1,12 @@
 import { z } from 'zod';
 import { AiError } from './ai-error.ts';
+import type { GenerateOptions } from './provider.ts';
 
-export type Invoke = (prompt: string, jsonSchema: Record<string, unknown>) => Promise<unknown>;
+export type Invoke = (
+  prompt: string,
+  jsonSchema: Record<string, unknown>,
+  options?: GenerateOptions,
+) => Promise<unknown>;
 
 /**
  * Strict structured-output modes (Codex) require every property to be listed as required.
@@ -51,14 +56,15 @@ export async function generateStructured<T>(
   invoke: Invoke,
   prompt: string,
   schema: z.ZodType<T>,
+  options?: GenerateOptions,
 ): Promise<T> {
   const jsonSchema = cliSafeSchema(schema);
 
-  const first = schema.safeParse(await invoke(prompt, jsonSchema));
+  const first = schema.safeParse(await invoke(prompt, jsonSchema, options));
   if (first.success) return first.data;
 
   const retryPrompt = `${prompt}\n\nYour previous answer did not match the required JSON format (${summarize(first.error)}). Answer again with only the JSON object.`;
-  const second = schema.safeParse(await invoke(retryPrompt, jsonSchema));
+  const second = schema.safeParse(await invoke(retryPrompt, jsonSchema, options));
   if (second.success) return second.data;
 
   throw new AiError(
