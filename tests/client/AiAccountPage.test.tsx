@@ -29,7 +29,7 @@ afterEach(() => {
 describe('AiAccountPage', () => {
   it('shows the signed-in account, plan and model for the default tool', async () => {
     serve({ 'GET /api/ai/providers': () => json(PROVIDERS) });
-    render(<AiAccountPage onBack={() => undefined} onShowTour={() => undefined} />);
+    render(<AiAccountPage onShowTour={() => undefined} />);
 
     const claude = await screen.findByRole('article', { name: 'Claude Code' });
     expect(await within(claude).findByText('Claude subscription')).toBeInTheDocument();
@@ -49,7 +49,7 @@ describe('AiAccountPage', () => {
       'PUT /api/ai/providers/claude/selection': () =>
         json({ ...PROVIDERS.providers[0], selection: { model: 'opus', effort: null } }),
     });
-    render(<AiAccountPage onBack={() => undefined} onShowTour={() => undefined} />);
+    render(<AiAccountPage onShowTour={() => undefined} />);
     const claude = await screen.findByRole('article', { name: 'Claude Code' });
     await within(claude).findByText('Claude subscription');
 
@@ -87,7 +87,7 @@ describe('AiAccountPage', () => {
           },
         }),
     });
-    render(<AiAccountPage onBack={() => undefined} onShowTour={() => undefined} />);
+    render(<AiAccountPage onShowTour={() => undefined} />);
     const codex = await screen.findByRole('article', { name: 'Codex' });
 
     const user = userEvent.setup();
@@ -117,7 +117,7 @@ describe('AiAccountPage', () => {
       'POST /api/ai/providers/claude/login/code': () =>
         json({ login: { ...waiting.login, status: 'pending' } }),
     });
-    render(<AiAccountPage onBack={() => undefined} onShowTour={() => undefined} />);
+    render(<AiAccountPage onShowTour={() => undefined} />);
 
     const claude = await screen.findByRole('article', { name: 'Claude Code' });
     const input = await within(claude).findByLabelText('Sign-in code');
@@ -137,7 +137,7 @@ describe('AiAccountPage', () => {
 
   it('lists the tools and marks the default one', async () => {
     serve({ 'GET /api/ai/providers': () => json(PROVIDERS) });
-    render(<AiAccountPage onBack={() => undefined} onShowTour={() => undefined} />);
+    render(<AiAccountPage onShowTour={() => undefined} />);
     await screen.findByText('Claude subscription');
 
     expect(screen.getByRole('radio', { name: /Claude Code.*Signed in/ })).toBeChecked();

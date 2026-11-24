@@ -37,7 +37,7 @@ describe('App', () => {
   it('shows the diagram list on the start page', async () => {
     serve([]);
     render(<App />);
-    expect(screen.getByRole('heading', { name: 'Diagrams' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Drawings' })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText(/Nothing drawn yet/i)).toBeInTheDocument());
   });
 

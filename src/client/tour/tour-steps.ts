@@ -9,22 +9,22 @@ export interface TourStep {
 export const TOUR_STEPS: readonly TourStep[] = [
   {
     title: 'Welcome to sraww',
-    body: 'sraww is a whiteboard for drawing diagrams, with AI help and a way to map the structure of your code. Everything is stored on this computer. This tour takes about a minute, and you can open it again from the top of any page.',
+    body: 'sraww is a whiteboard for drawing diagrams, with AI help and a way to map the structure of your code. Everything is stored on this computer. This tour takes about a minute, and you can open it again from the top of the main pages.',
   },
   {
     title: 'Drawings',
     body: 'Type a name and press Create to start a drawing, or import an .excalidraw file. Click a name to open it. Rename, duplicate and delete are beside each name.',
-    where: 'Start page, at the top of the list',
+    where: 'Drawings tab, at the top of the list',
   },
   {
     title: 'Code projects',
     body: 'Upload a project folder or a zip file to draw its structure. Tick the privacy notice first. Dependency folders and build output are skipped. Credential files and binaries are left out, and the list shows each one with its reason.',
-    where: 'Start page, under “Code projects”',
+    where: 'Architecture tab, under “Code projects”',
   },
   {
     title: 'Architecture maps',
     body: 'Choose an uploaded project under “Map a project” and press “Map project”. The map groups the project into boxes you can move. Where you put them is saved for that map.',
-    where: 'Start page, under “Map a project”',
+    where: 'Architecture tab, under “Map a project”',
   },
   {
     title: 'The assistant',
@@ -34,7 +34,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
   {
     title: 'AI tools',
     body: 'The assistant uses the Claude Code or Codex command-line tool that you are already signed in to, so no API keys are needed. Sign in to each one and choose which one is the default here.',
-    where: 'Top right of the start page, “AI tools”',
+    where: 'Top of the main pages, the “AI tools” tab',
   },
   {
     title: 'Your privacy',
@@ -43,6 +43,6 @@ export const TOUR_STEPS: readonly TourStep[] = [
   },
   {
     title: 'You are set',
-    body: 'Start with a new drawing, or upload a project to map it. You can open this tour again at any time from the top of the start page or from the “Tour” button in a drawing.',
+    body: 'Start with a new drawing, or upload a project to map it. You can open this tour again at any time from “Take the tour” at the top of the main pages, or from the “Tour” button in a drawing.',
   },
 ];

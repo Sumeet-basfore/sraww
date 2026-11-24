@@ -8,7 +8,7 @@ test('shows structural findings, selects their boxes and makes no AI request', a
 }) => {
   const aiRequests: string[] = [];
   await request.delete(`/api/diagrams/${encodeURIComponent(NAME)}`);
-  await page.goto('/');
+  await page.goto('/#/architecture');
   await expect(page.getByRole('heading', { name: 'Map a project' })).toBeVisible();
   await page.waitForLoadState('networkidle');
   page.on('request', (request) => {
@@ -20,7 +20,7 @@ test('shows structural findings, selects their boxes and makes no AI request', a
   await page.getByLabel('Diagram name', { exact: true }).fill(NAME);
   await page.getByRole('button', { name: 'Map project' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Architecture' })).toBeVisible({
+  await expect(page.getByRole('heading', { name: 'Architecture', level: 2 })).toBeVisible({
     timeout: 30_000,
   });
   const finding = page.getByRole('button', { name: 'Show Dependency cycle on map' });

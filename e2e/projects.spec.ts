@@ -14,7 +14,7 @@ test('uploads a project zip after the privacy notice, lists what was left out, a
   page,
   request,
 }) => {
-  await page.goto('/');
+  await page.goto('/#/architecture');
   await expect(
     page.getByRole('heading', { name: 'Your code stays on this computer' }),
   ).toBeVisible();

@@ -63,6 +63,11 @@ function restoreScene(scene: ExcalidrawScene, style: DrawingStyle): RestoredScen
   };
 }
 
+/** The page the editor's Back button returns to: the map list for a map, otherwise the drawings. */
+function backPageName(mode: 'diagram' | 'architecture' | undefined): string {
+  return mode === 'architecture' ? 'Architecture' : 'Drawings';
+}
+
 export function Editor({
   name,
   onExit,
@@ -292,10 +297,10 @@ export function Editor({
         <button
           type="button"
           className="button ghost editor-back"
-          aria-label="Back to diagrams"
+          aria-label={`Back to ${backPageName(mode)}`}
           onClick={() => void handleExit()}
         >
-          ← Diagrams
+          ← {backPageName(mode)}
         </button>
         <h1 className="editor-title" title={name} aria-label={name}>
           {name}
@@ -440,7 +445,7 @@ export function Editor({
               Could not open “{name}”. {load.message}
             </p>
             <button type="button" className="button" onClick={onExit}>
-              Back to diagrams
+              Back to {backPageName(mode)}
             </button>
           </div>
         )}

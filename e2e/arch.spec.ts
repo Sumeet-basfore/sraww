@@ -15,12 +15,12 @@ test('maps the sample project, keeps stable ids and glued arrows, and re-scans',
   request,
 }) => {
   await request.delete(`/api/diagrams/${encodeURIComponent(NAME)}`);
-  await page.goto('/');
+  await page.goto('/#/architecture');
   await expect(page.getByRole('heading', { name: 'Map a project' })).toBeVisible();
   await page.getByLabel('Diagram name', { exact: true }).fill(NAME);
   await page.getByRole('button', { name: 'Map project' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Architecture' })).toBeVisible({
+  await expect(page.getByRole('heading', { name: 'Architecture', level: 2 })).toBeVisible({
     timeout: 30_000,
   });
   await expect(page.locator('.excalidraw')).toBeVisible({ timeout: 30_000 });
@@ -41,4 +41,9 @@ test('maps the sample project, keeps stable ids and glued arrows, and re-scans',
   await expect(page.getByText(/Re-scanned/)).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole('heading', { name: 'Changes since last scan' })).toBeVisible();
   await expect(page.getByText(/First scan/)).toHaveCount(0);
+
+  // Back from a map returns to the Architecture tab, not the drawings.
+  await page.getByRole('button', { name: 'Back to Architecture' }).click();
+  await expect(page).toHaveURL(/#\/architecture$/);
+  await expect(page.getByRole('heading', { name: 'Map a project' })).toBeVisible();
 });

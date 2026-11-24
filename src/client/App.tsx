@@ -1,7 +1,9 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { DiagramList } from './diagrams/DiagramList.tsx';
 import { AiAccountPage } from './ai/account/AiAccountPage.tsx';
-import { aiSettingsHash, architectureHash, editorHash, type Route } from './lib/route.ts';
+import { ArchitecturePage } from './arch/ArchitecturePage.tsx';
+import { LearnPage } from './learn/LearnPage.tsx';
+import { architectureHash, editorHash, mapsHash, type Route } from './lib/route.ts';
 import { loadPrefs } from './lib/prefs.ts';
 import { useRoute } from './lib/useRoute.ts';
 import { Tour } from './tour/Tour.tsx';
@@ -19,24 +21,24 @@ interface PagesProps {
   onShowTour: () => void;
 }
 
+/** Each top-level page draws its own header and tabs. The editor is full screen and has none. */
 function Pages({ route, onShowTour }: PagesProps) {
   if (route.view === 'list') {
+    return <DiagramList onOpen={(name) => goTo(editorHash(name))} onShowTour={onShowTour} />;
+  }
+  if (route.view === 'learn') {
+    return <LearnPage onShowTour={onShowTour} />;
+  }
+  if (route.view === 'maps') {
     return (
-      <div className="app">
-        <main className="page start-page-container">
-          <DiagramList
-            onOpen={(name) => goTo(editorHash(name))}
-            onOpenArchitecture={(name) => goTo(architectureHash(name))}
-            onOpenAi={() => goTo(aiSettingsHash())}
-            onShowTour={onShowTour}
-          />
-        </main>
-      </div>
+      <ArchitecturePage
+        onOpenArchitecture={(name) => goTo(architectureHash(name))}
+        onShowTour={onShowTour}
+      />
     );
   }
-
   if (route.view === 'ai') {
-    return <AiAccountPage onBack={() => goTo('#/')} onShowTour={onShowTour} />;
+    return <AiAccountPage onShowTour={onShowTour} />;
   }
 
   const isArchitecture = route.view === 'architecture';
@@ -47,7 +49,7 @@ function Pages({ route, onShowTour }: PagesProps) {
           key={`${route.view}:${route.name}`}
           name={route.name}
           mode={isArchitecture ? 'architecture' : 'diagram'}
-          onExit={() => goTo('#/')}
+          onExit={() => goTo(isArchitecture ? mapsHash() : '#/')}
           onShowTour={onShowTour}
           onOpenArchitecture={() => goTo(architectureHash(route.name))}
         />

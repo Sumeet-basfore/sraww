@@ -4,16 +4,6 @@
   padding: 36px 32px 88px;
 }
 
-.ai-masthead {
-  margin-bottom: 42px;
-}
-
-.ai-current-link {
-  text-decoration-thickness: 2px;
-  text-decoration-color: var(--accent);
-  text-underline-offset: 6px;
-}
-
 .ai-title-block {
   max-width: 720px;
   margin-bottom: 34px;
