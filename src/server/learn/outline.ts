@@ -23,10 +23,7 @@ export function buildOutlinePrompt(topic: string): string {
   ].join('\n\n');
 }
 
-/**
- * Asks the provider for an outline, checks its size, and gives every module and topic an id.
- * Ids come from the server only, so the model cannot choose or repeat them.
- */
+/** Ids come from the server only, so the model cannot choose or repeat them. */
 export async function generateOutline(provider: AiProvider, topic: string): Promise<CourseOutline> {
   const reply = await provider.generate(buildOutlinePrompt(topic), outlineReplySchema);
   const total = reply.modules.reduce((count, module) => count + module.topics.length, 0);

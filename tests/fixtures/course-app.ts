@@ -81,7 +81,6 @@ export function courseApp(
   return app;
 }
 
-/** Creates the course from OUTLINE through the API and returns the saved course. */
 export async function createCourse(app: express.Express) {
   const res = await request(app).post('/api/learn/courses').send({ topic: 'HTTP caching' });
   return res.body.course;

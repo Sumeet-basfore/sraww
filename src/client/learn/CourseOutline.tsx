@@ -9,7 +9,6 @@ interface CourseOutlineProps {
   onOpen: (topicId: string) => void;
 }
 
-/** The modules and topics of a course, each topic with its status and its open button. */
 export function CourseOutline({
   modules,
   builtLessons,

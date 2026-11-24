@@ -18,7 +18,6 @@ const SAVED = [
   { id: 'course-1', title: 'HTTP caching', createdAt: '2026-11-24T10:00:00.000Z', topicCount: 3 },
 ];
 
-/** Answers the course list with `courses`, and each create request with `create`. */
 function serve(courses: unknown[], create: () => Promise<Response>): void {
   fetchMock.mockImplementation((_url: string, init?: RequestInit) =>
     init?.method === 'POST' ? create() : Promise.resolve(json(200, { courses })),

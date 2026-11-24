@@ -62,7 +62,6 @@ function json(body: unknown, status = 200) {
   return { status, contentType: 'application/json', body: JSON.stringify(body) };
 }
 
-/** The row for one topic on the course page, found by its title. */
 function topicRow(page: Page, title: string) {
   return page.locator('li', { has: page.getByRole('heading', { level: 3, name: title }) });
 }

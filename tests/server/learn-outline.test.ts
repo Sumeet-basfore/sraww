@@ -22,7 +22,6 @@ const OUTLINE = {
   ],
 };
 
-/** An outline whose modules hold the given numbers of topics, for checking the total. */
 function outlineWithTopicCounts(counts: number[]) {
   return {
     title: 'Big course',

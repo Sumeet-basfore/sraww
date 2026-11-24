@@ -110,5 +110,4 @@ export type Course = z.infer<typeof courseSchema>;
 export type CourseModule = Course['modules'][number];
 export type CourseTopic = CourseModule['topics'][number];
 
-/** One row of the course list. */
 export type CourseSummary = Pick<Course, 'id' | 'title' | 'createdAt'> & { topicCount: number };

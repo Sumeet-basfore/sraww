@@ -42,7 +42,6 @@ const COURSE: Course = {
   progress: { topicId: null },
 };
 
-/** A course with the given number of topics, for the list. */
 function courseWith(id: string, createdAt: string, topicCount: number): Course {
   return {
     id,

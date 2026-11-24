@@ -74,7 +74,6 @@ function renderCourse(): void {
   render(<CoursePage id="course-1" onShowTour={() => undefined} />);
 }
 
-/** The list item for one topic, found by its title. */
 async function topicRow(title: string): Promise<HTMLElement> {
   const heading = await screen.findByRole('heading', { name: title, level: 3 });
   return heading.closest('li') as HTMLElement;
