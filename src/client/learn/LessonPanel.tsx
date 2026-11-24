@@ -34,8 +34,8 @@ function SourceItem({ source }: { source: LessonSource }) {
       )}
       {host !== '' && <span className="source-host">{host}</span>}
       <ul>
-        {source.points.map((point) => (
-          <li key={point}>{point}</li>
+        {source.points.map((point, index) => (
+          <li key={index}>{point}</li>
         ))}
       </ul>
     </li>
@@ -53,8 +53,8 @@ export function LessonPanel({ lesson }: LessonPanelProps) {
         <>
           <h2>Key terms</h2>
           <ul className="key-terms">
-            {lesson.keyTerms.map((term) => (
-              <li key={term}>{term}</li>
+            {lesson.keyTerms.map((term, index) => (
+              <li key={index}>{term}</li>
             ))}
           </ul>
         </>
@@ -63,8 +63,8 @@ export function LessonPanel({ lesson }: LessonPanelProps) {
       <section className="lesson-sources" aria-labelledby="lesson-sources-title">
         <h2 id="lesson-sources-title">Sources</h2>
         <ol className="source-list">
-          {lesson.sources.map((source) => (
-            <SourceItem key={source.url} source={source} />
+          {lesson.sources.map((source, index) => (
+            <SourceItem key={index} source={source} />
           ))}
         </ol>
         <p className="muted">Read the sources to check this explanation.</p>

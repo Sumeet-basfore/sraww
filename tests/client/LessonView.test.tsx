@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LessonView } from '../../src/client/learn/LessonView.tsx';
 
@@ -35,6 +35,19 @@ function reply(status: number, body: unknown): Response {
     status,
     headers: { 'Content-Type': 'application/json' },
   });
+}
+
+interface Deferred {
+  promise: Promise<Response>;
+  resolve: (response: Response) => void;
+}
+
+function deferred(): Deferred {
+  let resolve: (response: Response) => void = () => undefined;
+  const promise = new Promise<Response>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
 }
 
 function renderLesson(): void {
@@ -134,6 +147,28 @@ describe('LessonView', () => {
         'Boxes: Client, Cache, Server. Arrows: Client to Cache, labelled request. Cache to Server, labelled miss.',
       ),
     ).toHaveClass('visually-hidden');
+  });
+
+  it('keeps lesson B on screen when lesson A answers after the switch to B', async () => {
+    const lessonA = { ...lesson, id: 'lesson-a', title: 'First lesson: keep a copy' };
+    const lessonB = { ...lesson, id: 'lesson-b', title: 'Second lesson: check freshness' };
+    const answerA = deferred();
+    const answerB = deferred();
+    fetchMock.mockReturnValueOnce(answerA.promise).mockReturnValueOnce(answerB.promise);
+
+    const { rerender } = render(<LessonView id="lesson-a" onShowTour={() => undefined} />);
+    rerender(<LessonView id="lesson-b" onShowTour={() => undefined} />);
+    await act(async () => {
+      answerB.resolve(reply(200, { lesson: lessonB }));
+    });
+    await screen.findByRole('heading', { level: 1, name: lessonB.title });
+
+    await act(async () => {
+      answerA.resolve(reply(200, { lesson: lessonA }));
+      await new Promise((done) => setTimeout(done, 50));
+    });
+    expect(screen.getByRole('heading', { level: 1, name: lessonB.title })).toBeInTheDocument();
+    expect(screen.queryByText(lessonA.title)).not.toBeInTheDocument();
   });
 
   it('keeps a Learn link back to the Learn tab', async () => {

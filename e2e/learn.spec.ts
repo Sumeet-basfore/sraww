@@ -77,6 +77,7 @@ test('a topic is built into a lesson with its diagram, explanation, key term and
     'https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching',
   );
   await expect(source).toHaveAttribute('target', '_blank');
+  await expect(source).toHaveAttribute('rel', /noopener/);
 
   await expect(page.locator('.excalidraw')).toBeVisible();
   await expect(page.getByRole('link', { name: '← Learn' })).toBeVisible();
