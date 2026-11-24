@@ -12,9 +12,9 @@ interface LessonCanvasProps {
 
 type Elements = ReturnType<typeof convertToExcalidrawElements>;
 
-type Drawing = { status: 'drawing' } | { status: 'ready'; elements: Elements } | { status: 'failed' };
+type Drawing =
+  { status: 'drawing' } | { status: 'ready'; elements: Elements } | { status: 'failed' };
 
-/** The lesson's diagram on a canvas that cannot be edited. It is loaded only on the lesson page. */
 export function LessonCanvas({ diagram }: LessonCanvasProps) {
   const [drawing, setDrawing] = useState<Drawing>({ status: 'drawing' });
 

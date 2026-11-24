@@ -4,7 +4,6 @@ interface LessonPanelProps {
   lesson: Lesson;
 }
 
-/** Splits text at blank lines. The text is only ever rendered as text, never as HTML. */
 function paragraphsOf(text: string): string[] {
   return text
     .split(/\n\s*\n/)
