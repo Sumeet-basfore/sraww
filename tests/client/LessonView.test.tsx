@@ -23,7 +23,7 @@ const lesson = {
   ],
   diagram: {
     direction: 'right',
-    nodes: [{ id: 'browser', label: 'Browser', shape: 'box' }],
+    nodes: [{ id: 'browser', label: 'Browser', shape: 'rounded' }],
     edges: [],
   },
   createdAt: '2026-11-24T10:00:00.000Z',
@@ -78,7 +78,10 @@ describe('LessonView', () => {
     fetchMock.mockResolvedValueOnce(reply(200, { lesson }));
     renderLesson();
     const link = await screen.findByRole('link', { name: 'HTTP caching guide' });
-    expect(link).toHaveAttribute('href', 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching');
+    expect(link).toHaveAttribute(
+      'href',
+      'https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching',
+    );
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     expect(screen.getByText('developer.mozilla.org')).toBeInTheDocument();
