@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   architectureHash,
+  courseHash,
   editorHash,
   learnHash,
   lessonHash,
@@ -60,5 +61,21 @@ describe('parseRoute', () => {
   it('round-trips a lesson id with the hash builder', () => {
     expect(parseRoute(lessonHash('lesson-1'))).toEqual({ view: 'lesson', id: 'lesson-1' });
     expect(lessonHash('lesson-1')).toBe('#/learn/lesson-1');
+  });
+
+  it('opens a course for a course hash with a valid id', () => {
+    expect(parseRoute('#/course/course-7f2_a')).toEqual({ view: 'course', id: 'course-7f2_a' });
+  });
+
+  it('falls back to the Learn tab for an empty or invalid course id', () => {
+    expect(parseRoute('#/course/')).toEqual({ view: 'learn' });
+    expect(parseRoute('#/course/bad.id')).toEqual({ view: 'learn' });
+    expect(parseRoute('#/course/a/b')).toEqual({ view: 'learn' });
+    expect(parseRoute(`#/course/${'a'.repeat(65)}`)).toEqual({ view: 'learn' });
+  });
+
+  it('round-trips a course id with the hash builder', () => {
+    expect(courseHash('course-1')).toBe('#/course/course-1');
+    expect(parseRoute(courseHash('course-1'))).toEqual({ view: 'course', id: 'course-1' });
   });
 });

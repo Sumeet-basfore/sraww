@@ -48,19 +48,6 @@ describe('diagramApi', () => {
 });
 
 describe('learnApi', () => {
-  it('posts the topic and returns the lesson with its skipped-source count', async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse(201, { lesson: { id: 'l1' }, skippedSources: 2 }));
-    await expect(learnApi.create('HTTP caching')).resolves.toEqual({
-      lesson: { id: 'l1' },
-      skippedSources: 2,
-    });
-    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/learn/lessons');
-    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
-      method: 'POST',
-      body: '{"topic":"HTTP caching"}',
-    });
-  });
-
   it('reads a lesson by its id', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(200, { lesson: { id: 'l1' } }));
     await expect(learnApi.get('l1')).resolves.toEqual({ lesson: { id: 'l1' } });

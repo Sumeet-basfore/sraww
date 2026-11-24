@@ -10,9 +10,6 @@ export interface CourseDetail {
 const coursePath = (id: string): string => `/learn/courses/${encodeURIComponent(id)}`;
 
 export const learnApi = {
-  create(topic: string): Promise<{ lesson: Lesson; skippedSources: number }> {
-    return request('/learn/lessons', { method: 'POST', body: JSON.stringify({ topic }) });
-  },
   get(id: string): Promise<{ lesson: Lesson }> {
     return request(`/learn/lessons/${encodeURIComponent(id)}`);
   },

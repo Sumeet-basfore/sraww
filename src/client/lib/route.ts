@@ -1,6 +1,9 @@
+import { LEARN_ID_PATTERN } from '../../shared/learn.ts';
+
 export type Route =
   | { view: 'list' }
   | { view: 'learn' }
+  | { view: 'course'; id: string }
   | { view: 'lesson'; id: string }
   | { view: 'maps' }
   | { view: 'ai' }
@@ -9,7 +12,7 @@ export type Route =
 
 const LEARN_HASH = '#/learn';
 const LESSON_HASH = /^#\/learn\/(.*)$/;
-const LESSON_ID = /^[a-zA-Z0-9_-]{1,64}$/;
+const COURSE_HASH = /^#\/course\/(.*)$/;
 const MAPS_HASH = '#/architecture';
 const AI_HASH = '#/ai';
 const EDITOR_HASH = /^#\/diagram\/(.+)$/;
@@ -30,7 +33,12 @@ export function parseRoute(hash: string): Route {
   const lesson = LESSON_HASH.exec(hash);
   if (lesson) {
     const id = lesson[1] ?? '';
-    return LESSON_ID.test(id) ? { view: 'lesson', id } : { view: 'learn' };
+    return LEARN_ID_PATTERN.test(id) ? { view: 'lesson', id } : { view: 'learn' };
+  }
+  const course = COURSE_HASH.exec(hash);
+  if (course) {
+    const id = course[1] ?? '';
+    return LEARN_ID_PATTERN.test(id) ? { view: 'course', id } : { view: 'learn' };
   }
   if (hash === MAPS_HASH) return { view: 'maps' };
   if (hash === AI_HASH) return { view: 'ai' };
@@ -62,6 +70,10 @@ export function learnHash(): string {
 
 export function lessonHash(id: string): string {
   return `${LEARN_HASH}/${encodeURIComponent(id)}`;
+}
+
+export function courseHash(id: string): string {
+  return `#/course/${encodeURIComponent(id)}`;
 }
 
 export function aiSettingsHash(): string {
