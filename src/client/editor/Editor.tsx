@@ -7,7 +7,6 @@ import {
   serializeLibraryAsJSON,
 } from '@excalidraw/excalidraw';
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types';
-import { PROJECT_LINKS } from '../lib/project-links.ts';
 import { useEffect, useRef, useState } from 'react';
 import { diagramApi } from '../lib/api.ts';
 import { editorHash } from '../lib/route.ts';
@@ -27,14 +26,13 @@ import { insertTemplate, type TemplateKind } from '../math/insert-template.ts';
 import { FormulaDialog } from '../math/FormulaDialog.tsx';
 import { EditorMenu } from './EditorMenu.tsx';
 import { FileMenuItems, InsertMenuItems, MoreMenuItems } from './EditorMenuItems.tsx';
+import { DRAWING_UI_OPTIONS } from './drawing-options.ts';
+import { ProjectMenuLinks } from './ProjectMenuLinks.tsx';
 import './editor.css';
 
 export const AUTOSAVE_DELAY_MS = 800;
 
-// Loading a file from Excalidraw's own menu would replace this drawing and autosave would then
-// write the replacement here. Importing goes through the app instead, which creates a new drawing.
 const LIBRARY_SAVE_DELAY_MS = 600;
-const UI_OPTIONS = { canvasActions: { loadScene: false } } as const;
 
 type RestoredScene = ReturnType<typeof restore>;
 type LoadState =
@@ -455,7 +453,7 @@ export function Editor({
             initialData={load.initial}
             theme={prefs.theme}
             aiEnabled={false}
-            UIOptions={UI_OPTIONS}
+            UIOptions={DRAWING_UI_OPTIONS}
             onLibraryChange={(items) => librarySyncRef.current?.changed(items)}
             excalidrawAPI={(api) => {
               apiRef.current = api;
@@ -469,15 +467,7 @@ export function Editor({
             <MainMenu>
               <MainMenu.DefaultItems.ChangeCanvasBackground />
               <MainMenu.DefaultItems.ClearCanvas />
-              <MainMenu.Separator />
-              {PROJECT_LINKS.map((link) => (
-                <MainMenu.Item
-                  key={link.href}
-                  onSelect={() => window.open(link.href, '_blank', 'noopener,noreferrer')}
-                >
-                  {link.label}
-                </MainMenu.Item>
-              ))}
+              <ProjectMenuLinks />
             </MainMenu>
           </Excalidraw>
         )}

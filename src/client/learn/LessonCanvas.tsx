@@ -1,10 +1,12 @@
 import '@excalidraw/excalidraw/index.css';
-import { convertToExcalidrawElements, Excalidraw } from '@excalidraw/excalidraw';
+import { convertToExcalidrawElements, Excalidraw, MainMenu } from '@excalidraw/excalidraw';
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types';
 import { useEffect, useState } from 'react';
 import type { LessonReply } from '../../shared/learn.ts';
 import { layoutGraph } from '../ai/layout.ts';
 import { graphToSkeleton } from '../ai/skeleton.ts';
+import { DRAWING_UI_OPTIONS } from '../editor/drawing-options.ts';
+import { ProjectMenuLinks } from '../editor/ProjectMenuLinks.tsx';
 import { loadPrefs } from '../lib/prefs.ts';
 
 interface LessonCanvasProps {
@@ -56,9 +58,17 @@ export function LessonCanvas({ diagram }: LessonCanvasProps) {
         <Excalidraw
           initialData={{ elements: drawing.elements }}
           viewModeEnabled
+          aiEnabled={false}
+          UIOptions={DRAWING_UI_OPTIONS}
           theme={loadPrefs().theme}
           excalidrawAPI={setApi}
-        />
+        >
+          <MainMenu>
+            <MainMenu.DefaultItems.ChangeCanvasBackground />
+            <MainMenu.DefaultItems.ClearCanvas />
+            <ProjectMenuLinks />
+          </MainMenu>
+        </Excalidraw>
       )}
       {drawing.status === 'drawing' && (
         <p className="lesson-canvas-status muted" role="status">

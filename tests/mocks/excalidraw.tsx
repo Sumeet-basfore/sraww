@@ -8,6 +8,8 @@ export interface FakeExcalidrawProps {
   excalidrawAPI?: (api: object) => void;
   theme?: string;
   viewModeEnabled?: boolean;
+  aiEnabled?: boolean;
+  UIOptions?: unknown;
   children?: ReactNode;
 }
 

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LessonReply } from '../../src/shared/learn.ts';
 import { layoutGraph, type Layout } from '../../src/client/ai/layout.ts';
@@ -48,6 +48,22 @@ describe('LessonCanvas', () => {
     render(<LessonCanvas diagram={DIAGRAM} />);
     await waitFor(() => expect(screen.getByTestId('excalidraw-canvas')).toBeInTheDocument());
     expect(canvasProps.current?.viewModeEnabled).toBe(true);
+  });
+
+  it("turns AI off and keeps the editor's canvas options", async () => {
+    vi.mocked(layoutGraph).mockResolvedValue(LAYOUT);
+    render(<LessonCanvas diagram={DIAGRAM} />);
+    await waitFor(() => expect(screen.getByTestId('excalidraw-canvas')).toBeInTheDocument());
+    expect(canvasProps.current?.aiEnabled).toBe(false);
+    expect(canvasProps.current?.UIOptions).toEqual({ canvasActions: { loadScene: false } });
+  });
+
+  it("offers sraww's own links in its menu, as the editor does", async () => {
+    vi.mocked(layoutGraph).mockResolvedValue(LAYOUT);
+    render(<LessonCanvas diagram={DIAGRAM} />);
+    const menu = within(await screen.findByTestId('main-menu'));
+    expect(menu.getByRole('button', { name: 'sraww on GitHub' })).toBeInTheDocument();
+    expect(menu.getByRole('button', { name: 'Report an issue' })).toBeInTheDocument();
   });
 
   it('does not fit the drawing when the page is left before the fit timer fires', async () => {
