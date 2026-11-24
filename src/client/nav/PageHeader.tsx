@@ -1,15 +1,16 @@
 import type { ReactNode } from 'react';
 import { Logo } from '../brand/Logo.tsx';
+import { aiSettingsHash, learnHash, mapsHash } from '../lib/route.ts';
 import './nav.css';
 
 export type MainTab = 'drawings' | 'learn' | 'architecture' | 'ai';
 
-/** The four top-level tabs, in the order a new person meets them. */
+/** The four top-level tabs, in the order a new person meets them. The hashes come from route.ts. */
 export const MAIN_TABS: readonly { id: MainTab; label: string; href: string }[] = [
   { id: 'drawings', label: 'Drawings', href: '#/' },
-  { id: 'learn', label: 'Learn', href: '#/learn' },
-  { id: 'architecture', label: 'Architecture', href: '#/architecture' },
-  { id: 'ai', label: 'AI tools', href: '#/ai' },
+  { id: 'learn', label: 'Learn', href: learnHash() },
+  { id: 'architecture', label: 'Architecture', href: mapsHash() },
+  { id: 'ai', label: 'AI tools', href: aiSettingsHash() },
 ];
 
 interface PageHeaderProps {

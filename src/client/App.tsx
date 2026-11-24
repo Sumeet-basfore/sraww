@@ -3,7 +3,7 @@ import { DiagramList } from './diagrams/DiagramList.tsx';
 import { AiAccountPage } from './ai/account/AiAccountPage.tsx';
 import { ArchitecturePage } from './arch/ArchitecturePage.tsx';
 import { LearnPage } from './learn/LearnPage.tsx';
-import { architectureHash, editorHash, type Route } from './lib/route.ts';
+import { architectureHash, editorHash, mapsHash, type Route } from './lib/route.ts';
 import { loadPrefs } from './lib/prefs.ts';
 import { useRoute } from './lib/useRoute.ts';
 import { Tour } from './tour/Tour.tsx';
@@ -49,7 +49,7 @@ function Pages({ route, onShowTour }: PagesProps) {
           key={`${route.view}:${route.name}`}
           name={route.name}
           mode={isArchitecture ? 'architecture' : 'diagram'}
-          onExit={() => goTo('#/')}
+          onExit={() => goTo(isArchitecture ? mapsHash() : '#/')}
           onShowTour={onShowTour}
           onOpenArchitecture={() => goTo(architectureHash(route.name))}
         />

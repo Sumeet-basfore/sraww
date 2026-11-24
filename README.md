@@ -67,11 +67,11 @@ The server listens on `127.0.0.1` only and rejects requests whose Host or Origin
 - **New diagram** turns a sentence into a whole diagram. The model can choose rounded boxes, ellipses, diamonds or notes, colours with meaning, dashed or plain arrows, group frames, a left-to-right or top-down layout, and a title. It never gives coordinates; the layout is computed by ELK. You can add the result to the drawing or replace the drawing (replace asks first).
 - **+** explains the selected shapes and changes nothing.
 
-**AI tools.** Open the **AI tools** tab at the top of any page. It shows the account each tool is signed in to (the email, plan and workspace the CLI reports), the model and effort it uses, and which tool the assistant uses. Pick a model and effort and press **Save**. If a tool is signed out, press **Sign in**. Codex shows a link and a code to enter on its sign-in page. Claude Code shows a link, and you paste the code it gives you back into sraww. sraww never sees your password.
+**AI tools.** Open the **AI tools** tab at the top of the main pages. It shows the account each tool is signed in to (the email, plan and workspace the CLI reports), the model and effort it uses, and which tool the assistant uses. Pick a model and effort and press **Save**. If a tool is signed out, press **Sign in**. Codex shows a link and a code to enter on its sign-in page. Claude Code shows a link, and you paste the code it gives you back into sraww. sraww never sees your password.
 
 **Code projects.** On the **Architecture** tab, under **Code projects**, upload a project folder or a zip file, or import a public GitHub branch. Tick the privacy notice first. Package, build, cache and version-control folders are skipped without being listed. For a folder upload, files over 1 MB are not read. For a zip upload, the browser reads the whole archive into memory, but oversized files and skipped-folder entries are not decompressed or included in the re-packed upload; their paths and sizes are listed. Credential and lock files, binaries and text that matches known credential formats are also listed with their reason. Uploads are saved under `PROJECTS_DIR`, and **Delete** removes one. [PRIVACY.md](PRIVACY.md#code-upload) sets out exactly what is kept and what is ever sent.
 
-**Walkthrough.** The first visit opens a short tour of the whole site. Press **Take the tour** at the top of any page, or **Tour** in a drawing, to open it again. Escape or **Skip tour** closes it.
+**Walkthrough.** The first visit opens a short tour of the whole site. Press **Take the tour** at the top of the main pages, or **Tour** in a drawing, to open it again. Escape or **Skip tour** closes it.
 
 **Architecture maps.**
 

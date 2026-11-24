@@ -4,6 +4,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 12px 20px;
+  margin-bottom: 42px;
 }
 
 .main-tabs {

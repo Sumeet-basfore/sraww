@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LearnPage } from '../../src/client/learn/LearnPage.tsx';
 
 afterEach(() => cleanup());
@@ -22,5 +23,12 @@ describe('LearnPage', () => {
       'Architecture',
       'AI tools',
     ]);
+  });
+
+  it('the Take the tour button calls onShowTour', async () => {
+    const onShowTour = vi.fn();
+    render(<LearnPage onShowTour={onShowTour} />);
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Take the tour' }));
+    expect(onShowTour).toHaveBeenCalledTimes(1);
   });
 });

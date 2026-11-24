@@ -9,7 +9,7 @@ export interface TourStep {
 export const TOUR_STEPS: readonly TourStep[] = [
   {
     title: 'Welcome to sraww',
-    body: 'sraww is a whiteboard for drawing diagrams, with AI help and a way to map the structure of your code. Everything is stored on this computer. This tour takes about a minute, and you can open it again from the top of any page.',
+    body: 'sraww is a whiteboard for drawing diagrams, with AI help and a way to map the structure of your code. Everything is stored on this computer. This tour takes about a minute, and you can open it again from the top of the main pages.',
   },
   {
     title: 'Drawings',
@@ -34,7 +34,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
   {
     title: 'AI tools',
     body: 'The assistant uses the Claude Code or Codex command-line tool that you are already signed in to, so no API keys are needed. Sign in to each one and choose which one is the default here.',
-    where: 'Top of every page, the “AI tools” tab',
+    where: 'Top of the main pages, the “AI tools” tab',
   },
   {
     title: 'Your privacy',
@@ -43,6 +43,6 @@ export const TOUR_STEPS: readonly TourStep[] = [
   },
   {
     title: 'You are set',
-    body: 'Start with a new drawing, or upload a project to map it. You can open this tour again at any time from “Take the tour” at the top of a page, or from the “Tour” button in a drawing.',
+    body: 'Start with a new drawing, or upload a project to map it. You can open this tour again at any time from “Take the tour” at the top of the main pages, or from the “Tour” button in a drawing.',
   },
 ];

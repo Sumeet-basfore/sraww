@@ -20,7 +20,7 @@ test('shows structural findings, selects their boxes and makes no AI request', a
   await page.getByLabel('Diagram name', { exact: true }).fill(NAME);
   await page.getByRole('button', { name: 'Map project' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Architecture' })).toBeVisible({
+  await expect(page.getByRole('heading', { name: 'Architecture', level: 2 })).toBeVisible({
     timeout: 30_000,
   });
   const finding = page.getByRole('button', { name: 'Show Dependency cycle on map' });

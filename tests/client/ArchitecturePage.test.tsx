@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ArchitecturePage } from '../../src/client/arch/ArchitecturePage.tsx';
 
@@ -47,8 +48,18 @@ describe('ArchitecturePage', () => {
     expect(screen.getByRole('heading', { name: 'Map a project' })).toBeInTheDocument();
   });
 
-  it('keeps the upload button disabled until the privacy notice is ticked', async () => {
+  it('enables the upload button only after the privacy notice is ticked', async () => {
     render(<ArchitecturePage onOpenArchitecture={() => undefined} onShowTour={() => undefined} />);
-    expect(await screen.findByRole('button', { name: 'Upload a project folder' })).toBeDisabled();
+    const upload = await screen.findByRole('button', { name: 'Upload a project folder' });
+    expect(upload).toBeDisabled();
+    await userEvent.setup().click(screen.getByRole('checkbox', { name: /I understand/ }));
+    expect(upload).toBeEnabled();
+  });
+
+  it('the Take the tour button calls onShowTour', async () => {
+    const onShowTour = vi.fn();
+    render(<ArchitecturePage onOpenArchitecture={() => undefined} onShowTour={onShowTour} />);
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Take the tour' }));
+    expect(onShowTour).toHaveBeenCalledTimes(1);
   });
 });
