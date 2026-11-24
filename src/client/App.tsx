@@ -26,7 +26,8 @@ function Pages({ route, onShowTour }: PagesProps) {
   if (route.view === 'list') {
     return <DiagramList onOpen={(name) => goTo(editorHash(name))} onShowTour={onShowTour} />;
   }
-  if (route.view === 'learn') {
+  // A lesson page is added in a later step; until then a lesson hash shows the Learn tab.
+  if (route.view === 'learn' || route.view === 'lesson') {
     return <LearnPage onShowTour={onShowTour} />;
   }
   if (route.view === 'maps') {

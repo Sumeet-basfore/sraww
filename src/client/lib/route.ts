@@ -1,12 +1,15 @@
 export type Route =
   | { view: 'list' }
   | { view: 'learn' }
+  | { view: 'lesson'; id: string }
   | { view: 'maps' }
   | { view: 'ai' }
   | { view: 'editor'; name: string }
   | { view: 'architecture'; name: string };
 
 const LEARN_HASH = '#/learn';
+const LESSON_HASH = /^#\/learn\/(.*)$/;
+const LESSON_ID = /^[a-zA-Z0-9_-]{1,64}$/;
 const MAPS_HASH = '#/architecture';
 const AI_HASH = '#/ai';
 const EDITOR_HASH = /^#\/diagram\/(.+)$/;
@@ -24,6 +27,11 @@ function decodeName(encoded: string | undefined): string | null {
 /** Parses the URL hash so that reloading the page reopens the same page, drawing or architecture map. */
 export function parseRoute(hash: string): Route {
   if (hash === LEARN_HASH) return { view: 'learn' };
+  const lesson = LESSON_HASH.exec(hash);
+  if (lesson) {
+    const id = lesson[1] ?? '';
+    return LESSON_ID.test(id) ? { view: 'lesson', id } : { view: 'learn' };
+  }
   if (hash === MAPS_HASH) return { view: 'maps' };
   if (hash === AI_HASH) return { view: 'ai' };
   const arch = ARCH_HASH.exec(hash);
@@ -50,6 +58,10 @@ export function mapsHash(): string {
 
 export function learnHash(): string {
   return LEARN_HASH;
+}
+
+export function lessonHash(id: string): string {
+  return `${LEARN_HASH}/${encodeURIComponent(id)}`;
 }
 
 export function aiSettingsHash(): string {
