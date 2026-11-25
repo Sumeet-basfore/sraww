@@ -1,3 +1,4 @@
+import { generateStructured } from '../../src/server/ai/structured.ts';
 import type { z } from 'zod';
 import type { AiProvider, GenerateOptions, ProviderHealth } from '../../src/server/ai/provider.ts';
 import { moduleQuizReplySchema, outlineReplySchema } from '../../src/shared/learn.ts';
@@ -44,7 +45,7 @@ export function fakeProvider(replies: FakeReplies, calls: GenerateCall[] = []): 
         await new Promise((resolve) => setTimeout(resolve, replies.lessonDelayMs));
       }
       const reply = isOutline ? replies.outline : isQuiz ? replies.quiz : replies.lesson;
-      return schema.parse(reply);
+      return generateStructured(async () => reply, prompt, schema, options);
     },
   };
 }

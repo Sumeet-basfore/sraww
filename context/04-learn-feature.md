@@ -11,7 +11,7 @@
 
 ## Status
 
-Phases 0 to 4 are done and merged (PRs #11 to #16, see [06-history.md](06-history.md)). Phase 5 (optional quizzes) is implemented on `feat/learn-module-quizzes`. Phase 6 (bigger courses) and Phase 7 (hosted subscription) remain future work. See [07-open-items-and-roadmap.md](07-open-items-and-roadmap.md).
+Phases 0 to 4 are done and merged (PRs #11 to #16, see [06-history.md](06-history.md)). Phase 5 (optional quizzes) merged in PR #18. Phase 6 supports larger local courses and is waiting for owner review of the outline before merge. Phase 7 (hosted subscriptions) remains future work. See [07-open-items-and-roadmap.md](07-open-items-and-roadmap.md).
 
 ## Data shapes
 
@@ -30,8 +30,8 @@ All in `src/shared/learn.ts`. Diagrams reuse the app's graph schema from `src/sh
 | Course title, module title | 120                                                                        |
 | Topic title                | 160                                                                        |
 | Topic summary              | 240                                                                        |
-| Modules per course         | up to 8                                                                    |
-| Topics per course          | up to 12 in total                                                          |
+| Modules per course         | up to 12                                                                   |
+| Topics per course          | up to 24 in total                                                          |
 | Topics per module          | up to 12                                                                   |
 | Quiz questions per module  | up to 5                                                                    |
 | Quiz prompt                | up to 500 characters                                                       |
@@ -42,9 +42,9 @@ All in `src/shared/learn.ts`. Diagrams reuse the app's graph schema from `src/sh
 
 **Saved lesson** (`lessonSchema`): the reply plus `id`, `topic`, `createdAt`, `provider` (`claude` or `codex`), and optional `courseId` and `topicId`. Only sources whose URLs passed the check are kept.
 
-**Outline reply** (`outlineReplySchema`): `title` and modules with topics. The model never supplies ids. The server counts the topics after parsing (over 12 is an `INVALID_OUTPUT` error) and assigns random ids.
+**Outline reply** (`outlineReplySchema`): `title` and modules with topics. Model-supplied ids are ignored. The server checks module and topic counts before assigning random ids. A second invalid reply returns `INVALID_OUTPUT`.
 
-**Saved course** (`courseSchema`): id, the prompt it came from, `createdAt`, modules and topics with ids, and `progress.topicId` (the topic last opened, or null).
+**Saved course** (`courseSchema`, checked on save and load): id, the prompt it came from, `createdAt`, modules and topics with ids, and `progress.topicId` (the topic last opened, or null).
 
 **Saved module quiz** (`moduleQuizSchema`): course and module ids, the source topic ids, creation time, up to five questions with server-assigned ids, prompts, sample answers and explanations, aggregate `attempts`, `bestSelfRated` and `lastSelfRated` counts, and a bounded window of up to 256 unique opaque `attemptIds` for idempotent retries. A retry older than the window is treated as a new attempt. No typed answers are part of the schema.
 
@@ -118,7 +118,7 @@ Implemented in `build-steps.ts` (planner), `playback.ts` (reducer), `usePlayback
 - **A build that never finishes blocks later opens of that topic** until the server restarts. Source checks have no lookup timeout (the DNS lookup can still hang). This predates the Learn branch.
 - **Two tabs saving progress**: the last save wins.
 - **Orphan temporary files** from a crashed write are not swept. They are unreadable, so they do not affect results.
-- **The course page reads every lesson file** to find which topics are built (topics times lessons reads). Fine for 12 topics; a concern for larger courses.
+- **The course page scans lesson files for each topic** until it finds a match. With 24 saved lessons, median p95 was 9.914 ms on a warm memory-backed filesystem. See the [measurement and limits](../docs/plans/2026-11-24-visual-learning.md#phase-6--larger-local-courses).
 - **Per-step scene rebuilds.** Every build-up step gives every element a new id (`regenerateIds`), which may flicker and adds one history entry per step in a real browser. Not verified in a browser.
 - **No error boundary** around lazy chunks, the same as the editor.
 - **No way to delete a lesson or course** from the app. Delete the JSON file in `DIAGRAMS_DIR` by hand (PRIVACY.md says so).

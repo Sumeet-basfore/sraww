@@ -27,7 +27,6 @@ function failingProvider(error: AiError): AiProvider {
   };
 }
 
-/** An outline with 13 topics, one more than the server allows. */
 function oversizedOutline() {
   const topics = (count: number) =>
     Array.from({ length: count }, (_, i) => ({
@@ -37,8 +36,9 @@ function oversizedOutline() {
   return {
     title: 'Too big',
     modules: [
-      { title: 'A', topics: topics(7) },
-      { title: 'B', topics: topics(6) },
+      { title: 'A', topics: topics(12) },
+      { title: 'B', topics: topics(12) },
+      { title: 'C', topics: topics(1) },
     ],
   };
 }
@@ -104,6 +104,7 @@ describe('POST /api/learn/courses', () => {
 
     expect(res.status).toBe(502);
     expect(res.body.code).toBe('INVALID_OUTPUT');
+    expect(res.body.error).toContain('24 topics');
     expect((await request(app).get('/api/learn/courses')).body.courses).toEqual([]);
   });
 });

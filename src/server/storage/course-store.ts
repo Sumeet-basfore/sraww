@@ -14,7 +14,9 @@ export function createCourseStore(dataDir: string): CourseStore {
   const files = createJsonFolder(path.join(dataDir, 'courses'), courseSchema);
 
   return {
-    save: (course) => files.write(course.id, course),
+    async save(course) {
+      await files.write(course.id, courseSchema.parse(course));
+    },
     read: (id) => files.read(id),
     async list() {
       const loaded = await Promise.all((await files.ids()).map((id) => files.read(id)));

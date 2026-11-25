@@ -77,22 +77,34 @@ describe('generateOutline', () => {
     expect(calls[0]?.options).toBeUndefined();
   });
 
-  it('accepts an outline with exactly 12 topics', async () => {
+  it('accepts an outline with 12 modules and exactly 24 topics', async () => {
     const outline = await generateOutline(
-      fakeProvider({ outline: outlineWithTopicCounts([4, 4, 4]) }),
+      fakeProvider({ outline: outlineWithTopicCounts(Array(12).fill(2)) }),
       'Big course',
     );
 
-    expect(outline.modules).toHaveLength(3);
-    expect(outline.modules.flatMap((m) => m.topics)).toHaveLength(12);
+    expect(outline.modules).toHaveLength(12);
+    expect(outline.modules.flatMap((m) => m.topics)).toHaveLength(24);
   });
 
-  it('rejects an outline with 13 topics as invalid output', async () => {
-    const provider = fakeProvider({ outline: outlineWithTopicCounts([7, 6]) });
+  it.each([
+    { name: '25 topics', counts: [12, 12, 1] },
+    { name: '13 modules', counts: Array(13).fill(1) },
+    { name: '13 topics in one module', counts: [13] },
+  ])('rejects $name as invalid output', async ({ counts }) => {
+    const provider = fakeProvider({ outline: outlineWithTopicCounts(counts) });
 
     const failure = generateOutline(provider, 'Big course');
     await expect(failure).rejects.toBeInstanceOf(AiError);
     await expect(failure).rejects.toMatchObject({ code: 'INVALID_OUTPUT' });
+  });
+
+  it('asks the learner to retry when the reply is malformed, not only to narrow the topic', async () => {
+    const provider = fakeProvider({ outline: { title: 'Big course', modules: 'not a list' } });
+
+    const failure = generateOutline(provider, 'Big course');
+    await expect(failure).rejects.toBeInstanceOf(AiError);
+    await expect(failure).rejects.toThrow(/Try again/);
   });
 });
 
