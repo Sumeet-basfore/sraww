@@ -8,9 +8,9 @@ This file lists what is not done, in four groups: planned work, blocked work, fo
 
 Merged in PR #18. A completed module offers up to five short-answer questions. The learner reveals a sample answer and self-rates; aggregate attempts, best and last counts plus up to 256 recent opaque attempt ids for retry deduplication are stored locally. An older delayed retry is treated as new. Typed answers are never sent or saved. The action is optional and does not gate navigation or progress. Codex is refused because its command tool cannot be guaranteed off.
 
-### Learn phase 6: bigger local courses (in review)
+### Learn phase 6: bigger local courses (merged)
 
-This change supports up to 12 modules and 24 topics total, with up to 12 topics per module. Owner review of the full outline is required before merge. The [Learn plan](../docs/plans/2026-11-24-visual-learning.md#phase-6--larger-local-courses) includes the example outline and course load measurements. Hosted quotas depend on a future account and plan model.
+Merged in PR #19. A course supports up to 12 modules and 24 topics total, with up to 12 topics per module. The [Learn plan](../docs/plans/2026-11-24-visual-learning.md#phase-6--larger-local-courses) includes the example outline and the course load measurements. Hosted quotas depend on a future account and plan model.
 
 ### Learn: delete a course or lesson
 

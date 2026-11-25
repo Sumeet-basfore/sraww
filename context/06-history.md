@@ -1,6 +1,6 @@
 # 6. History
 
-The repository has 99 commits on `main`, from 23 November 2026 (first commit) to 25 November 2026. Every feature below landed through a pull request into `main`. The GitHub repository is the project's `origin`.
+The repository has 107 commits on `main`, from 23 November 2026 (first commit) to 25 November 2026. Every feature below landed through a pull request into `main`. The GitHub repository is the project's `origin`.
 
 ## Merged pull requests, in order
 
@@ -22,6 +22,9 @@ The repository has 99 commits on `main`, from 23 November 2026 (first commit) to
 | #14 | `feat/course-outline`                 | Course outline (Learn phase 2): course schemas and builder, course store, course routes (outline, topic lessons, progress), client calls, course list and course page, Continue, Last opened. Fixes: one lesson build shared between two tabs; unique temp file per JSON write.                                 |
 | #15 | `feat/build-up-animation`             | Build-up (Learn phase 3): the step planner, the playback reducer and timer, Replay, Back, Play or Pause, Next, Skip to end, arrow keys scoped to the controls, reduced motion, completion announcement.                                                                                                         |
 | #16 | `feat/polish-and-privacy`             | Learn phase 4: Try again on every failed step, focus on retry, time note, phone and desktop layout checks (light and dark), resume-after-reload e2e test, privacy and README updates.                                                                                                                           |
+| #17 | `docs/project-context`                | A `context` folder that explains the app, the Learn feature, decisions, history, open items and the development workflow.                                                                                                                                                                                       |
+| #18 | `feat/learn-module-quizzes`           | Learn phase 5: optional module quizzes with learner self-rating. Saved results are aggregate counts only; typed answers are never sent or stored.                                                                                                                                                               |
+| #19 | `feat/learn-course-capacity`          | Learn phase 6: 12 modules and 24 topics per local course, checked on generated outlines, saves and loads. Full-course e2e, a repeatable load probe, and a neutral "try again" message for an unusable outline reply.                                                                                            |
 
 The Learn phases were reviewed by DeepSeek V4.1 Flash through the `pi` harness, as the owner instructed. The reviewer for earlier PRs is not recorded in this folder; check the PR threads on GitHub.
 
@@ -37,7 +40,7 @@ From `docs/plans/2026-11-24-visual-learning.md`:
 | 3     | Build-up animation               | Done                                       | #15      |
 | 4     | Polish, privacy and tests        | Done                                       | #16      |
 | 5     | Quizzes                          | Merged                                     | #18      |
-| 6     | Bigger local courses             | In review; outline owner review pending    | -        |
+| 6     | Bigger local courses             | Merged                                     | #19      |
 | 7     | Hosted subscription              | Future track, blocked on provider approval | -        |
 
 ## Other planning documents

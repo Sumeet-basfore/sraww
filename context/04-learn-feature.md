@@ -11,7 +11,7 @@
 
 ## Status
 
-Phases 0 to 4 are done and merged (PRs #11 to #16, see [06-history.md](06-history.md)). Phase 5 (optional quizzes) merged in PR #18. Phase 6 supports larger local courses and is waiting for owner review of the outline before merge. Phase 7 (hosted subscriptions) remains future work. See [07-open-items-and-roadmap.md](07-open-items-and-roadmap.md).
+Phases 0 to 4 are done and merged (PRs #11 to #16, see [06-history.md](06-history.md)). Phase 5 (optional quizzes) merged in PR #18. Phase 6 (larger local courses) merged in PR #19. Phase 7 (hosted subscriptions) remains future work. See [07-open-items-and-roadmap.md](07-open-items-and-roadmap.md).
 
 ## Data shapes
 
