@@ -1,0 +1,64 @@
+# 5. Decisions
+
+Each decision has the reason it was made. A decision that was later changed says so. If you want to reverse one, read the reason first.
+
+## Product
+
+| Decision | Reason | Status |
+| --- | --- | --- |
+| A local, single-user app that runs on the owner's computer. No accounts, no cloud, no sync, no sharing. | The owner wants a personal tool that understands their own projects. | Holds. |
+| AI runs through the owner's already-logged-in **Claude Code** and **Codex** CLIs. | They use existing paid subscriptions (Claude Pro, ChatGPT Plus) rather than API keys. | Holds. Never add API keys or provider SDKs. |
+| No API key variables and no provider SDKs. | Keeps the app free of credentials and keeps the subscription the only AI access. | Holds. |
+| Excalidraw is the editor, pinned to exact `0.18.0`. | Official embeddable editor under MIT. The embed API changes between versions, so the pin prevents surprises. | Holds. |
+| Desktop browser first. The phone layout is a later polish step. | First build scope. | Phone layouts added for the Learn lesson page (Phase 4). The editor is not designed for phones. |
+| Architecture scanning covers TypeScript and JavaScript first. | The owner's likely projects. Other languages are later. | Holds. Python, Go and infra manifests are "later" in `docs/PLAN.md`. |
+| The Learn tab is separate from Architecture. | Learning and mapping are different jobs; a separate tab keeps each simple. | Chosen for Phase 0. |
+| Learn UI is minimal and plain-language. | The owner asked for a simple interface. | Holds. |
+| Lessons come from web research, with checked sources. Lessons are not labelled "AI-generated". | The owner wants lessons grounded in real pages, with the sources shown. | Holds. Sources are checked by the server (see [04-learn-feature.md](04-learn-feature.md)). |
+| Quizzes are deferred. | Scope: the owner wants them later. | Phase 5, not started. |
+| Course limits: 8 modules, 12 topics. | Keep an outline small enough to read and build. | Holds until Phase 6. |
+| Highest effort by default for AI tools; the owner can lower it. | Owner preference stated during Learn planning. | **Not in code.** The stored default effort is empty, so the CLI's own default applies (`src/server/ai/settings-store.ts`). Decide whether to change it. |
+| A hosted subscription (sraww-hosted model access) is a future track only, not planned. | It needs provider agreements, accounts, payments, a new privacy policy and consumer-law review. | Phase 7, blocked. |
+
+## Learn tab specifics
+
+| Decision | Reason |
+| --- | --- |
+| Codex cannot build lessons. A lesson request while Codex is the default is refused, and nothing is sent. | Codex's shell tool cannot be removed for a web call, so a web lesson would let Codex read local files. Refusing is safer than trusting a read-only sandbox to stop it. (Found in review; the first version let Codex try.) |
+| Claude lessons allow only `WebSearch` and `WebFetch`, and no other tools. | Least privilege for the one call that reads the web. Outline and other calls get no tools at all. |
+| Source checks run on the server, with https only, public addresses only, pinned connections and a timeout. | The server fetches URLs the model chose, which is a server-side request forgery risk. Pinning the checked address closes the DNS rebinding gap found in review. |
+| The model never gives ids or coordinates. The server assigns ids; ELK computes layout. | Keeps model output small and checkable, and layouts consistent. |
+| A lesson diagram is read-only in the canvas (`viewModeEnabled`). | A lesson is a saved teaching object; the owner does not edit it. |
+| Two tabs opening one topic share one build. | Avoids paying for two web-research calls. Found in review. |
+| The build-up draws one node per step, in dependency order, and reduces to a full diagram under reduced motion. | Readable pacing for teaching; respects the accessibility setting. |
+
+## Architecture and engineering
+
+| Decision | Reason |
+| --- | --- |
+| No database. Every record is a JSON file, written to a temporary file and renamed. | Simple, inspectable, easy to back up or delete by hand. Writes never leave half a record. |
+| Ids are validated before they become file names. | Stops a request from reaching outside its folder. |
+| Hash-based client routing, no router library. | Enough for the page count; works with the local server without server routing rules. |
+| Zod schemas in `src/shared/` used on both sides. | One source of truth; validation at every boundary. |
+| Architecture findings are computed deterministically; the AI review reads only the findings and metadata, never file contents. | Findings are repeatable and free. Metadata-only review limits what leaves the machine. |
+| Architecture review is stored as a sidecar file, validated on read. | The review is a saved artifact, and a damaged file must not break the map. |
+| Diagram generation returns a graph; layout is computed by ELK. | Models place boxes badly; code places them consistently. |
+| The AI CLIs run with a cleared environment (only `PATH` and `HOME`) in an empty working folder. | They cannot read the owner's projects by accident, and they see no extra secrets. |
+| Formulas render on the server to standalone SVG (MathJax) and are inserted as image labels with editable source. | MathJax needs a DOM, which the server supplies; labels stay readable and sanitised. |
+| GitHub import: public branches only, zip from `codeload.github.com`, no token, redirects kept inside that host. | No credentials to store; the smallest network surface that does the job. |
+| Uploaded projects skip package, build, cache and version-control folders, and credential, key, lock and binary files. | Keep secrets and noise out of the stored copy. |
+
+## Process
+
+| Decision | Reason | Status |
+| --- | --- | --- |
+| Commit trailers: no `Co-Authored-By` line, because the owner's `CLAUDE.md` forbids it unless the project's `.claude/settings.json` sets `attribution.commit`. That file does not exist (there is no `.claude/` folder in the repo). | Owner rule. | Holds for new commits. **11 of 99 commits** carry a trailer, added by subagents or by the tooling during the Learn work (for example `c9a1193`, `2a10a71`, `2ed3958`, `6fef5bc`, `26764cd`). They were not rewritten. Do not rewrite shared history to remove them. |
+| Work on feature branches off `main`, one branch per phase or feature, merged by pull request. | Keeps `main` buildable and each change reviewable. | Holds. |
+| No `git push` until the owner asks. | Owner's first instruction (D10). | **Superseded.** The owner later asked for a pull request per phase, and those are pushed. Pushing still follows the owner's request. |
+| Reviews run on DeepSeek V4.1 Flash through the `pi` harness, not GPT-6 Luna. | Owner instruction. The owner later replaced the earlier Luna reviewer with DeepSeek. | Holds. |
+| Review runtime is `full-access` with written prohibitions on harmful commands. | `pi` has no automatic mode, so the rule is a written instruction and is not enforced by the harness. The owner accepted this. | Holds. Disclose it when it is used. |
+| Subagents use the `poteto-agent` type; its model cannot be pinned and runs on Opus. | Tooling constraint. | Disclose the model in reports. |
+| Do not touch the two untracked planning documents without asking. | They belong to the owner and are not committed. | Holds. |
+| Every PR includes a `## Why`, what changed, decisions, verification with exact results, and what was not verified. | Makes review and later reading possible without the chat. | Holds. |
+| Known flaky test is reported, not hidden. | Load-related timeouts happen on the owner's machine. | Holds. See [08-testing-and-quality.md](08-testing-and-quality.md). |
+| Privacy text must match the code, claim by claim. | The policy is a promise; a wrong sentence is a defect. | Holds. |
