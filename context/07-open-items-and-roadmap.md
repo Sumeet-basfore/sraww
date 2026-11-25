@@ -46,9 +46,6 @@ These come from the review rounds for PRs #11 to #16. None is a known data-loss 
 
 **Learn, reliability**
 
-- A failed lesson load on the lesson page has no retry. The plan defers it. Retry exists on the course page.
-- A build that never finishes blocks later opens of that topic until the server restarts. Add a timeout for lesson builds.
-- Source checks have no timeout on the DNS lookup itself. The request timeout (8 seconds) does not cover it.
 - Temporary files left by a crashed write are never swept. Add a sweep at startup or when listing.
 - A lesson build may exceed `AI_TIMEOUT_MS` (120 seconds) at high effort. No real build has been timed. Measure before changing the default.
 - Two tabs saving progress: the last save wins. Acceptable for one user; note it if multi-tab use grows.

@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LessonView } from '../../src/client/learn/LessonView.tsx';
 
@@ -202,5 +203,24 @@ describe('LessonView', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'The lesson file could not be read.',
     );
+  });
+
+  it('a failed lesson load is retried by Try again, which asks the server again', async () => {
+    fetchMock.mockResolvedValueOnce(reply(500, { error: 'The lesson file could not be read.' }));
+    renderLesson();
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'The lesson file could not be read.',
+    );
+
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValueOnce(reply(200, { lesson }));
+    await user.click(screen.getByRole('button', { name: 'Try again: load this lesson' }));
+    expect(screen.getByRole('heading', { level: 1 })).toHaveFocus();
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: lesson.title }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
