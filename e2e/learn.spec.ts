@@ -78,7 +78,13 @@ function topicRow(page: Page, title: string) {
  * Stubs the course endpoints as one small server. The course keeps its progress and the lessons
  * built for it, so reopening the course shows what the learner did before.
  */
-async function stubCourseApi(page: Page, listed: unknown[] = [], prebuiltTopicIds: string[] = []) {
+async function stubCourseApi(
+  page: Page,
+  listed: unknown[] = [],
+  prebuiltTopicIds: string[] = [],
+  modules = course.modules,
+) {
+  const savedCourse = { ...course, modules };
   let progress: { topicId: string | null } = { topicId: null };
   let builtLessons: Record<string, string> = Object.fromEntries(
     prebuiltTopicIds.map((topicId) => [topicId, `lesson-${topicId}`]),
@@ -115,7 +121,7 @@ async function stubCourseApi(page: Page, listed: unknown[] = [], prebuiltTopicId
   await page.route('**/api/learn/courses', async (route) => {
     if (route.request().method() === 'POST') {
       created.push(route.request().postDataJSON());
-      await route.fulfill(json({ course }, 201));
+      await route.fulfill(json({ course: savedCourse }, 201));
       return;
     }
     await route.fulfill(json({ courses: listed }));
@@ -123,7 +129,7 @@ async function stubCourseApi(page: Page, listed: unknown[] = [], prebuiltTopicId
   await page.route(`**/api/learn/courses/${course.id}`, (route) =>
     route.fulfill(
       json({
-        course: { ...course, progress },
+        course: { ...savedCourse, progress },
         builtLessons,
         quizResults:
           savedQuiz.attempts > 0
@@ -150,7 +156,7 @@ async function stubCourseApi(page: Page, listed: unknown[] = [], prebuiltTopicId
   await page.route(`**/api/learn/courses/${course.id}/progress`, async (route) => {
     progress = route.request().postDataJSON() as { topicId: string | null };
     progressSaved.push(progress);
-    await route.fulfill(json({ course: { ...course, progress } }));
+    await route.fulfill(json({ course: { ...savedCourse, progress } }));
   });
   await page.route(`**/api/learn/courses/${course.id}/modules/module-1/quiz`, async (route) => {
     quizGenerationCalls.push(1);
@@ -360,8 +366,72 @@ async function expectQuizFitsWidth(page: Page, width: number): Promise<void> {
   }
 }
 
+const fullOutline = (
+  [
+    ['The HTTP cache', 'What a cache is', 'Freshness'],
+    ['Where copies live', 'Browser caches', 'Shared caches'],
+    ['Choosing a copy', 'Cache keys', 'The Vary header'],
+    ['Lifetimes', 'Age and Date', 'Expires and max-age'],
+    ['Checking a copy', 'Entity tags', 'Last-Modified'],
+    ['Conditional requests', 'If-None-Match', 'Handling a 304 response'],
+    ['Private responses', 'Private cache controls', 'Requests with credentials'],
+    ['Stale responses', 'Revalidate in the background', 'Serve stale after an error'],
+    ['Shared infrastructure', 'Reverse proxies', 'Content delivery networks'],
+    ['Updating content', 'Versioned asset URLs', 'Purging cached responses'],
+    ['Reading cache behavior', 'Inspect response headers', 'Compare warm and cold requests'],
+    [
+      'Plan a cache policy',
+      'Choose defaults for static assets',
+      'Review a policy for changing data',
+    ],
+  ] as const
+).map(([title, ...topics], m) => ({
+  id: `module-${m + 1}`,
+  title,
+  topics: topics.map((topic, t) => ({
+    id: `topic-${m * 2 + t + 1}`,
+    title: topic,
+    summary: `Explore ${topic.toLowerCase()} in the context of HTTP caching.`,
+  })),
+}));
+
 for (const width of [390, 1440]) {
   for (const theme of ['light', 'dark'] as const) {
+    test(`the full course opens and resumes at ${width}px in ${theme} theme`, async ({
+      page,
+    }, info) => {
+      await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+      await setTheme(page, theme);
+      await stubCourseApi(page, [], [], fullOutline);
+
+      await page.goto('/#/learn');
+      await page.getByLabel('Topic').fill('HTTP caching');
+      await page.getByRole('button', { name: 'Build course' }).click();
+      await expect(page.getByRole('heading', { level: 1, name: course.title })).toBeVisible();
+      await topicRow(page, 'Freshness').getByRole('button', { name: 'Open lesson' }).click();
+      await page.getByRole('link', { name: '← Course' }).click();
+      await page.reload();
+
+      await expect(page.getByRole('heading', { level: 2 })).toHaveText(
+        fullOutline.map((m) => m.title),
+      );
+      await expect(page.getByRole('heading', { level: 3 })).toHaveText(
+        fullOutline.flatMap((m) => m.topics.map((t) => t.title)),
+      );
+      await expect(page.getByRole('button', { name: 'Open lesson' })).toHaveCount(24);
+      await expect(topicRow(page, 'Freshness').getByText('Last opened')).toBeVisible();
+      await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+        width,
+      );
+      await info.attach('full-outline', {
+        body: await page.screenshot({ fullPage: true }),
+        contentType: 'image/png',
+      });
+      await page.getByRole('button', { name: 'Continue' }).click();
+      await expect(page).toHaveURL(/#\/learn\/lesson-e2e-2$/);
+    });
+
     test(`the module quiz fits ${width}px in ${theme} theme`, async ({ page }) => {
       await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
       await setTheme(page, theme);

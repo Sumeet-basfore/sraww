@@ -71,6 +71,27 @@ describe('course store', () => {
     await expect(store.read('course-1')).resolves.toEqual(COURSE);
   });
 
+  it.each([
+    { name: '12 modules and 24 topics', counts: Array(12).fill(2), valid: true },
+    { name: '12 topics per module', counts: [12, 12], valid: true },
+    { name: '13 modules', counts: Array(13).fill(1), valid: false },
+    { name: '25 topics', counts: [12, 12, 1], valid: false },
+    { name: '13 topics in one module', counts: [13], valid: false },
+  ])('checks $name on disk and on save', async ({ counts, valid }) => {
+    const course = {
+      ...COURSE,
+      modules: counts.flatMap(
+        (count, i) => courseWith(`module-${i}`, COURSE.createdAt, count).modules,
+      ),
+    };
+    await mkdir(path.join(dir, 'courses'));
+    await writeFile(path.join(dir, 'courses', `${course.id}.json`), JSON.stringify(course));
+    const store = createCourseStore(dir);
+    await expect(store.read(course.id)).resolves.toEqual(valid ? course : null);
+    if (valid) await expect(store.save(course)).resolves.toBeUndefined();
+    else await expect(store.save(course)).rejects.toThrow();
+  });
+
   it('reads a bad, unknown or path-like id as null', async () => {
     const store = createCourseStore(dir);
     await store.save(COURSE);

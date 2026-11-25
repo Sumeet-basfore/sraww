@@ -19,8 +19,8 @@ Storage stays under `DIAGRAMS_DIR`.
 **Tech stack:** TypeScript, Express 5, Zod 4, React 19, Excalidraw 0.18.0, ELK (existing), Vitest,
 Playwright. No new runtime dependencies are planned.
 
-**Effort (estimate):** about 18 working days for phases 0–4 (the MVP). Phase 5 is a completed follow-up;
-phases 6–7 remain future work.
+**Effort (estimate):** about 18 working days for phases 0–4 (the MVP). Phase 5 shipped optional quizzes. Phase 6 raises local course capacity.
+Phase 7 remains future work.
 
 **Research basis:** read 2026-11-24. Diagram tools are common, but none combines AI course generation,
 build-up animation and sourced teaching. Closest rivals: Diagramstalk (Mermaid, stepwise reveal, free,
@@ -55,8 +55,8 @@ provider approval (Anthropic) or a check against the business terms (OpenAI). Se
 7. **Model: highest effort by default.** Lessons use the model and effort chosen on the AI tools page,
    which defaults to the highest effort the CLI offers. The user can lower it. Higher effort means slower
    lessons and more usage per topic, so the lesson page shows an estimate of time before a course is built.
-8. **Scope limits (kept).** At most 12 topics per course and 8 modules in the MVP. Each topic diagram is
-   capped at 14 nodes and 20 arrows. Bigger courses and per-plan limits come later (Phase 6).
+8. **Scope limits.** A local course can have up to 12 modules and 24 topics in total, with at most
+   12 topics in a module. Each topic diagram is capped at 14 nodes and 20 arrows.
 9. **Hosted subscription (future track, not MVP).** sraww's own paid plan, with model access sold to
    users. It needs provider approval, accounts, payments, a new privacy policy and consumer-law review. See
    Phase 7.
@@ -242,12 +242,62 @@ Input: a graph (nodes, edges, groups). Output: an ordered list of steps, each on
   under `DIAGRAMS_DIR/learn-quizzes`, plus up to 256 recent opaque attempt ids to make retries idempotent.
   A delayed retry older than this window is treated as new. Result updates serialize per course and module.
   Practice never gates lesson navigation or course progress.
-- **Status:** implemented on `feat/learn-module-quizzes`; focused server, client and e2e checks verify it.
+- **Status:** merged in PR #18; focused server, client and e2e checks verify it.
 
-### Phase 6 — Bigger courses and plan limits (future)
+### Phase 6 — Larger local courses
 
-- More modules and topics per course, and per-plan limits (for example, topics or courses per month).
-  Limits depend on the user and on what the paid plan covers.
+An outline can contain 12 modules and 24 topics, with at most 12 topics per module.
+Generated and saved courses use these limits. Monthly quotas belong to the future hosted plan.
+
+**Full course used for the browser check.** The Learn tab displays this HTTP caching course in module order.
+
+| Module                 | First topic                       | Second topic                      |
+| ---------------------- | --------------------------------- | --------------------------------- |
+| The HTTP cache         | What a cache is                   | Freshness                         |
+| Where copies live      | Browser caches                    | Shared caches                     |
+| Choosing a copy        | Cache keys                        | The Vary header                   |
+| Lifetimes              | Age and Date                      | Expires and max-age               |
+| Checking a copy        | Entity tags                       | Last-Modified                     |
+| Conditional requests   | If-None-Match                     | Handling a 304 response           |
+| Private responses      | Private cache controls            | Requests with credentials         |
+| Stale responses        | Revalidate in the background      | Serve stale after an error        |
+| Shared infrastructure  | Reverse proxies                   | Content delivery networks         |
+| Updating content       | Versioned asset URLs              | Purging cached responses          |
+| Reading cache behavior | Inspect response headers          | Compare warm and cold requests    |
+| Plan a cache policy    | Choose defaults for static assets | Review a policy for changing data |
+
+**Course load time, 2026-11-25.** Each request opened a course through its HTTP route and
+returned every saved lesson ID. The original 12-topic baseline on main (`e79256c`) had a
+median p95 of 5.785 ms across five samples (5.304, 5.508, 5.785, 5.798, 23.870 ms).
+The acceptance limit was the smaller of 500 ms and twice that median, or **11.570 ms**.
+
+| Course                            | Five p95 measurements in run order, ms | Median p95, ms |
+| --------------------------------- | -------------------------------------- | -------------: |
+| Main, 8 modules and 12 topics     | 4.997, 6.361, 5.206, 5.847, 6.205      |          5.847 |
+| Phase 6, 12 modules and 24 topics | 9.914, 7.773, 10.113, 10.172, 7.076    |          9.914 |
+
+The second comparison alternated main and Phase 6 five times. Each run opened one local server,
+warmed it with five requests, then timed 30 sequential requests. The p95 is the 29th of those
+30 times in ascending order. All 350 responses returned the expected number of modules and
+saved lesson IDs. Every Phase 6 sample was below 11.570 ms.
+
+Both sides used the same temporary data folder path on Linux x64 under `/tmp` (a memory-backed filesystem), Node
+v26.9.0 and 12 logical CPUs. The one-minute system load ranged from 3.07 to 3.15 during the
+alternating runs. The course route scans lesson files for each topic and parses the saved JSON.
+This measures warm local requests with only the course's own lessons in the directory.
+Larger libraries or cold disks can take longer.
+
+To repeat, run the following from the Phase 6 checkout. Supply a separate checkout of
+`e79256c` with its dependencies installed as `BASELINE_ROOT`.
+
+```sh
+probe_dir=$(mktemp -d)
+for i in 1 2 3 4 5; do
+  PROJECT_ROOT="$BASELINE_ROOT" SHAPE=baseline RUNS=1 PROBE_DATA_DIR="$probe_dir" node --import tsx scripts/learn-course-capacity-probe.mts
+  SHAPE=candidate RUNS=1 PROBE_DATA_DIR="$probe_dir" node --import tsx scripts/learn-course-capacity-probe.mts
+done
+rmdir "$probe_dir"
+```
 
 ### Phase 7 — Hosted subscription (future track, not planned)
 

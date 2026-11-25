@@ -19,8 +19,8 @@ export const LEARN_LIMITS = {
   maxModuleTitle: 120,
   maxTopicTitle: 160,
   maxSummary: 240,
-  maxModules: 8,
-  maxCourseTopics: 12,
+  maxModules: 12,
+  maxCourseTopics: 24,
   maxModuleTopics: 12,
   maxQuizQuestions: 5,
   maxQuizPrompt: 500,
@@ -83,33 +83,50 @@ const outlineModuleSchema = z.object({
   topics: z.array(outlineTopicSchema).min(1).max(LEARN_LIMITS.maxModuleTopics),
 });
 
-/** What the model returns for a course. It never supplies ids; the server assigns them after this check. */
-export const outlineReplySchema = z.object({
-  title: z.string().min(1).max(LEARN_LIMITS.maxCourseTitle),
-  modules: z.array(outlineModuleSchema).min(1).max(LEARN_LIMITS.maxModules),
-});
+function hasValidCourseTopicCount(course: { modules: { topics: readonly unknown[] }[] }): boolean {
+  return (
+    course.modules.reduce((total, module) => total + module.topics.length, 0) <=
+    LEARN_LIMITS.maxCourseTopics
+  );
+}
+
+/** What the model returns for a course. Model-supplied ids are ignored; the server assigns ids after validation. */
+export const outlineReplySchema = z
+  .object({
+    title: z.string().min(1).max(LEARN_LIMITS.maxCourseTitle),
+    modules: z.array(outlineModuleSchema).min(1).max(LEARN_LIMITS.maxModules),
+  })
+  .refine(hasValidCourseTopicCount, {
+    path: ['modules'],
+    message: `A course can have at most ${LEARN_LIMITS.maxCourseTopics} topics.`,
+  });
 
 export type OutlineReply = z.infer<typeof outlineReplySchema>;
 
 const courseTopicSchema = outlineTopicSchema.extend({ id: idSchema });
 
 /** A saved course. Every module and topic has a server-assigned id. `progress` is the topic opened last. */
-export const courseSchema = z.object({
-  id: idSchema,
-  title: z.string().min(1).max(LEARN_LIMITS.maxCourseTitle),
-  prompt: z.string().min(1).max(LEARN_LIMITS.maxTopic),
-  createdAt: z.string(),
-  modules: z
-    .array(
-      outlineModuleSchema.extend({
-        id: idSchema,
-        topics: z.array(courseTopicSchema).min(1).max(LEARN_LIMITS.maxModuleTopics),
-      }),
-    )
-    .min(1)
-    .max(LEARN_LIMITS.maxModules),
-  progress: z.object({ topicId: idSchema.nullable() }),
-});
+export const courseSchema = z
+  .object({
+    id: idSchema,
+    title: z.string().min(1).max(LEARN_LIMITS.maxCourseTitle),
+    prompt: z.string().min(1).max(LEARN_LIMITS.maxTopic),
+    createdAt: z.string(),
+    modules: z
+      .array(
+        outlineModuleSchema.extend({
+          id: idSchema,
+          topics: z.array(courseTopicSchema).min(1).max(LEARN_LIMITS.maxModuleTopics),
+        }),
+      )
+      .min(1)
+      .max(LEARN_LIMITS.maxModules),
+    progress: z.object({ topicId: idSchema.nullable() }),
+  })
+  .refine(hasValidCourseTopicCount, {
+    path: ['modules'],
+    message: `A course can have at most ${LEARN_LIMITS.maxCourseTopics} topics.`,
+  });
 
 export type Course = z.infer<typeof courseSchema>;
 export type CourseModule = Course['modules'][number];

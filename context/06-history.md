@@ -36,8 +36,8 @@ From `docs/plans/2026-11-24-visual-learning.md`:
 | 2     | Course outline and progress      | Done                                       | #14      |
 | 3     | Build-up animation               | Done                                       | #15      |
 | 4     | Polish, privacy and tests        | Done                                       | #16      |
-| 5     | Quizzes                          | Not started (future)                       | -        |
-| 6     | Bigger courses and plan limits   | Not started (future)                       | -        |
+| 5     | Quizzes                          | Merged                                     | #18      |
+| 6     | Bigger local courses             | In review; outline owner review pending    | -        |
 | 7     | Hosted subscription              | Future track, blocked on provider approval | -        |
 
 ## Other planning documents

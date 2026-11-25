@@ -6,11 +6,11 @@ This file lists what is not done, in four groups: planned work, blocked work, fo
 
 ### Learn phase 5: optional module quizzes (implemented)
 
-Implemented on `feat/learn-module-quizzes`. A completed module offers up to five short-answer questions. The learner reveals a sample answer and self-rates; aggregate attempts, best and last counts plus up to 256 recent opaque attempt ids for retry deduplication are stored locally. An older delayed retry is treated as new. Typed answers are never sent or saved. The action is optional and does not gate navigation or progress. Codex is refused because its command tool cannot be guaranteed off.
+Merged in PR #18. A completed module offers up to five short-answer questions. The learner reveals a sample answer and self-rates; aggregate attempts, best and last counts plus up to 256 recent opaque attempt ids for retry deduplication are stored locally. An older delayed retry is treated as new. Typed answers are never sent or saved. The action is optional and does not gate navigation or progress. Codex is refused because its command tool cannot be guaranteed off.
 
-### Learn phase 6: bigger local courses (future)
+### Learn phase 6: bigger local courses (in review)
 
-After Phase 5 merges, raise local course limits from 8 modules and 12 topics to 12 modules and 24 topics total, keeping the 12-topic per-module cap. No hosted quotas: the app has no account or paid-plan identity. Follow the performance gate in the Learn plan before changing these limits.
+This change supports up to 12 modules and 24 topics total, with up to 12 topics per module. Owner review of the full outline is required before merge. The [Learn plan](../docs/plans/2026-11-24-visual-learning.md#phase-6--larger-local-courses) includes the example outline and course load measurements. Hosted quotas depend on a future account and plan model.
 
 ### Learn: delete a course or lesson
 
@@ -55,7 +55,7 @@ These come from the review rounds for PRs #11 to #16. None is a known data-loss 
 
 **Learn, code quality**
 
-- The course page reads every lesson file to find which topics are built. Fine for 12 topics, a cost for larger courses.
+- The course page scans saved lessons for each topic. A larger saved library or slower disk may increase load time beyond the Phase 6 measurement.
 - The server route `POST /api/learn/lessons` (a standalone lesson) has no UI caller. Either give it a use or remove it in one change.
 - No error boundary around lazily loaded chunks (the editor and the lesson canvas). A chunk failure shows a blank area.
 - Each build-up step rebuilds the scene with new element ids (`regenerateIds`). This may flicker in a real browser and adds one undo entry per step. Needs stable ids to fix. Verify in a browser first.
