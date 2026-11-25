@@ -91,15 +91,10 @@ function hasValidCourseTopicCount(course: { modules: { topics: readonly unknown[
 }
 
 /** What the model returns for a course. Model-supplied ids are ignored; the server assigns ids after validation. */
-export const outlineReplySchema = z
-  .object({
-    title: z.string().min(1).max(LEARN_LIMITS.maxCourseTitle),
-    modules: z.array(outlineModuleSchema).min(1).max(LEARN_LIMITS.maxModules),
-  })
-  .refine(hasValidCourseTopicCount, {
-    path: ['modules'],
-    message: `A course can have at most ${LEARN_LIMITS.maxCourseTopics} topics.`,
-  });
+export const outlineReplySchema = z.object({
+  title: z.string().min(1).max(LEARN_LIMITS.maxCourseTitle),
+  modules: z.array(outlineModuleSchema).min(1).max(LEARN_LIMITS.maxModules),
+});
 
 export type OutlineReply = z.infer<typeof outlineReplySchema>;
 
