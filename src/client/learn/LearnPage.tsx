@@ -28,6 +28,7 @@ export function LearnPage({ onShowTour }: LearnPageProps) {
   const [topic, setTopic] = useState('');
   const [build, setBuild] = useState<BuildState>({ status: 'idle' });
   const [list, setList] = useState<ListState>({ status: 'loading' });
+  const [listAttempt, setListAttempt] = useState(0);
   const building = build.status === 'building';
   const canSubmit = topic.trim() !== '' && !building;
 
@@ -44,7 +45,18 @@ export function LearnPage({ onShowTour }: LearnPageProps) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [listAttempt]);
+
+  function retryList(): void {
+    setList({ status: 'loading' });
+    setListAttempt((count) => count + 1);
+    document.getElementById('learn-title')?.focus();
+  }
+
+  function changeTopic(value: string): void {
+    setTopic(value);
+    if (build.status === 'failed') setBuild({ status: 'idle' });
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -69,7 +81,9 @@ export function LearnPage({ onShowTour }: LearnPageProps) {
           </PageHeader>
 
           <div className="intro">
-            <h1 id="learn-title">Learn</h1>
+            <h1 id="learn-title" tabIndex={-1}>
+              Learn
+            </h1>
           </div>
           <p className="muted">
             Type a topic and sraww drafts a course of modules and topics. Open a topic to build its
@@ -90,29 +104,40 @@ export function LearnPage({ onShowTour }: LearnPageProps) {
               id="learn-topic"
               value={topic}
               maxLength={LEARN_LIMITS.maxTopic}
-              onChange={(e) => setTopic(e.target.value)}
+              onChange={(e) => changeTopic(e.target.value)}
               placeholder="For example: How HTTP caching works"
               disabled={building}
             />
-            <button type="submit" className="button primary" disabled={!canSubmit}>
-              Build course
+            <button
+              type="submit"
+              className="button primary"
+              disabled={!canSubmit}
+              aria-label={
+                build.status === 'failed' ? 'Try again: build the course outline' : undefined
+              }
+            >
+              {build.status === 'failed' ? 'Try again' : 'Build course'}
             </button>
           </form>
+          <p className="muted">
+            Building a course outline can take a minute or more. Building a lesson uses web
+            research, which can take longer.
+          </p>
 
           {building && (
             <p className="muted" role="status">
-              Building the course outline. This takes about a minute. Keep this tab open.
+              Building the course outline. Keep this tab open.
             </p>
           )}
 
-          <CourseList state={list} />
+          <CourseList state={list} onRetry={retryList} />
         </section>
       </main>
     </div>
   );
 }
 
-function CourseList({ state }: { state: ListState }) {
+function CourseList({ state, onRetry }: { state: ListState; onRetry: () => void }) {
   if (state.status === 'loading') {
     return (
       <p className="muted" role="status">
@@ -122,9 +147,19 @@ function CourseList({ state }: { state: ListState }) {
   }
   if (state.status === 'failed') {
     return (
-      <p role="alert" className="banner error">
-        {state.message}
-      </p>
+      <>
+        <p role="alert" className="banner error">
+          {state.message}
+        </p>
+        <button
+          type="button"
+          className="button"
+          aria-label="Try again: load your courses"
+          onClick={onRetry}
+        >
+          Try again
+        </button>
+      </>
     );
   }
   if (state.courses.length === 0) {

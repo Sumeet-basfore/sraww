@@ -136,7 +136,7 @@
 
 .source-host {
   margin-left: 8px;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   font-family: var(--font-mono);
   font-size: 12px;
 }
@@ -186,7 +186,7 @@
 }
 
 .course-list time {
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   font-family: var(--font-mono);
   font-size: 12px;
 }
@@ -251,9 +251,16 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   font-family: var(--font-mono);
   font-size: 12px;
+}
+
+.course-topic-note {
+  margin: 2px 0 18px;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .course-topic-tag {

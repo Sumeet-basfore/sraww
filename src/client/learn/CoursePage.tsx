@@ -24,8 +24,9 @@ interface CoursePageProps {
  */
 export function CoursePage({ id, onShowTour }: CoursePageProps) {
   const [load, setLoad] = useState<LoadState>({ status: 'loading' });
+  const [attempt, setAttempt] = useState(0);
   const [opening, setOpening] = useState<string | null>(null);
-  const [openError, setOpenError] = useState<string | null>(null);
+  const [openError, setOpenError] = useState<OpenError | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,7 +43,13 @@ export function CoursePage({ id, onShowTour }: CoursePageProps) {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, attempt]);
+
+  function retryLoad(): void {
+    setLoad({ status: 'loading' });
+    setAttempt((count) => count + 1);
+    document.getElementById('course-title')?.focus();
+  }
 
   async function openTopic(topicId: string): Promise<void> {
     setOpening(topicId);
@@ -53,7 +60,7 @@ export function CoursePage({ id, onShowTour }: CoursePageProps) {
       window.location.hash = lessonHash(lesson.id);
     } catch (err) {
       setOpening(null);
-      setOpenError(errorMessage(err));
+      setOpenError({ topicId, message: errorMessage(err) });
     }
   }
 
@@ -73,24 +80,38 @@ export function CoursePage({ id, onShowTour }: CoursePageProps) {
             <a className="lesson-back" href={learnHash()}>
               ← Learn
             </a>
-            <h1 id="course-title">{title}</h1>
+            <h1 id="course-title" tabIndex={-1}>
+              {title}
+            </h1>
           </div>
 
-          <CourseBody load={load} opening={opening} openError={openError} onOpen={openTopic} />
+          <CourseBody
+            load={load}
+            opening={opening}
+            openError={openError}
+            onOpen={openTopic}
+            onRetry={retryLoad}
+          />
         </section>
       </main>
     </div>
   );
 }
 
+interface OpenError {
+  topicId: string;
+  message: string;
+}
+
 interface CourseBodyProps {
   load: LoadState;
   opening: string | null;
-  openError: string | null;
+  openError: OpenError | null;
   onOpen: (topicId: string) => void;
+  onRetry: () => void;
 }
 
-function CourseBody({ load, opening, openError, onOpen }: CourseBodyProps) {
+function CourseBody({ load, opening, openError, onOpen, onRetry }: CourseBodyProps) {
   if (load.status === 'loading') {
     return (
       <p className="muted" role="status">
@@ -107,23 +128,33 @@ function CourseBody({ load, opening, openError, onOpen }: CourseBodyProps) {
   }
   if (load.status === 'failed') {
     return (
-      <p role="alert" className="banner error">
-        {load.message}
-      </p>
+      <>
+        <p role="alert" className="banner error">
+          {load.message}
+        </p>
+        <button
+          type="button"
+          className="button"
+          aria-label="Try again: load this course"
+          onClick={onRetry}
+        >
+          Try again
+        </button>
+      </>
     );
   }
 
   const { course, builtLessons } = load.detail;
   const lastOpenedId = course.progress.topicId;
-  const continueTopic = course.modules
-    .flatMap((module) => module.topics)
-    .find((topic) => topic.id === lastOpenedId);
+  const topics = course.modules.flatMap((module) => module.topics);
+  const continueTopic = topics.find((topic) => topic.id === lastOpenedId);
+  const anyUnbuilt = topics.some((topic) => !builtLessons[topic.id]);
 
   return (
     <>
       {openError && (
         <p role="alert" className="banner error">
-          {openError}
+          {openError.message}
         </p>
       )}
       {continueTopic && (
@@ -136,11 +167,17 @@ function CourseBody({ load, opening, openError, onOpen }: CourseBodyProps) {
           Continue
         </button>
       )}
+      {anyUnbuilt && (
+        <p className="course-topic-note">
+          Building a lesson uses web research, which can take longer.
+        </p>
+      )}
       <CourseOutline
         modules={course.modules}
         builtLessons={builtLessons}
         lastOpenedId={lastOpenedId}
         opening={opening}
+        failedId={openError?.topicId ?? null}
         onOpen={onOpen}
       />
     </>

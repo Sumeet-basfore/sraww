@@ -39,6 +39,8 @@ Relative paths such as `./data/diagrams` are relative to the folder you start sr
 
 Lessons, when you create them, are saved as one JSON file each under `DIAGRAMS_DIR/lessons`. A lesson holds the topic you asked for, its title, explanation, key terms, diagram and the source addresses it cites. A lesson opened from a course holds the course title and topic title in place of the topic you asked for, and the ids of its course and topic. To delete one, delete its file from that folder. The Learn tab has no delete button for this yet.
 
+Playing a lesson's build-up runs in your browser and sends nothing. The drawing is read-only and is not saved, and the build-up's position is not kept between visits.
+
 Courses and their progress are saved as one JSON file each under `DIAGRAMS_DIR/courses`. A course holds the topic you asked for, its title, its modules and topics with their summaries, and the topic you opened last. To delete one, delete its file from that folder. The Learn tab has no delete button for this yet.
 
 The drawings, architecture maps, lessons, courses, AI settings and working folder are plain files on your machine. sraww does not upload them anywhere.
@@ -83,7 +85,7 @@ Lessons are the only feature where an AI tool reads web pages. After a lesson is
 - sraww reads only the status code and content type of the answer. It does not keep the page.
 - A source that fails the check is dropped from the lesson. The reply to the request says how many were dropped. The saved lesson does not keep that count.
 
-These requests are the only ones the sraww server makes to other websites. They do not pass through your browser, so the browser's network panel will not show them. The code is in `src/server/learn/sources.ts`.
+Apart from the GitHub import below, these requests are the only ones the sraww server makes to other websites. They do not pass through your browser, so the browser's network panel will not show them. The code is in `src/server/learn/sources.ts`.
 
 ## Code upload
 
