@@ -27,12 +27,22 @@ function topLeft(boxes: Iterable<Box>): { x: number; y: number } {
   return { x: Number.isFinite(x) ? x : 0, y: Number.isFinite(y) ? y : 0 };
 }
 
+/** The origin the title hangs from: the top-left of the whole layout, boxes and frames alike. */
+export function originOf(layout: Layout): { x: number; y: number } {
+  return topLeft([...layout.boxes.values(), ...layout.frames.values()]);
+}
+
 /**
  * Turns a laid-out graph into Excalidraw skeletons: group frames first (so they sit behind their
  * shapes), then the shapes with their labels, then the arrows. Arrows are bound to shapes by id, so
- * they follow when the user moves a box.
+ * they follow when the user moves a box. The title sits above `origin`, which defaults to the
+ * layout's own top-left; a caller drawing a part of a layout passes the full layout's origin.
  */
-export function graphToSkeleton(graph: DiagramGraph, layout: Layout): ExcalidrawElementSkeleton[] {
+export function graphToSkeleton(
+  graph: DiagramGraph,
+  layout: Layout,
+  origin: { x: number; y: number } = originOf(layout),
+): ExcalidrawElementSkeleton[] {
   const frames = [...layout.frames].flatMap(([name, box]): ExcalidrawElementSkeleton[] => [
     {
       type: 'rectangle',
@@ -138,16 +148,13 @@ export function graphToSkeleton(graph: DiagramGraph, layout: Layout): Excalidraw
 
   const title = graph.title
     ? [
-        (() => {
-          const origin = topLeft([...layout.boxes.values(), ...layout.frames.values()]);
-          return {
-            type: 'text',
-            x: origin.x,
-            y: origin.y - TITLE_GAP,
-            text: graph.title,
-            fontSize: TITLE_FONT_SIZE,
-          } as ExcalidrawElementSkeleton;
-        })(),
+        {
+          type: 'text',
+          x: origin.x,
+          y: origin.y - TITLE_GAP,
+          text: graph.title,
+          fontSize: TITLE_FONT_SIZE,
+        } as ExcalidrawElementSkeleton,
       ]
     : [];
 

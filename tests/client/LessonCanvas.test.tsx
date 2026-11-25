@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LessonReply } from '../../src/shared/learn.ts';
 import { layoutGraph, type Layout } from '../../src/client/ai/layout.ts';
@@ -81,5 +81,25 @@ describe('LessonCanvas', () => {
       vi.advanceTimersByTime(300);
     });
     expect(scrollToContent).not.toHaveBeenCalled();
+  });
+
+  it('draws one more step on Next, and Skip to end draws the whole lesson', async () => {
+    vi.mocked(layoutGraph).mockResolvedValue(LAYOUT);
+    render(<LessonCanvas diagram={DIAGRAM} />);
+    await waitFor(() => expect(screen.getByTestId('excalidraw-canvas')).toBeInTheDocument());
+    const updateScene = vi.fn<(scene: { elements: unknown[] }) => void>();
+    act(() => canvasProps.current?.excalidrawAPI?.({ scrollToContent: vi.fn(), updateScene }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pause' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(updateScene).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Skip to end' }));
+    expect(updateScene).toHaveBeenCalledTimes(2);
+    const [partial = 0, whole = 0] = updateScene.mock.calls.map(([scene]) => scene.elements.length);
+
+    expect(partial).toBeGreaterThan(0);
+    expect(partial).toBeLessThan(whole);
+    expect(screen.getByText('Step 2 of 2')).toBeInTheDocument();
   });
 });
