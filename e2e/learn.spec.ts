@@ -181,8 +181,8 @@ test('the build-up plays in steps, pauses, resumes, and its controls work at any
   await page.route(`**/api/learn/lessons/${lesson.id}`, (route) => route.fulfill(json({ lesson })));
 
   await page.goto(`/#/learn/${lesson.id}`);
-  await expect(page.getByText('Step 0 of 2', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  await expect(page.getByText('Step 0 of 2', { exact: true })).toBeVisible();
 
   await page.getByRole('button', { name: 'Next', exact: true }).click();
   await expect(page.getByText('Step 1 of 2', { exact: true })).toBeVisible();
@@ -194,8 +194,8 @@ test('the build-up plays in steps, pauses, resumes, and its controls work at any
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
 
   await page.getByRole('button', { name: 'Replay', exact: true }).click();
-  await page.getByRole('button', { name: 'Pause', exact: true }).click();
   await expect(page.getByText('Step 0 of 2', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
 
   await page.getByRole('button', { name: 'Skip to end', exact: true }).click();
   await expect(page.getByText('Step 2 of 2', { exact: true })).toBeVisible();

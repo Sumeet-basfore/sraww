@@ -55,9 +55,11 @@ describe('BuildControls labels and order', () => {
     expect(names).toEqual(['Replay', 'Back', 'Pause', 'Next', 'Skip to end']);
   });
 
-  it('announces the step politely as it changes', () => {
+  it('stays silent while the build plays and announces the step once paused', () => {
     render(<Harness />);
     const step = screen.getByText('Step 0 of 3');
+    expect(step).toHaveAttribute('aria-live', 'off');
+    fireEvent.click(button('Pause'));
     expect(step).toHaveAttribute('aria-live', 'polite');
   });
 
@@ -112,23 +114,20 @@ describe('BuildControls stepping', () => {
 });
 
 describe('BuildControls arrow keys', () => {
-  it('steps forward on Right and back on Left', () => {
+  it('steps forward on Right and back on Left while focus is on the controls', () => {
     render(<Harness />);
-    fireEvent.keyDown(window, { key: 'ArrowRight' });
-    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    fireEvent.click(button('Pause'));
+    fireEvent.keyDown(button('Next'), { key: 'ArrowRight' });
+    fireEvent.keyDown(button('Next'), { key: 'ArrowRight' });
     expect(screen.getByText('Step 2 of 3')).toBeInTheDocument();
-    fireEvent.keyDown(window, { key: 'ArrowLeft' });
+    fireEvent.keyDown(button('Back'), { key: 'ArrowLeft' });
     expect(screen.getByText('Step 1 of 3')).toBeInTheDocument();
   });
 
-  it('ignores arrow keys typed into a field', () => {
+  it('ignores arrow keys pressed outside the controls, such as page scrolling', () => {
     render(<Harness />);
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
     fireEvent.keyDown(screen.getByRole('textbox', { name: 'Notes' }), { key: 'ArrowRight' });
-    expect(screen.getByText('Step 0 of 3')).toBeInTheDocument();
-  });
-
-  it('ignores arrow keys aimed inside the canvas', () => {
-    render(<Harness />);
     fireEvent.keyDown(screen.getByRole('button', { name: 'Inside the canvas' }), {
       key: 'ArrowRight',
     });
@@ -137,7 +136,7 @@ describe('BuildControls arrow keys', () => {
 
   it('ignores arrow keys pressed with a modifier, which belong to the browser', () => {
     render(<Harness />);
-    fireEvent.keyDown(window, { key: 'ArrowLeft', altKey: true });
+    fireEvent.keyDown(button('Next'), { key: 'ArrowLeft', altKey: true });
     expect(screen.getByText('Step 0 of 3')).toBeInTheDocument();
   });
 });

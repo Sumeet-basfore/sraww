@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import type { KeyboardEvent } from 'react';
 import type { PlaybackAction } from './playback.ts';
 
 interface BuildControlsProps {
@@ -9,17 +9,10 @@ interface BuildControlsProps {
   dispatch: (action: PlaybackAction) => void;
 }
 
-const TYPING_TAGS = ['INPUT', 'TEXTAREA', 'SELECT'];
-
-/** Keys typed into a field, or aimed at the canvas, are not steps. */
-function isTyping(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  return (
-    target.isContentEditable ||
-    TYPING_TAGS.includes(target.tagName) ||
-    !!target.closest('.excalidraw')
-  );
-}
+const STEP_KEYS: Record<string, PlaybackAction['type']> = {
+  ArrowRight: 'next',
+  ArrowLeft: 'back',
+};
 
 /** The toolbar under the lesson canvas: Replay, Back, Play or Pause, Next, Skip to end. */
 export function BuildControls({
@@ -29,20 +22,23 @@ export function BuildControls({
   reducedMotion,
   dispatch,
 }: BuildControlsProps) {
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent): void {
-      if (event.altKey || event.ctrlKey || event.metaKey || isTyping(event.target)) return;
-      if (event.key === 'ArrowRight') dispatch({ type: 'next' });
-      if (event.key === 'ArrowLeft') dispatch({ type: 'back' });
-    }
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [dispatch]);
+  // Arrow keys step only while focus is on these controls, so page scrolling is left alone.
+  function onKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
+    const type = STEP_KEYS[event.key];
+    if (!type || event.altKey || event.ctrlKey || event.metaKey) return;
+    event.preventDefault();
+    dispatch({ type });
+  }
 
   const atStart = shown === 0;
   const atEnd = shown === total;
   return (
-    <div className="build-controls" role="group" aria-label="Build-up controls">
+    <div
+      className="build-controls"
+      role="group"
+      aria-label="Build-up controls"
+      onKeyDown={onKeyDown}
+    >
       <button type="button" className="button" onClick={() => dispatch({ type: 'replay' })}>
         Replay
       </button>
@@ -78,7 +74,8 @@ export function BuildControls({
       >
         Skip to end
       </button>
-      <p className="build-step" aria-live="polite">
+      {/* Silent while playing, so the screen reader is not told every step; announced when paused. */}
+      <p className="build-step" aria-live={playing ? 'off' : 'polite'}>
         {`Step ${shown} of ${total}`}
       </p>
     </div>

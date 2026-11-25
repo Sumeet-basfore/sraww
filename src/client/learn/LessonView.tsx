@@ -114,7 +114,7 @@ function LessonBody({ load }: { load: LoadState }) {
             </p>
           }
         >
-          <LessonCanvas diagram={load.lesson.diagram} />
+          <LessonCanvas key={load.lesson.id} diagram={load.lesson.diagram} />
         </Suspense>
       </div>
       <LessonPanel lesson={load.lesson} />
