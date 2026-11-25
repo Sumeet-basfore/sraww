@@ -19,7 +19,7 @@ Storage stays under `DIAGRAMS_DIR`.
 **Tech stack:** TypeScript, Express 5, Zod 4, React 19, Excalidraw 0.18.0, ELK (existing), Vitest,
 Playwright. No new runtime dependencies are planned.
 
-**Effort (estimate):** about 18 working days for phases 0–4 (the MVP). Phase 5 shipped optional quizzes. Phase 6 raises local course capacity.
+**Effort (estimate):** about 18 working days for phases 0–4 (the MVP). Phase 5 shipped optional quizzes. Phase 6 merged larger local courses.
 Phase 7 remains future work.
 
 **Research basis:** read 2026-11-24. Diagram tools are common, but none combines AI course generation,
@@ -248,6 +248,8 @@ Input: a graph (nodes, edges, groups). Output: an ordered list of steps, each on
 
 An outline can contain 12 modules and 24 topics, with at most 12 topics per module.
 Generated and saved courses use these limits. Monthly quotas belong to the future hosted plan.
+
+- **Status:** merged in PR #19; focused server, client and e2e checks and the load gate verify it.
 
 **Full course used for the browser check.** The Learn tab displays this HTTP caching course in module order.
 

@@ -55,7 +55,7 @@ The server binds to `127.0.0.1` only. It rejects requests whose Host or Origin h
 | Shape library                                          | Done                                                 | [03-features.md](03-features.md#shape-library)               |
 | Tour                                                   | Done                                                 | [03-features.md](03-features.md#tour)                        |
 | Learn: courses, lessons, sources, build-up, retry      | Phases 0 to 4 done                                   | [04-learn-feature.md](04-learn-feature.md)                   |
-| Learn: quizzes and bigger local courses                | Phase 5 merged; Phase 6 in review                    | [07-open-items-and-roadmap.md](07-open-items-and-roadmap.md) |
+| Learn: quizzes and bigger local courses                | Phases 5 and 6 merged                                | [07-open-items-and-roadmap.md](07-open-items-and-roadmap.md) |
 | Hosted subscription                                    | Future track, blocked on provider approval (phase 7) | [07-open-items-and-roadmap.md](07-open-items-and-roadmap.md) |
 
 ## Vocabulary
