@@ -174,3 +174,30 @@ test('the lesson page stacks the drawing above the explanation and fits a phone'
   expect(canvas!.y + canvas!.height).toBeLessThanOrEqual(explanation!.y);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
+
+test('the build-up plays in steps, pauses, resumes, and its controls work at any point', async ({
+  page,
+}) => {
+  await page.route(`**/api/learn/lessons/${lesson.id}`, (route) => route.fulfill(json({ lesson })));
+
+  await page.goto(`/#/learn/${lesson.id}`);
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  await expect(page.getByText('Step 0 of 2', { exact: true })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(page.getByText('Step 1 of 2', { exact: true })).toBeVisible();
+  await page.waitForTimeout(2_200);
+  await expect(page.getByText('Step 1 of 2', { exact: true })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect(page.getByText('Step 2 of 2', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Replay', exact: true }).click();
+  await expect(page.getByText('Step 0 of 2', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+
+  await page.getByRole('button', { name: 'Skip to end', exact: true }).click();
+  await expect(page.getByText('Step 2 of 2', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeDisabled();
+});

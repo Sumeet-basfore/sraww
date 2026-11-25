@@ -150,25 +150,30 @@ All AI output is validated against the schemas and capped in size. The topic is 
 
 - `src/client/learn/LearnPage.tsx` — topic entry, outline, course list.
 - `src/client/learn/LessonView.tsx` — read-only canvas plus the explanation and sources panel.
-- `src/client/learn/playback.ts` — the step planner and playback controller (pure functions where possible).
-- `src/client/learn/LessonControls.tsx` — Replay, Pause/Play, Skip to end, Next, progress.
+- `src/client/learn/build-steps.ts` — the step planner (pure): ordered steps and the visible part of a graph.
+- `src/client/learn/playback.ts` — the playback state machine (pure reducer).
+- `src/client/learn/usePlayback.ts` — the timer that drives the reducer.
+- `src/client/learn/lesson-scene.ts` — turns the visible part of a graph into Excalidraw elements.
+- `src/client/learn/BuildControls.tsx` — Replay, Back, Pause/Play, Next, Skip to end, step count, arrow keys.
 
 ### Step planner (the new core)
 
-Input: a laid-out graph (node positions and sizes from ELK, arrow endpoints). Output: an ordered list of
-steps, each a small batch of scene elements.
+Input: a graph (nodes, edges, groups). Output: an ordered list of steps, each one node.
 
-- Order: group frames first, then nodes in layout order (top to bottom, then left to right), then each arrow
-  after both endpoints, then labels.
-- Batch size: at most 3 elements per step.
-- Timing: 700 ms per step by default. Pause stops the timer. Skip to end writes everything at once.
-- Deterministic for the same graph, so it can be unit-tested without a browser.
+- Order: nodes in topological order (ties go to the earlier declaration; a cycle takes its earliest
+  unplaced node). A group's frame appears with its first node, before that node is drawn. Each arrow appears
+  once both of its ends are shown.
+- Batch size: one node per step by default (`nodesPerStep` can raise it).
+- Deterministic for the same graph, so it is unit-tested without a browser.
 
 ### Playback engine
 
-- Holds the step list and an index. Writes each batch into the Excalidraw scene with `updateScene`, using
-  the same capture approach as the architecture view. Playback never changes the stored lesson.
-- Pause and Replay reset the scene and replay from step 0. Skip to end writes the full scene.
+- State is the number of steps shown and whether playback is running. Each step writes the whole visible
+  scene with `updateScene`, so the scene is always a pure function of the step count.
+- Timing: 1200 ms per step. Pause stops the timer. Next works at any point. Skip to end shows everything.
+- Replay returns to step 0 and plays again. Playback never changes the stored lesson.
+- With reduced motion on, the build-up is skipped and the full diagram appears; Play is disabled and
+  Next and Back still step through it.
 - With reduced motion on, the build-up is skipped and the full diagram appears.
 
 ---
@@ -253,7 +258,7 @@ steps, each a small batch of scene elements.
 | Web tools widen what the CLI can reach     | Allowlist search and fetch only; no shell or file tools; empty working folder; tested in Phase 1.            |
 | Fetched pages carry hidden instructions    | Page text is quoted as data; output must match the schema; the model has no action tools.                    |
 | Highest effort is slow and uses more usage | Time estimate before building; the user can lower effort on the AI tools page.                               |
-| Build-up feels slow on long lessons        | Batches of up to 3 elements; Skip to end; 700 ms default.                                                    |
+| Build-up feels slow on long lessons        | Lessons cap at 14 nodes; Skip to end; 1200 ms per step.                                                      |
 | Scope creep into a full learning platform  | MVP is one course at a time, no accounts, no grading; quizzes and plans come later.                          |
 | The hosted plan is started before approval | Phase 7 is blocked on written provider approval; nothing in the MVP stores keys or user content on a server. |
 

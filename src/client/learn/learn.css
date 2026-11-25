@@ -57,6 +57,21 @@
   padding: 24px;
 }
 
+.build-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.build-step {
+  margin: 0 0 0 auto;
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
 .lesson-panel {
   display: grid;
   gap: 16px;
