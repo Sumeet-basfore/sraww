@@ -82,11 +82,16 @@ describe('learnApi courses', () => {
 
   it('reads one course with its built lessons, encoding the id', async () => {
     fetchMock.mockResolvedValueOnce(
-      jsonResponse(200, { course: { id: 'c/1' }, builtLessons: { t1: 'l1' } }),
+      jsonResponse(200, {
+        course: { id: 'c/1' },
+        builtLessons: { t1: 'l1' },
+        quizResults: {},
+      }),
     );
     await expect(learnApi.course('c/1')).resolves.toEqual({
       course: { id: 'c/1' },
       builtLessons: { t1: 'l1' },
+      quizResults: {},
     });
     expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/learn/courses/c%2F1');
   });
@@ -119,6 +124,27 @@ describe('learnApi courses', () => {
     await expect(learnApi.course('missing')).rejects.toMatchObject({
       status: 404,
       message: 'That course does not exist.',
+    });
+  });
+
+  it('requests module practice with a POST that encodes both ids', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { quiz: { moduleId: 'm 1' } }));
+    await expect(learnApi.practiceModule('c/1', 'm 1')).resolves.toEqual({
+      quiz: { moduleId: 'm 1' },
+    });
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/learn/courses/c%2F1/modules/m%201/quiz');
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ method: 'POST' });
+  });
+
+  it('saves only the attempt id and self-rated count', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { quiz: { moduleId: 'm1' } }));
+    await expect(learnApi.saveQuizResult('c1', 'm1', 'attempt-1', 2)).resolves.toEqual({
+      quiz: { moduleId: 'm1' },
+    });
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/learn/courses/c1/modules/m1/quiz/results');
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+      method: 'PUT',
+      body: '{"attemptId":"attempt-1","selfRatedCount":2}',
     });
   });
 });

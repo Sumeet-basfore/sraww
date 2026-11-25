@@ -4,13 +4,13 @@ This file lists what is not done, in four groups: planned work, blocked work, fo
 
 ## Planned work
 
-### Learn phase 5: quizzes (future)
+### Learn phase 5: optional module quizzes (implemented)
 
-From the Learn plan. A quiz per module, generated only when the learner asks. Retrieval-style questions after a step. Results stay on the machine. Never required to move on. Owner note: quizzes "can be kept for future updates", so this is not urgent.
+Implemented on `feat/learn-module-quizzes`. A completed module offers up to five short-answer questions. The learner reveals a sample answer and self-rates; aggregate attempts, best and last counts plus up to 256 recent opaque attempt ids for retry deduplication are stored locally. An older delayed retry is treated as new. Typed answers are never sent or saved. The action is optional and does not gate navigation or progress. Codex is refused because its command tool cannot be guaranteed off.
 
-### Learn phase 6: bigger courses and plan limits (future)
+### Learn phase 6: bigger local courses (future)
 
-More modules and topics per course, and per-plan limits (for example topics or courses per month). Limits depend on the owner's product choices and on what a paid plan covers. Current limits are 8 modules and 12 topics (`LEARN_LIMITS`).
+After Phase 5 merges, raise local course limits from 8 modules and 12 topics to 12 modules and 24 topics total, keeping the 12-topic per-module cap. No hosted quotas: the app has no account or paid-plan identity. Follow the performance gate in the Learn plan before changing these limits.
 
 ### Learn: delete a course or lesson
 

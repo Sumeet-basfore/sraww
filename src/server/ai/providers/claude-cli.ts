@@ -63,9 +63,10 @@ export function createClaudeProvider(options: ClaudeCliOptions): AiProvider {
   ): Promise<unknown> {
     await mkdir(options.workdir, { recursive: true });
     // Without web search, no built-in tools are offered at all.
-    const toolArgs = callOptions?.webSearch
-      ? ['--tools', WEB_TOOLS, '--allowedTools', WEB_TOOLS]
-      : ['--tools', ''];
+    const toolArgs =
+      callOptions?.disableTools || !callOptions?.webSearch
+        ? ['--tools', '']
+        : ['--tools', WEB_TOOLS, '--allowedTools', WEB_TOOLS];
     const args = [
       '-p',
       '--output-format',

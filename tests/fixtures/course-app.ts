@@ -5,6 +5,7 @@ import type { AiProvider } from '../../src/server/ai/provider.ts';
 import type { SourceCheckDeps } from '../../src/server/learn/sources.ts';
 import { createCourseRouter } from '../../src/server/routes/learn-courses.ts';
 import { createCourseStore } from '../../src/server/storage/course-store.ts';
+import { createCourseQuizStore } from '../../src/server/storage/course-quiz-store.ts';
 import { createLessonStore } from '../../src/server/storage/lesson-store.ts';
 import { testServices } from './ai-services.ts';
 
@@ -72,6 +73,7 @@ export function courseApp(
     createCourseRouter(
       createCourseStore(dir),
       createLessonStore(dir),
+      createCourseQuizStore(dir),
       testServices({ claude: provider, codex: provider }),
       checks,
       () => new Date(NOW),

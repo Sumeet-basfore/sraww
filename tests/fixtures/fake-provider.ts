@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 import type { AiProvider, GenerateOptions, ProviderHealth } from '../../src/server/ai/provider.ts';
-import { outlineReplySchema } from '../../src/shared/learn.ts';
+import { moduleQuizReplySchema, outlineReplySchema } from '../../src/shared/learn.ts';
 
 export interface GenerateCall {
   prompt: string;
@@ -10,8 +10,11 @@ export interface GenerateCall {
 export interface FakeReplies {
   outline?: unknown;
   lesson?: unknown;
+  quiz?: unknown;
   /** Delays only the lesson answer, so tests can make two requests overlap. */
   lessonDelayMs?: number;
+  /** Delays only quiz generation, so tests can verify concurrent requests share one call. */
+  quizDelayMs?: number;
 }
 
 /**
@@ -34,10 +37,14 @@ export function fakeProvider(replies: FakeReplies, calls: GenerateCall[] = []): 
     ): Promise<T> => {
       calls.push({ prompt, options });
       const isOutline = (schema as unknown) === outlineReplySchema;
-      if (!isOutline && replies.lessonDelayMs) {
+      const isQuiz = (schema as unknown) === moduleQuizReplySchema;
+      if (isQuiz && replies.quizDelayMs) {
+        await new Promise((resolve) => setTimeout(resolve, replies.quizDelayMs));
+      } else if (!isOutline && !isQuiz && replies.lessonDelayMs) {
         await new Promise((resolve) => setTimeout(resolve, replies.lessonDelayMs));
       }
-      return schema.parse(isOutline ? replies.outline : replies.lesson);
+      const reply = isOutline ? replies.outline : isQuiz ? replies.quiz : replies.lesson;
+      return schema.parse(reply);
     },
   };
 }

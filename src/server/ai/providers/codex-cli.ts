@@ -108,6 +108,14 @@ export function createCodexProvider(options: CodexCliOptions): AiProvider {
     id: 'codex',
     health: withHealthCache(health),
     generate<T>(prompt: string, schema: z.ZodType<T>, callOptions?: GenerateOptions): Promise<T> {
+      if (callOptions?.disableTools) {
+        return Promise.reject(
+          new AiError(
+            'FAILED',
+            'This request needs all tools disabled, but Codex keeps its command tool available.',
+          ),
+        );
+      }
       // Codex cannot be limited to search alone: its shell tool stays available inside the
       // read-only sandbox, and the flags we tested do not remove it. A web-enabled call would let
       // a steered page make Codex read local files, so it is refused until that changes.

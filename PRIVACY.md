@@ -1,6 +1,6 @@
 # Privacy policy
 
-Last updated: 2026-11-24
+Last updated: 2026-11-25
 
 ## The short version
 
@@ -43,7 +43,9 @@ Playing a lesson's build-up runs in your browser and sends nothing. The drawing 
 
 Courses and their progress are saved as one JSON file each under `DIAGRAMS_DIR/courses`. A course holds the topic you asked for, its title, its modules and topics with their summaries, and the topic you opened last. To delete one, delete its file from that folder. The Learn tab has no delete button for this yet.
 
-The drawings, architecture maps, lessons, courses, AI settings and working folder are plain files on your machine. sraww does not upload them anywhere.
+Module quizzes are separate JSON sidecars under `DIAGRAMS_DIR/learn-quizzes/<courseId>/<moduleId>.json`. They hold the source topic ids, up to five questions with sample answers and explanations, aggregate self-rating counts, and up to 256 opaque ids for recent attempts so a retry cannot count the same attempt twice. A retry older than that window is treated as a new attempt. Typed answers stay in the browser while a question is open; they are not sent or saved. To delete a quiz, delete its sidecar file. The Learn tab has no delete button for quizzes.
+
+The drawings, architecture maps, lessons, courses, quizzes, AI settings and working folder are plain files on your machine. sraww does not upload them anywhere.
 
 The server writes its status messages to its console only. It does not write a log file.
 
@@ -61,19 +63,22 @@ sraww never reads, stores or transmits a password, a sign-in token or an API key
 
 Each AI action below sends only the content listed. Nothing is sent for an AI action unless you press the button or send the message.
 
-| You do this                                     | What is sent to the provider                                                                                                                                                                                           |
-| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Press **Generate diagram** (New diagram mode)   | The text you typed in the assistant's message box                                                                                                                                                                      |
-| Send a message (Edit this drawing mode)         | Your message; the last 12 messages of the chat; and a summary of the open drawing: each shape's identifier, kind and label, and each arrow's identifier, its label text, and the identifiers of the shapes it connects |
-| Press **+** to explain the selected shapes      | The same as a chat message, but the summary covers only the selected shapes and arrows, plus the identifiers of the shapes those arrows connect and their label text                                                   |
-| Press **Name with AI** on an architecture map   | For each folder: its path relative to the project root; up to 15 file base names (names only, not paths); and the other folders and npm packages it imports, with counts. File contents are never sent                 |
-| Press **Review with AI** on an architecture map | Each folder's path and label, its file count and import edges with counts, and the computed findings (finding id, kind, severity, title and folder ids). Never file contents or file names.                            |
+| You do this                                            | What is sent to the provider                                                                                                                                                                                           |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Press **Generate diagram** (New diagram mode)          | The text you typed in the assistant's message box                                                                                                                                                                      |
+| Send a message (Edit this drawing mode)                | Your message; the last 12 messages of the chat; and a summary of the open drawing: each shape's identifier, kind and label, and each arrow's identifier, its label text, and the identifiers of the shapes it connects |
+| Press **+** to explain the selected shapes             | The same as a chat message, but the summary covers only the selected shapes and arrows, plus the identifiers of the shapes those arrows connect and their label text                                                   |
+| Press **Name with AI** on an architecture map          | For each folder: its path relative to the project root; up to 15 file base names (names only, not paths); and the other folders and npm packages it imports, with counts. File contents are never sent                 |
+| Press **Review with AI** on an architecture map        | Each folder's path and label, its file count and import edges with counts, and the computed findings (finding id, kind, severity, title and folder ids). Never file contents or file names.                            |
+| Press **Practice module** on a completed course module | Course and module titles, and the built lesson titles, explanations and key terms. The call has no tools and no web search. Typed quiz answers are never sent.                                                         | To the selected CLI when it can disable all tools; Codex quiz generation is refused because it cannot guarantee that |
 
 Architecture maps are built on your computer with no AI call. The map itself never leaves your machine.
 
 **Building a course outline** (started from the Learn tab, which calls `POST /api/learn/courses`) sends the topic you enter, with fixed instructions for the outline, to the tool you chose, with no web search. The outline is written from the tool's own knowledge. With Claude Code the call offers no tools at all. With Codex the call runs in a read-only sandbox whose shell tool stays available, so Codex can still read files on this computer during the call. The answer is saved as a course (see the courses paragraph in [What is stored on your computer](#what-is-stored-on-your-computer)).
 
 **Building a lesson** (started by opening a topic on a course page, which calls `POST /api/learn/courses/:id/topics/:topicId/lesson`) sends the course title and the topic title, and asks the tool to research it on the web. For this one call, Claude Code may search the web and read pages it chooses. Those searches and page reads are made by the tool, from its own process, under the provider's terms. For Claude, the call allows only web search and page reading as tools. Codex is not used for lessons. Its shell tool cannot be switched off for a web-enabled call, and a read-only sandbox does not stop it reading files on this computer. A lesson request made while Codex is the chosen tool is refused with a message, and nothing is sent. The tool's answer is saved as a lesson (see the lessons paragraph in [What is stored on your computer](#what-is-stored-on-your-computer)). sraww then checks each source address the lesson cites, as described in [Lesson sources](#lesson-sources). A topic opened from a course page gets the same research and checks.
+
+**Building a module quiz** (started by pressing **Practice module**, which calls `POST /api/learn/courses/:id/modules/:moduleId/quiz`) sends the course and module titles plus the built lesson titles, explanations and key terms to the selected CLI. Tools and web search are disabled. Claude Code runs with `--tools ''`. Codex cannot guarantee that its command tool is disabled, so quiz generation is refused before Codex is called. Quiz questions and aggregate self-ratings are saved locally as a sidecar. When you write an answer in the browser, it stays in the page only; revealing the sample answer clears it, and it is never sent to a CLI or saved by sraww.
 
 The provider sees the content of each request. Anthropic and OpenAI handle it under their own terms, retention periods and privacy policies. Check those before you use the AI features with private material. The CLI tools may also have their own usage and telemetry settings. sraww does not change those settings. Their documentation explains them.
 

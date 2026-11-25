@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -6,6 +6,7 @@ import { createClaudeProvider } from '../../src/server/ai/providers/claude-cli.t
 import { createCodexProvider } from '../../src/server/ai/providers/codex-cli.ts';
 import { AiError } from '../../src/server/ai/ai-error.ts';
 import { diagramGraphSchema } from '../../src/shared/ai-schemas.ts';
+import { moduleQuizReplySchema } from '../../src/shared/learn.ts';
 
 const fixture = (name: string): string => path.resolve('tests/fixtures/bin', name);
 let workdir: string;
@@ -30,6 +31,19 @@ describe('claude provider', () => {
   it('returns a validated graph from the structured output', async () => {
     const graph = await claude(fixture('claude-ok')).generate('draw', diagramGraphSchema);
     expect(graph.nodes.map((n) => n.id)).toEqual(['api', 'db']);
+  });
+
+  it('turns off every Claude tool when a call requires tool-free generation', async () => {
+    await claude(fixture('claude-args')).generate('build quiz', diagramGraphSchema, {
+      disableTools: true,
+      webSearch: false,
+    });
+
+    const args = JSON.parse(await readFile(path.join(workdir, 'args.json'), 'utf8')) as string[];
+    const toolsIndex = args.indexOf('--tools');
+    expect(args[toolsIndex + 1]).toBe('');
+    expect(args).not.toContain('WebSearch');
+    expect(args).not.toContain('WebFetch');
   });
 
   it('reports the login state from `claude auth status`', async () => {
@@ -101,6 +115,16 @@ describe('codex provider', () => {
       .generate('draw', diagramGraphSchema)
       .catch((e: unknown) => e);
     expect(error).toMatchObject({ code: 'FAILED' });
+  });
+
+  it('refuses a request that requires all tools to be disabled', async () => {
+    const error = await codex(path.join(workdir, 'no-such-codex'))
+      .generate('build quiz', moduleQuizReplySchema, { disableTools: true, webSearch: false })
+      .catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(AiError);
+    expect(error).toMatchObject({ code: 'FAILED' });
+    expect((error as Error).message).toMatch(/keeps its command tool available/);
   });
 
   it('gives INVALID_OUTPUT when the output file is the wrong shape', async () => {

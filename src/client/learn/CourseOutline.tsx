@@ -1,4 +1,4 @@
-import type { Course } from '../../shared/learn.ts';
+import type { Course, ModuleQuizResultSummary } from '../../shared/learn.ts';
 
 interface CourseOutlineProps {
   modules: Course['modules'];
@@ -9,6 +9,9 @@ interface CourseOutlineProps {
   /** The topic whose last open failed, or null. Its button reads Try again. */
   failedId: string | null;
   onOpen: (topicId: string) => void;
+  quizResults: Record<string, ModuleQuizResultSummary>;
+  practicingModuleId: string | null;
+  onPractice: (moduleId: string) => void;
 }
 
 function openLabel(topicId: string, opening: string | null, failedId: string | null): string {
@@ -23,6 +26,9 @@ export function CourseOutline({
   opening,
   failedId,
   onOpen,
+  quizResults,
+  practicingModuleId,
+  onPractice,
 }: CourseOutlineProps) {
   return (
     <div className="course-outline">
@@ -51,6 +57,28 @@ export function CourseOutline({
               </li>
             ))}
           </ul>
+          {module.topics.every((topic) => Boolean(builtLessons[topic.id])) && (
+            <div className="course-practice">
+              <button
+                id={`practice-${module.id}`}
+                type="button"
+                className="button course-practice-button"
+                aria-label={`Practice module: ${module.title}`}
+                aria-busy={practicingModuleId === module.id}
+                onClick={() => onPractice(module.id)}
+              >
+                {practicingModuleId === module.id ? 'Preparing practice…' : 'Practice module'}
+              </button>
+              {quizResults[module.id]?.attempts ? (
+                <p className="course-practice-result">
+                  Best self-rating: {quizResults[module.id]?.bestSelfRated ?? 0} of{' '}
+                  {quizResults[module.id]?.questionCount ?? 0}; last{' '}
+                  {quizResults[module.id]?.lastSelfRated ?? 0} of{' '}
+                  {quizResults[module.id]?.questionCount ?? 0}
+                </p>
+              ) : null}
+            </div>
+          )}
         </section>
       ))}
     </div>

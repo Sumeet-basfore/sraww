@@ -22,6 +22,11 @@ export const LEARN_LIMITS = {
   maxModules: 8,
   maxCourseTopics: 12,
   maxModuleTopics: 12,
+  maxQuizQuestions: 5,
+  maxQuizPrompt: 500,
+  maxQuizSampleAnswer: 1200,
+  maxQuizExplanation: 1000,
+  maxQuizAttemptIds: 256,
 } as const;
 
 /** Ids name files and URL segments, so they use the same safe alphabet everywhere. */
@@ -111,3 +116,95 @@ export type CourseModule = Course['modules'][number];
 export type CourseTopic = CourseModule['topics'][number];
 
 export type CourseSummary = Pick<Course, 'id' | 'title' | 'createdAt'> & { topicCount: number };
+
+/** Text generated for one quiz question. The server assigns each saved question its id. */
+export const moduleQuizQuestionReplySchema = z.object({
+  prompt: z.string().trim().min(1).max(LEARN_LIMITS.maxQuizPrompt),
+  sampleAnswer: z.string().trim().min(1).max(LEARN_LIMITS.maxQuizSampleAnswer),
+  explanation: z.string().trim().min(1).max(LEARN_LIMITS.maxQuizExplanation),
+});
+
+/** The provider's response does not include ids or results. */
+export const moduleQuizReplySchema = z.object({
+  questions: z.array(moduleQuizQuestionReplySchema).min(1).max(LEARN_LIMITS.maxQuizQuestions),
+});
+
+const resultCountSchema = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
+
+/** A saved module quiz, kept beside but separate from the course's progress record. */
+export const moduleQuizSchema = z
+  .object({
+    courseId: idSchema,
+    moduleId: idSchema,
+    sourceTopicIds: z.array(idSchema).min(1).max(LEARN_LIMITS.maxModuleTopics),
+    createdAt: z.string().datetime(),
+    questions: z
+      .array(
+        moduleQuizQuestionReplySchema.extend({
+          id: idSchema,
+        }),
+      )
+      .min(1)
+      .max(LEARN_LIMITS.maxQuizQuestions),
+    attempts: resultCountSchema,
+    bestSelfRated: resultCountSchema,
+    lastSelfRated: resultCountSchema,
+    attemptIds: z.array(idSchema).max(LEARN_LIMITS.maxQuizAttemptIds),
+  })
+  .superRefine((quiz, context) => {
+    if (new Set(quiz.sourceTopicIds).size !== quiz.sourceTopicIds.length) {
+      context.addIssue({
+        code: 'custom',
+        path: ['sourceTopicIds'],
+        message: 'Topic ids must be unique.',
+      });
+    }
+    if (new Set(quiz.attemptIds).size !== quiz.attemptIds.length) {
+      context.addIssue({
+        code: 'custom',
+        path: ['attemptIds'],
+        message: 'Attempt ids must be unique.',
+      });
+    }
+    if (quiz.attemptIds.length !== Math.min(quiz.attempts, LEARN_LIMITS.maxQuizAttemptIds)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['attemptIds'],
+        message: 'Saved attempt ids must match the bounded retry window.',
+      });
+    }
+    for (const field of ['bestSelfRated', 'lastSelfRated'] as const) {
+      if (quiz[field] > quiz.questions.length) {
+        context.addIssue({
+          code: 'custom',
+          path: [field],
+          message: 'Self-rated counts cannot exceed the number of questions.',
+        });
+      }
+    }
+    if (quiz.bestSelfRated < quiz.lastSelfRated) {
+      context.addIssue({
+        code: 'custom',
+        path: ['bestSelfRated'],
+        message: 'Best self-rated count cannot be lower than the last count.',
+      });
+    }
+    if (quiz.attempts === 0 && (quiz.bestSelfRated !== 0 || quiz.lastSelfRated !== 0)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['attempts'],
+        message: 'A quiz without attempts cannot have saved self-ratings.',
+      });
+    }
+  });
+
+export type ModuleQuizReply = z.infer<typeof moduleQuizReplySchema>;
+export type ModuleQuizQuestion = z.infer<typeof moduleQuizSchema>['questions'][number];
+export type ModuleQuiz = z.infer<typeof moduleQuizSchema>;
+export type ModuleQuizClient = Omit<ModuleQuiz, 'attemptIds'>;
+
+/** Small result summary shown on the course outline without loading quiz questions. */
+export type ModuleQuizResultSummary = Pick<
+  ModuleQuiz,
+  'attempts' | 'bestSelfRated' | 'lastSelfRated'
+> & { questionCount: number };

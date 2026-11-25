@@ -1,10 +1,17 @@
-import type { Course, CourseSummary, Lesson } from '../../shared/learn.ts';
+import type {
+  Course,
+  CourseSummary,
+  Lesson,
+  ModuleQuizClient,
+  ModuleQuizResultSummary,
+} from '../../shared/learn.ts';
 import { request } from './api.ts';
 
 /** One course, with the id of the lesson already built for each topic that has one. */
 export interface CourseDetail {
   course: Course;
   builtLessons: Record<string, string>;
+  quizResults: Record<string, ModuleQuizResultSummary>;
 }
 
 const coursePath = (id: string): string => `/learn/courses/${encodeURIComponent(id)}`;
@@ -31,6 +38,22 @@ export const learnApi = {
     return request(`${coursePath(courseId)}/progress`, {
       method: 'PUT',
       body: JSON.stringify({ topicId }),
+    });
+  },
+  practiceModule(courseId: string, moduleId: string): Promise<{ quiz: ModuleQuizClient }> {
+    return request(`${coursePath(courseId)}/modules/${encodeURIComponent(moduleId)}/quiz`, {
+      method: 'POST',
+    });
+  },
+  saveQuizResult(
+    courseId: string,
+    moduleId: string,
+    attemptId: string,
+    selfRatedCount: number,
+  ): Promise<{ quiz: ModuleQuizClient }> {
+    return request(`${coursePath(courseId)}/modules/${encodeURIComponent(moduleId)}/quiz/results`, {
+      method: 'PUT',
+      body: JSON.stringify({ attemptId, selfRatedCount }),
     });
   },
 };

@@ -270,6 +270,135 @@
   color: var(--accent);
 }
 
+.course-practice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+
+.course-practice-result,
+.course-practice-status {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.module-quiz {
+  display: grid;
+  gap: 16px;
+  margin-top: 28px;
+  padding: clamp(18px, 4vw, 28px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sheet);
+}
+
+.module-quiz-heading-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.module-quiz-heading-row .course-section-title {
+  margin-top: 0;
+}
+
+.module-quiz-heading-row h2 {
+  margin: 6px 0 0;
+  font-size: clamp(22px, 3vw, 30px);
+  overflow-wrap: anywhere;
+}
+
+.module-quiz-history,
+.module-quiz-progress,
+.module-quiz-privacy,
+.module-quiz-explanation {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.module-quiz-progress {
+  font-family: var(--font-mono);
+}
+
+.module-quiz-question {
+  margin: 0;
+  font-size: clamp(19px, 2vw, 24px);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.module-quiz-answer,
+.module-quiz-sample,
+.module-quiz-complete {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+}
+
+.module-quiz-answer label,
+.module-quiz-sample h4,
+.module-quiz-complete h3 {
+  margin: 0;
+  font-weight: 600;
+}
+
+.module-quiz-answer textarea {
+  width: 100%;
+  min-height: 112px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.module-quiz-sample > p,
+.module-quiz-complete > p {
+  margin: 0;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.module-quiz-sample h4,
+.module-quiz-complete h3 {
+  font-size: 18px;
+}
+
+.module-quiz-ratings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.module-quiz-save-error {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+
+.module-quiz-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.module-quiz-error .banner {
+  flex-basis: 100%;
+  margin: 0;
+}
+
 @media (max-width: 760px) {
   .lesson-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -278,5 +407,9 @@
   .lesson-canvas {
     height: 360px;
     min-height: 0;
+  }
+
+  .module-quiz-heading-row {
+    align-items: start;
   }
 }

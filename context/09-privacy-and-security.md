@@ -7,7 +7,7 @@ The public policy is `PRIVACY.md` at the repo root. The app serves it at `/PRIVA
 1. **Local only.** The server listens on `127.0.0.1`. The local-only guard checks the Host and Origin headers on every request (`src/server/guard.ts`).
 2. **No API keys, no accounts, no provider SDKs.** AI runs only through the owner's logged-in `claude` and `codex` CLIs. Never add an API key variable or an SDK that calls a model directly.
 3. **The CLIs run in a bare environment.** Only `PATH` and `HOME` are passed, and the working folder is the empty `AI_WORKDIR`, so a CLI cannot read the owner's projects by default.
-4. **Least tools per call.** Outline and most calls get no tools (`--tools ''` for Claude). The one web-enabled call (a lesson) gets only `WebSearch` and `WebFetch`. Codex cannot be limited this way, so it refuses web-enabled calls.
+4. **Least tools per call.** Outline and module quiz calls get no tools (`--tools ''` for Claude); quizzes also set web search off. The one web-enabled call (a lesson) gets only `WebSearch` and `WebFetch`. Codex cannot guarantee its command tool is disabled, so it refuses lessons and module quizzes that require restricted tools.
 5. **Model output is data.** It is validated against zod schemas, capped in size, and drawn as text. Formula SVG is sanitised. Nothing in model output is executed.
 6. **User content is quoted, not obeyed.** Prompts wrap user content in tags, and the tags are stripped from the content first, so user text cannot close them.
 7. **Ids are checked before they become file names.** A request cannot reach outside its data folder.
@@ -21,21 +21,22 @@ The public policy is `PRIVACY.md` at the repo root. The app serves it at `/PRIVA
 
 Only these. If a feature sends something new, add it here and in `PRIVACY.md`.
 
-| Trigger                                                             | What is sent                                                                                                              | Where                                                                         |
-| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Any AI generation call (assistant, outline, lesson, review, naming) | The prompt, which contains the user's chosen content for that feature                                                     | To the chosen CLI, which talks to its provider under the owner's account      |
-| Building a course outline                                           | The topic text and fixed outline instructions. No web search.                                                             | Through the CLI (Claude or Codex)                                             |
-| Building a lesson                                                   | The course title and topic title. Web research is allowed for this one call (Claude only).                                | Through Claude Code; the tool may search the web and read pages it chooses    |
-| Lesson source check                                                 | The source address and two HTTP headers (`accept`, and the library's standard headers). No topic, drawing or lesson text. | From the sraww server process, straight to the cited address                  |
-| GitHub import                                                       | The owner's chosen public repository and branch name                                                                      | To `codeload.github.com`. No token. GitHub sees the request, as any site does |
-| Architecture AI review and naming                                   | Folder names, file base names, links, findings                                                                            | Through the chosen CLI                                                        |
-| Sign-in to a CLI                                                    | Whatever the CLI's own login flow sends                                                                                   | Sent by the CLI, not by sraww's code                                          |
+| Trigger                                                             | What is sent                                                                                                                                   | Where                                                                                 |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Any AI generation call (assistant, outline, lesson, review, naming) | The prompt, which contains the user's chosen content for that feature                                                                          | To the chosen CLI, which talks to its provider under the owner's account              |
+| Building a course outline                                           | The topic text and fixed outline instructions. No web search.                                                                                  | Through the CLI (Claude or Codex)                                                     |
+| Building a lesson                                                   | The course title and topic title. Web research is allowed for this one call (Claude only).                                                     | Through Claude Code; the tool may search the web and read pages it chooses            |
+| Building a module quiz                                              | Course and module titles, plus built lesson titles, explanations and key terms. No web search; tools are disabled. Typed answers are not sent. | To the selected CLI when it can disable all tools; Codex is refused before invocation |
+| Lesson source check                                                 | The source address and two HTTP headers (`accept`, and the library's standard headers). No topic, drawing or lesson text.                      | From the sraww server process, straight to the cited address                          |
+| GitHub import                                                       | The owner's chosen public repository and branch name                                                                                           | To `codeload.github.com`. No token. GitHub sees the request, as any site does         |
+| Architecture AI review and naming                                   | Folder names, file base names, links, findings                                                                                                 | Through the chosen CLI                                                                |
+| Sign-in to a CLI                                                    | Whatever the CLI's own login flow sends                                                                                                        | Sent by the CLI, not by sraww's code                                                  |
 
 Nothing else is sent. The browser talks only to the local server.
 
 ## What is stored on the computer
 
-- Drawings, architecture models, layouts, reviews, the shape library, lessons and courses: JSON or `.excalidraw` files under `DIAGRAMS_DIR`.
+- Drawings, architecture models, layouts, reviews, the shape library, lessons, courses and module quizzes: JSON or `.excalidraw` files under `DIAGRAMS_DIR`. Quiz questions, aggregate self-ratings and up to 256 opaque attempt ids for retry safety are sidecars under `learn-quizzes`; older delayed retries are treated as new attempts. Typed answers are not stored.
 - Uploaded or imported projects: files under `PROJECTS_DIR`, with a manifest.
 - AI choices (tool, model, effort): `AI_SETTINGS_FILE`. No credentials.
 - Browser preferences (theme, drawing style): `localStorage`. The lesson build-up position is not stored.
@@ -45,7 +46,7 @@ Deleting: drawings and uploaded projects have delete actions in the app. An arch
 
 ## Known privacy caveats to keep in mind
 
-- For Codex, the shell tool stays available in a read-only sandbox, so Codex can read files on the computer during a call. `PRIVACY.md` says so. Codex is refused for lesson builds because of this.
+- For Codex, the command tool stays available in a read-only sandbox, so Codex can read files on the computer during a call. `PRIVACY.md` says so. Codex is refused for lesson builds and module quiz generation because those calls require restricted tools.
 - The lesson source checks are made by the server, not the browser. They do not appear in the browser's network panel.
 - Lesson web research is done by Claude Code's own tools. sraww does not see which pages it reads.
 - Uploaded text passed to the AI is limited to what the feature sends (see the table). A plain-text password in an uploaded file is not detected.
