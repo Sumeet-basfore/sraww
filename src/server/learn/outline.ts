@@ -31,7 +31,7 @@ export async function generateOutline(provider: AiProvider, topic: string): Prom
     if (!(error instanceof AiError) || error.code !== 'INVALID_OUTPUT') throw error;
     throw new AiError(
       'INVALID_OUTPUT',
-      `The AI could not build a usable course outline. Try a narrower topic. A course can have up to ${LEARN_LIMITS.maxModules} modules and ${LEARN_LIMITS.maxCourseTopics} topics in total.`,
+      `The AI could not build a usable course outline. Try again, or use a narrower topic. A course can have up to ${LEARN_LIMITS.maxModules} modules and ${LEARN_LIMITS.maxCourseTopics} topics in total.`,
     );
   }
 }

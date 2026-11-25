@@ -98,6 +98,14 @@ describe('generateOutline', () => {
     await expect(failure).rejects.toBeInstanceOf(AiError);
     await expect(failure).rejects.toMatchObject({ code: 'INVALID_OUTPUT' });
   });
+
+  it('asks the learner to retry when the reply is malformed, not only to narrow the topic', async () => {
+    const provider = fakeProvider({ outline: { title: 'Big course', modules: 'not a list' } });
+
+    const failure = generateOutline(provider, 'Big course');
+    await expect(failure).rejects.toBeInstanceOf(AiError);
+    await expect(failure).rejects.toThrow(/Try again/);
+  });
 });
 
 describe('buildOutlinePrompt', () => {
