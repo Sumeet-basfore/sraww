@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   checkSourceUrl,
   isPublicAddress,
+  lookupWithin,
   parseSourceUrl,
   type SourceAnswer,
   type SourceCheckDeps,
@@ -229,5 +230,19 @@ describe('checkSourceUrl', () => {
     const d = deps(() => page(200));
     expect(await checkSourceUrl('http://example.com/a', d)).toBe(false);
     expect(d.request).not.toHaveBeenCalled();
+  });
+});
+
+describe('lookupWithin', () => {
+  it('returns the addresses when the lookup answers in time', async () => {
+    await expect(lookupWithin(async () => [PUBLIC_IP], 'example.com', 50)).resolves.toEqual([
+      PUBLIC_IP,
+    ]);
+  });
+
+  it('stops waiting when the lookup never answers, so a build cannot hold its topic forever', async () => {
+    const stalled = () => new Promise<string[]>(() => undefined);
+
+    await expect(lookupWithin(stalled, 'example.com', 10)).rejects.toThrow('timed out');
   });
 });

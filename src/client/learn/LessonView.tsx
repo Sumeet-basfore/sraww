@@ -28,6 +28,7 @@ interface LessonViewProps {
 /** One saved lesson: the diagram on the left, the explanation, terms and sources on the right. */
 export function LessonView({ id, onShowTour }: LessonViewProps) {
   const [load, setLoad] = useState<LoadState>({ status: 'loading' });
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -44,7 +45,13 @@ export function LessonView({ id, onShowTour }: LessonViewProps) {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, attempt]);
+
+  function retryLoad(): void {
+    setLoad({ status: 'loading' });
+    setAttempt((count) => count + 1);
+    document.getElementById('lesson-title')?.focus();
+  }
 
   const title = load.status === 'ready' ? load.lesson.title : 'Lesson';
   const back = backLinkOf(load);
@@ -63,10 +70,12 @@ export function LessonView({ id, onShowTour }: LessonViewProps) {
             <a className="lesson-back" href={back.href}>
               {back.label}
             </a>
-            <h1 id="lesson-title">{title}</h1>
+            <h1 id="lesson-title" tabIndex={-1}>
+              {title}
+            </h1>
           </div>
 
-          <LessonBody load={load} />
+          <LessonBody load={load} onRetry={retryLoad} />
         </section>
       </main>
     </div>
@@ -81,7 +90,7 @@ function backLinkOf(load: LoadState): { href: string; label: string } {
   return { href: learnHash(), label: '← Learn' };
 }
 
-function LessonBody({ load }: { load: LoadState }) {
+function LessonBody({ load, onRetry }: { load: LoadState; onRetry: () => void }) {
   if (load.status === 'loading') {
     return (
       <p className="muted" role="status">
@@ -98,9 +107,19 @@ function LessonBody({ load }: { load: LoadState }) {
   }
   if (load.status === 'failed') {
     return (
-      <p role="alert" className="banner error">
-        {load.message}
-      </p>
+      <>
+        <p role="alert" className="banner error">
+          {load.message}
+        </p>
+        <button
+          type="button"
+          className="button"
+          aria-label="Try again: load this lesson"
+          onClick={onRetry}
+        >
+          Try again
+        </button>
+      </>
     );
   }
   return (

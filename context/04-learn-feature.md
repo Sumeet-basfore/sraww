@@ -76,6 +76,7 @@ All in `src/shared/learn.ts`. Diagrams reuse the app's graph schema from `src/sh
 - The server resolves the host name and requires every address to be public. Private, loopback, link-local, multicast and reserved ranges are refused, IPv4 and IPv6, including the `2001:db8::/32` documentation range and the `fe80::/10`, `fec0::/10`, `fc00::/7` and `ff00::/8` prefixes.
 - The request connects to the address that was checked (pinned through `node:https` with a lookup override), so a second DNS answer cannot redirect it (DNS rebinding).
 - Timeout 8 seconds. At most 3 redirects, and every redirect target is checked again.
+- The host-name lookup is bounded at 5 seconds, so a stalled name server cannot hold a lesson build open.
 - The response must be 200 with content type `text/html` or `text/plain`. The page body is not kept.
 - The request carries only the address and two headers: a fixed `accept` header and the HTTP library's standard headers.
 - A failed source is dropped. The reply says how many were dropped; the saved lesson does not keep that count.
@@ -91,7 +92,7 @@ Quiz generation requests for the same module share one in-flight provider call. 
 - `src/client/learn/LearnPage.tsx`: the topic form, the time note ("Building a course outline can take a minute or more. Building a lesson uses web research, which can take longer."), the course list with **Try again** on failure.
 - `src/client/learn/CoursePage.tsx` and `CourseOutline.tsx`: modules, topics, **Continue**, **Open lesson**, **Try again** per topic, **Practice module** when every lesson in a module is built, and saved result summaries after reload. A failed course load has **Try again**; focus moves to the page heading on retry.
 - `src/client/learn/ModuleQuiz.tsx`: local answer draft, sample answer reveal, self-rating, result retry and keyboard focus on the active question or saved result. The API receives only the aggregate count.
-- `src/client/learn/LessonView.tsx`: loading, ready, missing (404) and failed states. Back link goes to the course when the lesson belongs to one, otherwise to the Learn tab. The diagram is described in plain words for screen readers (`describe-diagram.ts`).
+- `src/client/learn/LessonView.tsx`: loading, ready, missing (404) and failed states. A failed load shows **Try again**, which asks the server again and moves focus to the lesson heading. Back link goes to the course when the lesson belongs to one, otherwise to the Learn tab. The diagram is described in plain words for screen readers (`describe-diagram.ts`).
 - `src/client/learn/LessonPanel.tsx`: explanation paragraphs, key terms, sources. Only `https` links are made clickable; a malformed or unsafe address is shown as plain text. Links open in a new tab with `noopener noreferrer`.
 - `src/client/learn/LessonCanvas.tsx`: a read-only Excalidraw canvas (`viewModeEnabled`), lazy-loaded. Uses the editor's menu and drawing options. Fits the full drawing to the canvas once.
 - `src/client/lib/learn-api.ts`: the calls the pages use.
@@ -114,8 +115,6 @@ Implemented in `build-steps.ts` (planner), `playback.ts` (reducer), `usePlayback
 
 - **Codex cannot build lessons or module quizzes.** Lesson calls need limited web tools; quiz calls require all tools off. Codex's command tool cannot currently be disabled for either request.
 - **Lesson build time is unmeasured.** A build can take 80 seconds or more at high effort, which is close to the 120-second `AI_TIMEOUT_MS` default. No real build has been timed.
-- **Failed lesson load on the lesson page has no retry.** Retry exists on the course page only. This was deferred in the plan.
-- **A build that never finishes blocks later opens of that topic** until the server restarts. Source checks have no lookup timeout (the DNS lookup can still hang). This predates the Learn branch.
 - **Two tabs saving progress**: the last save wins.
 - **Orphan temporary files** from a crashed write are not swept. They are unreadable, so they do not affect results.
 - **The course page scans lesson files for each topic** until it finds a match. With 24 saved lessons, median p95 was 9.914 ms on a warm memory-backed filesystem. See the [measurement and limits](../docs/plans/2026-11-24-visual-learning.md#phase-6--larger-local-courses).

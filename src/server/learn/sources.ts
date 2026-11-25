@@ -3,7 +3,7 @@ import https from 'node:https';
 import net from 'node:net';
 import { LEARN_LIMITS } from '../../shared/learn.ts';
 
-export const SOURCE_CHECK = { timeoutMs: 8_000, maxRedirects: 3 } as const;
+export const SOURCE_CHECK = { timeoutMs: 8_000, lookupTimeoutMs: 5_000, maxRedirects: 3 } as const;
 
 /** What the check needs from one answer: the status, any redirect target, and the content type. */
 export interface SourceAnswer {
@@ -57,9 +57,36 @@ function requestPinned(url: URL, address: string, timeoutMs: number): Promise<So
 }
 
 export const defaultSourceCheckDeps: SourceCheckDeps = {
-  lookup: async (hostname) => (await dnsLookup(hostname, { all: true })).map((r) => r.address),
+  lookup: (hostname) =>
+    lookupWithin(
+      async (name) => (await dnsLookup(name, { all: true })).map((r) => r.address),
+      hostname,
+    ),
   request: requestPinned,
 };
+
+/**
+ * Resolves a host name, but stops waiting after `timeoutMs`. Name servers can stall, and a stalled
+ * lookup would hold the one build slot for a topic until the server restarts.
+ */
+export async function lookupWithin(
+  lookup: (hostname: string) => Promise<string[]>,
+  hostname: string,
+  timeoutMs: number = SOURCE_CHECK.lookupTimeoutMs,
+): Promise<string[]> {
+  let timer: NodeJS.Timeout | undefined;
+  try {
+    return await Promise.race([
+      lookup(hostname),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error('The name lookup timed out.')), timeoutMs);
+        timer.unref();
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 /** Accepts only https URLs without credentials, within the length limit. */
 export function parseSourceUrl(raw: string): URL | null {
