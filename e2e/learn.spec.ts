@@ -175,6 +175,10 @@ test('the course page fits a phone without sideways scrolling', async ({ page })
     .locator('.course-topic-note')
     .first()
     .evaluate((el) => getComputedStyle(el).color);
+  const tokenValue = await page.evaluate(() =>
+    getComputedStyle(document.documentElement).getPropertyValue('--ink-soft').trim(),
+  );
+  expect(tokenValue).not.toBe('');
   const softInk = await page.evaluate(() => {
     const probe = document.createElement('span');
     probe.style.color = 'var(--ink-soft)';
@@ -213,8 +217,10 @@ async function expectControlsInside(page: Page, width: number): Promise<void> {
 
 /** The page does not scroll sideways, and every build-up control sits inside the screen. */
 async function expectFitsWidth(page: Page, width: number): Promise<void> {
-  const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
-  expect(scrollWidth).toBeLessThanOrEqual(width);
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
   await expectControlsInside(page, width);
 }
 
@@ -259,7 +265,7 @@ test('the lesson page sits the drawing beside the explanation at 1440px in light
   expect(canvas).not.toBeNull();
   expect(explanation).not.toBeNull();
   expect(canvas!.x + canvas!.width).toBeLessThanOrEqual(explanation!.x);
-  await expectControlsInside(page, 1440);
+  await expectFitsWidth(page, 1440);
 });
 
 test('the build-up plays in steps, pauses, resumes, and its controls work at any point', async ({

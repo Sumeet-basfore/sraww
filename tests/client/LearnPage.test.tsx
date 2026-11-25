@@ -155,6 +155,20 @@ describe('LearnPage', () => {
     expect(window.location.hash).toBe('');
   });
 
+  it('typing a new topic after a failed build clears the alert and restores Build course', async () => {
+    serve([], () => Promise.resolve(json(502, { error: 'The AI tool did not answer.' })));
+    render(<LearnPage onShowTour={() => undefined} />);
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText('Topic'), 'HTTP caching');
+    await user.click(screen.getByRole('button', { name: 'Build course' }));
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Topic'), 'x');
+
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Build course' })).toBeEnabled();
+  });
+
   it('Try again posts the same topic again after a failed build, and moves to the course', async () => {
     let posts = 0;
     serve([], () => {

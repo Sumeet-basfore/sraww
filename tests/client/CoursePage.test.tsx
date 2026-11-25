@@ -269,6 +269,18 @@ describe('CoursePage', () => {
     expect(await screen.findAllByText(note)).toHaveLength(1);
   });
 
+  it('shows no web research note once every topic has a lesson', async () => {
+    serve({
+      builtLessons: { 'topic-1': 'lesson-1', 'topic-2': 'lesson-2', 'topic-3': 'lesson-3' },
+    });
+    renderCourse();
+
+    expect(await screen.findByRole('heading', { name: 'HTTP caching', level: 1 })).toBeVisible();
+    expect(
+      screen.queryByText('Building a lesson uses web research, which can take longer.'),
+    ).toBeNull();
+  });
+
   it('shows that a missing course could not be found', async () => {
     serve({ load: () => Promise.resolve(json(404, { error: 'That course does not exist.' })) });
     renderCourse();

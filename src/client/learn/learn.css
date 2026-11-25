@@ -257,7 +257,7 @@
 }
 
 .course-topic-note {
-  margin: 0;
+  margin: 2px 0 18px;
   color: var(--ink-soft);
   font-size: 14px;
   line-height: 1.5;
