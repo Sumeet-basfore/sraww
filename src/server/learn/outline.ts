@@ -25,15 +25,26 @@ export function buildOutlinePrompt(topic: string): string {
 
 /** Ids come from the server only, so the model cannot choose or repeat them. */
 export async function generateOutline(provider: AiProvider, topic: string): Promise<CourseOutline> {
+  let reply: OutlineReply;
   try {
-    return withIds(await provider.generate(buildOutlinePrompt(topic), outlineReplySchema));
+    reply = await provider.generate(buildOutlinePrompt(topic), outlineReplySchema);
   } catch (error) {
     if (!(error instanceof AiError) || error.code !== 'INVALID_OUTPUT') throw error;
     throw new AiError(
       'INVALID_OUTPUT',
-      `The AI could not build a usable course outline. Try again, or use a narrower topic. A course can have up to ${LEARN_LIMITS.maxModules} modules and ${LEARN_LIMITS.maxCourseTopics} topics in total.`,
+      'The AI could not build a usable course outline. Please try again.',
     );
   }
+
+  const total = reply.modules.reduce((count, module) => count + module.topics.length, 0);
+  if (total > LEARN_LIMITS.maxCourseTopics) {
+    throw new AiError(
+      'INVALID_OUTPUT',
+      `The outline has ${total} topics. The limit is ${LEARN_LIMITS.maxCourseTopics} topics. Try a narrower topic.`,
+    );
+  }
+
+  return withIds(reply);
 }
 
 function withIds(reply: OutlineReply): CourseOutline {

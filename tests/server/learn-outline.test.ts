@@ -91,20 +91,28 @@ describe('generateOutline', () => {
     { name: '25 topics', counts: [12, 12, 1] },
     { name: '13 modules', counts: Array(13).fill(1) },
     { name: '13 topics in one module', counts: [13] },
-  ])('rejects $name as invalid output', async ({ counts }) => {
+  ])('rejects $name as invalid output', async ({ name, counts }) => {
     const provider = fakeProvider({ outline: outlineWithTopicCounts(counts) });
 
     const failure = generateOutline(provider, 'Big course');
-    await expect(failure).rejects.toBeInstanceOf(AiError);
-    await expect(failure).rejects.toMatchObject({ code: 'INVALID_OUTPUT' });
+    const error = await failure.catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(AiError);
+    expect(error).toMatchObject({ code: 'INVALID_OUTPUT' });
+    if (name === '25 topics')
+      expect(error).toMatchObject({ message: expect.stringContaining('25 topics') });
   });
 
-  it('asks the learner to retry when the reply is malformed, not only to narrow the topic', async () => {
+  it('gives a neutral retry message when the reply is malformed', async () => {
     const provider = fakeProvider({ outline: { title: 'Big course', modules: 'not a list' } });
 
     const failure = generateOutline(provider, 'Big course');
-    await expect(failure).rejects.toBeInstanceOf(AiError);
-    await expect(failure).rejects.toThrow(/Try again/);
+    const error = await failure.catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(AiError);
+    expect(error).toMatchObject({
+      code: 'INVALID_OUTPUT',
+      message: 'The AI could not build a usable course outline. Please try again.',
+    });
   });
 });
 
