@@ -78,6 +78,10 @@ export function BuildControls({
       <p className="build-step" aria-live={playing ? 'off' : 'polite'}>
         {`Step ${shown} of ${total}`}
       </p>
+      {/* Always in the page, so the message is announced when it appears, not when the region is switched on. */}
+      <p role="status" className="visually-hidden">
+        {atEnd ? 'The build is complete.' : ''}
+      </p>
     </div>
   );
 }

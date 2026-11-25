@@ -63,6 +63,14 @@ describe('BuildControls labels and order', () => {
     expect(step).toHaveAttribute('aria-live', 'polite');
   });
 
+  it('announces that the build is complete once the last step is shown', () => {
+    render(<Harness />);
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent('');
+    fireEvent.click(button('Skip to end'));
+    expect(status).toHaveTextContent('The build is complete.');
+  });
+
   it('shows Pause while the build plays and Play once it is paused', () => {
     render(<Harness />);
     expect(button('Pause')).toBeEnabled();
@@ -117,6 +125,8 @@ describe('BuildControls arrow keys', () => {
   it('steps forward on Right and back on Left while focus is on the controls', () => {
     render(<Harness />);
     fireEvent.click(button('Pause'));
+    button('Next').focus();
+    expect(button('Next')).toHaveFocus();
     fireEvent.keyDown(button('Next'), { key: 'ArrowRight' });
     fireEvent.keyDown(button('Next'), { key: 'ArrowRight' });
     expect(screen.getByText('Step 2 of 3')).toBeInTheDocument();
