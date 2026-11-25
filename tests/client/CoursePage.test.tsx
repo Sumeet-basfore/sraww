@@ -44,6 +44,10 @@ const COURSE = {
 interface ServeOptions {
   progressTopicId?: string | null;
   builtLessons?: Record<string, string>;
+  quizResults?: Record<
+    string,
+    { attempts: number; bestSelfRated: number; lastSelfRated: number; questionCount: number }
+  >;
   open?: () => Promise<Response>;
   load?: () => Promise<Response>;
 }
@@ -55,11 +59,13 @@ interface ServeOptions {
 function serve(options: ServeOptions = {}): void {
   const progressTopicId = options.progressTopicId ?? null;
   const builtLessons = options.builtLessons ?? {};
+  const quizResults = options.quizResults ?? {};
   const course = { ...COURSE, progress: { topicId: progressTopicId } };
   const open =
     options.open ??
     (() => Promise.resolve(json(201, { lesson: { id: 'lesson-1' }, skippedSources: 0 })));
-  const load = options.load ?? (() => Promise.resolve(json(200, { course, builtLessons })));
+  const load =
+    options.load ?? (() => Promise.resolve(json(200, { course, builtLessons, quizResults })));
   fetchMock.mockImplementation((url: string, init?: RequestInit) => {
     if (init?.method === 'PUT') {
       const progress = JSON.parse(String(init.body));
@@ -234,7 +240,11 @@ describe('CoursePage', () => {
 
   it('a course that fails to load can be tried again without reloading the page', async () => {
     let loads = 0;
-    const ready = { course: { ...COURSE, progress: { topicId: null } }, builtLessons: {} };
+    const ready = {
+      course: { ...COURSE, progress: { topicId: null } },
+      builtLessons: {},
+      quizResults: {},
+    };
     serve({
       load: () => {
         loads += 1;
@@ -279,6 +289,20 @@ describe('CoursePage', () => {
     expect(
       screen.queryByText('Building a lesson uses web research, which can take longer.'),
     ).toBeNull();
+  });
+
+  it('shows practice only for fully built modules and restores saved results on load', async () => {
+    serve({
+      builtLessons: { 'topic-1': 'lesson-1', 'topic-2': 'lesson-2' },
+      quizResults: {
+        'module-1': { attempts: 2, bestSelfRated: 2, lastSelfRated: 1, questionCount: 2 },
+      },
+    });
+    renderCourse();
+
+    expect(await screen.findByRole('button', { name: 'Practice module: Basics' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Practice module: Checking copies' })).toBeNull();
+    expect(screen.getByText('Best self-rating: 2 of 2; last 1 of 2')).toBeVisible();
   });
 
   it('shows that a missing course could not be found', async () => {

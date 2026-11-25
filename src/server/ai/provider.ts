@@ -16,6 +16,8 @@ export interface GenerateOptions {
    * so ordinary calls have no web access.
    */
   webSearch?: boolean;
+  /** Requires the CLI to run with every tool disabled. The call must fail if that cannot be guaranteed. */
+  disableTools?: boolean;
 }
 
 /** A local AI CLI that answers with structured JSON. Implementations never see API keys. */

@@ -7,10 +7,11 @@
 3. **Open lesson** on a topic builds its lesson once. A lesson uses web research, so it can take longer. Later opens reuse the saved lesson.
 4. The lesson page has the diagram on the left (drawn step by step, see the build-up below) and the explanation, key terms and sources on the right. Phones stack the diagram above the explanation.
 5. If a build fails, a plain alert appears with **Try again**. A failed topic can be opened again without reloading.
+6. When every lesson in a module is built, **Practice module** offers up to five short-answer questions. The learner writes an answer, reveals a sample answer and explanation, then self-rates. The typed draft stays in the page and is cleared on reveal or exit. Aggregate attempt, best and last counts are saved, with up to 256 opaque attempt ids for retry deduplication. Practice never gates lesson navigation or progress. A retry older than the window is treated as a new attempt.
 
 ## Status
 
-Phases 0 to 4 of `docs/plans/2026-11-24-visual-learning.md` are done and merged (PRs #11 to #16, see [06-history.md](06-history.md)). Phases 5 (quizzes), 6 (bigger courses and plan limits) and 7 (hosted subscription) are not started. See [07-open-items-and-roadmap.md](07-open-items-and-roadmap.md).
+Phases 0 to 4 are done and merged (PRs #11 to #16, see [06-history.md](06-history.md)). Phase 5 (optional quizzes) is implemented on `feat/learn-module-quizzes`. Phase 6 (bigger courses) and Phase 7 (hosted subscription) remain future work. See [07-open-items-and-roadmap.md](07-open-items-and-roadmap.md).
 
 ## Data shapes
 
@@ -32,6 +33,10 @@ All in `src/shared/learn.ts`. Diagrams reuse the app's graph schema from `src/sh
 | Modules per course         | up to 8                                                                    |
 | Topics per course          | up to 12 in total                                                          |
 | Topics per module          | up to 12                                                                   |
+| Quiz questions per module  | up to 5                                                                    |
+| Quiz prompt                | up to 500 characters                                                       |
+| Sample answer              | up to 1,200 characters                                                     |
+| Quiz explanation           | up to 1,000 characters                                                     |
 
 **Lesson reply** (`lessonReplySchema`, what the model returns): `title`, `explanation`, `keyTerms`, `sources`, `diagram`.
 
@@ -41,21 +46,25 @@ All in `src/shared/learn.ts`. Diagrams reuse the app's graph schema from `src/sh
 
 **Saved course** (`courseSchema`): id, the prompt it came from, `createdAt`, modules and topics with ids, and `progress.topicId` (the topic last opened, or null).
 
-**Stored where:** one JSON file per lesson under `DIAGRAMS_DIR/lessons`, one per course under `DIAGRAMS_DIR/courses`. Ids match `^[a-zA-Z0-9_-]{1,64}$`.
+**Saved module quiz** (`moduleQuizSchema`): course and module ids, the source topic ids, creation time, up to five questions with server-assigned ids, prompts, sample answers and explanations, aggregate `attempts`, `bestSelfRated` and `lastSelfRated` counts, and a bounded window of up to 256 unique opaque `attemptIds` for idempotent retries. A retry older than the window is treated as a new attempt. No typed answers are part of the schema.
+
+**Stored where:** one JSON file per lesson under `DIAGRAMS_DIR/lessons`, one per course under `DIAGRAMS_DIR/courses`, and one separate sidecar per module under `DIAGRAMS_DIR/learn-quizzes/<courseId>/<moduleId>.json`. Both path ids match `^[a-zA-Z0-9_-]{1,64}$`.
 
 ## Server
 
 **Routes** (`src/server/routes/learn-courses.ts`, `learn.ts`):
 
-| Method and path                                      | Result                                                                                                                           |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `POST /api/learn/courses`                            | Builds an outline with no web search. 201 with the course.                                                                       |
-| `GET /api/learn/courses`                             | Summaries, newest first (with a topic count).                                                                                    |
-| `GET /api/learn/courses/:id`                         | The course and `builtLessons` (topic id to lesson id). 404 if missing.                                                           |
-| `POST /api/learn/courses/:id/topics/:topicId/lesson` | Returns the saved lesson, or builds one. 201 for the request that built it, 200 for the others. 404 for unknown course or topic. |
-| `PUT /api/learn/courses/:id/progress`                | Saves the last topic opened. 400 for a topic not in the course.                                                                  |
-| `GET /api/learn/lessons/:id`                         | One lesson. 404 if missing.                                                                                                      |
-| `POST /api/learn/lessons`                            | Builds a standalone lesson for a topic. No UI calls it yet.                                                                      |
+| Method and path                                             | Result                                                                                                                                                                                     |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `POST /api/learn/courses`                                   | Builds an outline with no web search. 201 with the course.                                                                                                                                 |
+| `GET /api/learn/courses`                                    | Summaries, newest first (with a topic count).                                                                                                                                              |
+| `GET /api/learn/courses/:id`                                | The course, `builtLessons` (topic id to lesson id) and saved `quizResults` summaries. 404 if missing.                                                                                      |
+| `POST /api/learn/courses/:id/topics/:topicId/lesson`        | Returns the saved lesson, or builds one. 201 for the request that built it, 200 for the others. 404 for unknown course or topic.                                                           |
+| `PUT /api/learn/courses/:id/progress`                       | Saves the last topic opened. 400 for a topic not in the course.                                                                                                                            |
+| `POST /api/learn/courses/:id/modules/:moduleId/quiz`        | Reuses a saved quiz or generates after all module lessons exist. The selected CLI receives course/module titles and lesson explanations and key terms, with tools and web search disabled. |
+| `PUT /api/learn/courses/:id/modules/:moduleId/quiz/results` | Accepts a self-rated count only; the sidecar records attempts, best and last counts.                                                                                                       |
+| `GET /api/learn/lessons/:id`                                | One lesson. 404 if missing.                                                                                                                                                                |
+| `POST /api/learn/lessons`                                   | Builds a standalone lesson for a topic. No UI calls it yet.                                                                                                                                |
 
 **Lesson builder** (`src/server/learn/lesson.ts`): `buildLesson` asks the provider with `{ webSearch: true }`, parses the reply, runs the source checks, drops failing sources, and throws `INVALID_OUTPUT` when no source remains. The prompt puts the topic inside tags and asks for web research.
 
@@ -75,10 +84,13 @@ All in `src/shared/learn.ts`. Diagrams reuse the app's graph schema from `src/sh
 
 **Concurrency.** Two requests that open the same topic at the same time share one build. A map of in-flight builds, keyed by course and topic, holds the running promise. A second request waits for it. The temporary file name for each JSON write is random, so two writes to one record cannot rename each other's file. Two progress saves at the same moment both succeed and leave one of the saved topics.
 
+Quiz generation requests for the same module share one in-flight provider call. Result updates queue per course/module while other modules use independent sidecar files. The quiz call sets `disableTools: true` and `webSearch: false`; Claude runs with `--tools ''`. Codex cannot guarantee its command tool is off, so it refuses that call before starting the CLI.
+
 ## Client
 
 - `src/client/learn/LearnPage.tsx`: the topic form, the time note ("Building a course outline can take a minute or more. Building a lesson uses web research, which can take longer."), the course list with **Try again** on failure.
-- `src/client/learn/CoursePage.tsx` and `CourseOutline.tsx`: modules, topics, **Continue**, **Open lesson**, **Try again** per topic. The web research note appears once above the outline when any topic is unbuilt. A failed course load has **Try again**; focus moves to the page heading on retry.
+- `src/client/learn/CoursePage.tsx` and `CourseOutline.tsx`: modules, topics, **Continue**, **Open lesson**, **Try again** per topic, **Practice module** when every lesson in a module is built, and saved result summaries after reload. A failed course load has **Try again**; focus moves to the page heading on retry.
+- `src/client/learn/ModuleQuiz.tsx`: local answer draft, sample answer reveal, self-rating, result retry and keyboard focus on the active question or saved result. The API receives only the aggregate count.
 - `src/client/learn/LessonView.tsx`: loading, ready, missing (404) and failed states. Back link goes to the course when the lesson belongs to one, otherwise to the Learn tab. The diagram is described in plain words for screen readers (`describe-diagram.ts`).
 - `src/client/learn/LessonPanel.tsx`: explanation paragraphs, key terms, sources. Only `https` links are made clickable; a malformed or unsafe address is shown as plain text. Links open in a new tab with `noopener noreferrer`.
 - `src/client/learn/LessonCanvas.tsx`: a read-only Excalidraw canvas (`viewModeEnabled`), lazy-loaded. Uses the editor's menu and drawing options. Fits the full drawing to the canvas once.
@@ -100,7 +112,7 @@ Implemented in `build-steps.ts` (planner), `playback.ts` (reducer), `usePlayback
 
 ## Known limits (from review rounds, not yet fixed)
 
-- **Codex cannot build lessons.** Blocked until Codex's shell tool can be removed for a web call.
+- **Codex cannot build lessons or module quizzes.** Lesson calls need limited web tools; quiz calls require all tools off. Codex's command tool cannot currently be disabled for either request.
 - **Lesson build time is unmeasured.** A build can take 80 seconds or more at high effort, which is close to the 120-second `AI_TIMEOUT_MS` default. No real build has been timed.
 - **Failed lesson load on the lesson page has no retry.** Retry exists on the course page only. This was deferred in the plan.
 - **A build that never finishes blocks later opens of that topic** until the server restarts. Source checks have no lookup timeout (the DNS lookup can still hang). This predates the Learn branch.

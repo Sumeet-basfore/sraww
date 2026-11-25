@@ -78,11 +78,39 @@ function topicRow(page: Page, title: string) {
  * Stubs the course endpoints as one small server. The course keeps its progress and the lessons
  * built for it, so reopening the course shows what the learner did before.
  */
-async function stubCourseApi(page: Page, listed: unknown[] = []) {
+async function stubCourseApi(page: Page, listed: unknown[] = [], prebuiltTopicIds: string[] = []) {
   let progress: { topicId: string | null } = { topicId: null };
-  let builtLessons: Record<string, string> = {};
+  let builtLessons: Record<string, string> = Object.fromEntries(
+    prebuiltTopicIds.map((topicId) => [topicId, `lesson-${topicId}`]),
+  );
   const created: unknown[] = [];
   const progressSaved: unknown[] = [];
+  const quizResultBodies: unknown[] = [];
+  const quizGenerationCalls: number[] = [];
+  let savedQuiz = {
+    courseId: course.id,
+    moduleId: 'module-1',
+    sourceTopicIds: ['topic-1', 'topic-2'],
+    createdAt: '2026-11-24T10:10:00.000Z',
+    questions: [
+      {
+        id: 'question-1',
+        prompt: 'What does a cache keep?',
+        sampleAnswer: 'A cache keeps a copy of a response.',
+        explanation: 'Reusing a copy avoids repeating work.',
+      },
+      {
+        id: 'question-2',
+        prompt: 'What does max-age control?',
+        sampleAnswer: 'It controls how long a cached copy stays fresh.',
+        explanation: 'Freshness determines whether a copy can be reused directly.',
+      },
+    ],
+    attempts: 0,
+    bestSelfRated: 0,
+    lastSelfRated: 0,
+    attemptIds: [] as string[],
+  };
 
   await page.route('**/api/learn/courses', async (route) => {
     if (route.request().method() === 'POST') {
@@ -93,7 +121,23 @@ async function stubCourseApi(page: Page, listed: unknown[] = []) {
     await route.fulfill(json({ courses: listed }));
   });
   await page.route(`**/api/learn/courses/${course.id}`, (route) =>
-    route.fulfill(json({ course: { ...course, progress }, builtLessons })),
+    route.fulfill(
+      json({
+        course: { ...course, progress },
+        builtLessons,
+        quizResults:
+          savedQuiz.attempts > 0
+            ? {
+                'module-1': {
+                  attempts: savedQuiz.attempts,
+                  bestSelfRated: savedQuiz.bestSelfRated,
+                  lastSelfRated: savedQuiz.lastSelfRated,
+                  questionCount: savedQuiz.questions.length,
+                },
+              }
+            : {},
+      }),
+    ),
   );
   await page.route(`**/api/learn/courses/${course.id}/topics/topic-1/lesson`, async (route) => {
     builtLessons = { ...builtLessons, 'topic-1': lesson.id };
@@ -108,12 +152,38 @@ async function stubCourseApi(page: Page, listed: unknown[] = []) {
     progressSaved.push(progress);
     await route.fulfill(json({ course: { ...course, progress } }));
   });
+  await page.route(`**/api/learn/courses/${course.id}/modules/module-1/quiz`, async (route) => {
+    quizGenerationCalls.push(1);
+    const { attemptIds, ...clientQuiz } = savedQuiz;
+    void attemptIds;
+    await route.fulfill(json({ quiz: clientQuiz }));
+  });
+  await page.route(
+    `**/api/learn/courses/${course.id}/modules/module-1/quiz/results`,
+    async (route) => {
+      const result = route.request().postDataJSON() as {
+        attemptId: string;
+        selfRatedCount: number;
+      };
+      quizResultBodies.push(result);
+      savedQuiz = {
+        ...savedQuiz,
+        attempts: savedQuiz.attempts + 1,
+        bestSelfRated: Math.max(savedQuiz.bestSelfRated, result.selfRatedCount),
+        lastSelfRated: result.selfRatedCount,
+        attemptIds: [...savedQuiz.attemptIds, result.attemptId],
+      };
+      const { attemptIds, ...clientQuiz } = savedQuiz;
+      void attemptIds;
+      await route.fulfill(json({ quiz: clientQuiz }));
+    },
+  );
   await page.route(`**/api/learn/lessons/${lesson.id}`, (route) => route.fulfill(json({ lesson })));
   await page.route(`**/api/learn/lessons/${secondLesson.id}`, (route) =>
     route.fulfill(json({ lesson: secondLesson })),
   );
 
-  return { created, progressSaved };
+  return { created, progressSaved, quizResultBodies, quizGenerationCalls };
 }
 
 test('a topic becomes a course outline, opens as a lesson, and the course resumes at it', async ({
@@ -148,6 +218,57 @@ test('a topic becomes a course outline, opens as a lesson, and the course resume
 
   expect(created).toEqual([{ topic: 'How HTTP caching works' }]);
   expect(progressSaved).toEqual([{ topicId: 'topic-1' }]);
+});
+
+test('module practice saves only aggregate self-ratings and shows them again after reload', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const { quizGenerationCalls, quizResultBodies } = await stubCourseApi(page);
+
+  await page.goto(`/#/course/${course.id}`);
+  await expect(page.getByRole('button', { name: 'Practice module: Basics' })).toHaveCount(0);
+  await topicRow(page, 'What a cache is').getByRole('button', { name: 'Open lesson' }).click();
+  await page.getByRole('link', { name: '← Course' }).click();
+  await expect(page.getByRole('button', { name: 'Practice module: Basics' })).toHaveCount(0);
+  await topicRow(page, 'Freshness').getByRole('button', { name: 'Open lesson' }).click();
+  await page.getByRole('link', { name: '← Course' }).click();
+
+  const practice = page.getByRole('button', { name: 'Practice module: Basics' });
+  await expect(practice).toBeVisible();
+  await practice.click();
+  await expect(page.getByRole('heading', { name: 'What does a cache keep?' })).toBeFocused();
+  const typedAnswer = 'private typed answer that must not leave the page';
+  await page.getByLabel('Your short answer').fill(typedAnswer);
+  await page.getByRole('button', { name: 'Reveal sample answer' }).click();
+  await expect(
+    page.locator('.module-quiz-sample').getByText('A cache keeps a copy of a response.'),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Got it' }).click();
+  await page.getByLabel('Your short answer').fill('another private answer');
+  await page.getByRole('button', { name: 'Reveal sample answer' }).click();
+  await page.getByRole('button', { name: 'Review again' }).click();
+  await expect(page.getByRole('heading', { name: 'Self-rating saved' })).toBeVisible();
+  expect(quizResultBodies).toHaveLength(1);
+  expect(quizResultBodies[0]).toMatchObject({ selfRatedCount: 1 });
+  expect(Object.keys(quizResultBodies[0] as object).sort()).toEqual([
+    'attemptId',
+    'selfRatedCount',
+  ]);
+  expect(JSON.stringify(quizResultBodies)).not.toContain(typedAnswer);
+  expect(quizGenerationCalls).toHaveLength(1);
+
+  await page.getByRole('button', { name: 'Return to course' }).click();
+  await expect(page.getByText('Best self-rating: 1 of 2; last 1 of 2')).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('Best self-rating: 1 of 2; last 1 of 2')).toBeVisible();
+  await page.getByRole('button', { name: 'Practice module: Basics' }).click();
+  await expect(
+    page.getByText('Your self-ratings: 1 attempt · best 1 of 2 · last 1 of 2'),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Return to course' }).click();
+  await topicRow(page, 'Freshness').getByRole('button', { name: 'Open lesson' }).click();
+  await expect(page).toHaveURL(/#\/learn\/lesson-e2e-2$/);
 });
 
 test('a saved course on the Learn tab opens its course page', async ({ page }) => {
@@ -222,6 +343,37 @@ async function expectFitsWidth(page: Page, width: number): Promise<void> {
   );
   expect(overflow).toBeLessThanOrEqual(0);
   await expectControlsInside(page, width);
+}
+
+async function expectQuizFitsWidth(page: Page, width: number): Promise<void> {
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+  for (const selector of ['.module-quiz', '.module-quiz textarea', '.module-quiz button']) {
+    for (const element of await page.locator(selector).all()) {
+      const box = await element.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.x).toBeGreaterThanOrEqual(0);
+      expect(box!.x + box!.width).toBeLessThanOrEqual(width);
+    }
+  }
+}
+
+for (const width of [390, 1440]) {
+  for (const theme of ['light', 'dark'] as const) {
+    test(`the module quiz fits ${width}px in ${theme} theme`, async ({ page }) => {
+      await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+      await setTheme(page, theme);
+      await stubCourseApi(page, [], ['topic-1', 'topic-2']);
+
+      await page.goto(`/#/course/${course.id}`);
+      await page.getByRole('button', { name: 'Practice module: Basics' }).click();
+      await expect(page.getByRole('heading', { name: 'What does a cache keep?' })).toBeVisible();
+      await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+      await expectQuizFitsWidth(page, width);
+    });
+  }
 }
 
 for (const theme of ['light', 'dark'] as const) {
