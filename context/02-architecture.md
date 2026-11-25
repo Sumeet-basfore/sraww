@@ -6,8 +6,8 @@
 Browser (React 19 + Excalidraw)               Local server (Express 5, 127.0.0.1)
   src/client/   pages, editor, assistant,       src/server/   routes -> services -> storage / AI / scanner
                 AI tools, architecture view,     src/shared/   zod schemas and types used by both sides
-                Learn tab, tour                  
-  --- HTTP JSON under /api, same origin ---------- 
+                Learn tab, tour
+  --- HTTP JSON under /api, same origin ----------
 ```
 
 - `src/shared/` holds every zod schema and every type that crosses the HTTP boundary. Both sides parse with the same schema. Validate at every boundary: request bodies, files read from disk, and model output.
@@ -25,20 +25,20 @@ Browser (React 19 + Excalidraw)               Local server (Express 5, 127.0.0.1
 
 All API routes are mounted in `src/server/app.ts`. Every request passes the local-only guard (`guard.ts`) first.
 
-| Mount | Router | Endpoints |
-| --- | --- | --- |
-| `/api/health` | inline | `GET` health check |
-| `/api/diagrams` | `routes/diagrams.ts` | `GET /` list; `POST /` create; `GET /:name`; `PUT /:name` save; `PATCH /:name` rename; `POST /:name/duplicate`; `DELETE /:name` |
-| `/api/math` | `routes/math.ts` | `POST /render` LaTeX to SVG |
-| `/api/library` | `routes/library.ts` | `GET /`; `PUT /` (shape library) |
-| `/api/projects` | `routes/projects.ts` | `GET /` list; `POST /github` import a public branch; `POST` upload (folder or zip); `DELETE /:id` |
-| `/api/arch` | `routes/arch.ts` | `GET /projects`; `POST /scan`; `GET /models/:name`; `GET /models/:name/findings`; `GET` and `POST /models/:name/review`; `PUT` and `DELETE /models/:name/layout`; `POST /models/:name/name` |
-| `/api/ai` | `routes/ai.ts` | `GET /status`; `POST /generate`; `POST /chat`; plus the account router (below) |
-| `/api/ai/providers...` | `routes/ai-account.ts` | `GET /providers`; `PUT /default`; `PUT /providers/:id/selection`; sign-in: `GET`/`POST`/`DELETE /providers/:id/login`, `POST /providers/:id/login/code` |
-| `/api/learn` | `routes/learn.ts` | `POST /lessons` (single lesson, no UI caller yet); `GET /lessons/:id` |
-| `/api/learn` | `routes/learn-courses.ts` | `POST /courses`; `GET /courses`; `GET /courses/:id`; `POST /courses/:id/topics/:topicId/lesson`; `PUT /courses/:id/progress` |
-| `/PRIVACY.md` | inline | serves the policy |
-| static | `express.static` | serves `dist/` built client when it exists, else `index.html` fallback |
+| Mount                  | Router                    | Endpoints                                                                                                                                                                                   |
+| ---------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/api/health`          | inline                    | `GET` health check                                                                                                                                                                          |
+| `/api/diagrams`        | `routes/diagrams.ts`      | `GET /` list; `POST /` create; `GET /:name`; `PUT /:name` save; `PATCH /:name` rename; `POST /:name/duplicate`; `DELETE /:name`                                                             |
+| `/api/math`            | `routes/math.ts`          | `POST /render` LaTeX to SVG                                                                                                                                                                 |
+| `/api/library`         | `routes/library.ts`       | `GET /`; `PUT /` (shape library)                                                                                                                                                            |
+| `/api/projects`        | `routes/projects.ts`      | `GET /` list; `POST /github` import a public branch; `POST` upload (folder or zip); `DELETE /:id`                                                                                           |
+| `/api/arch`            | `routes/arch.ts`          | `GET /projects`; `POST /scan`; `GET /models/:name`; `GET /models/:name/findings`; `GET` and `POST /models/:name/review`; `PUT` and `DELETE /models/:name/layout`; `POST /models/:name/name` |
+| `/api/ai`              | `routes/ai.ts`            | `GET /status`; `POST /generate`; `POST /chat`; plus the account router (below)                                                                                                              |
+| `/api/ai/providers...` | `routes/ai-account.ts`    | `GET /providers`; `PUT /default`; `PUT /providers/:id/selection`; sign-in: `GET`/`POST`/`DELETE /providers/:id/login`, `POST /providers/:id/login/code`                                     |
+| `/api/learn`           | `routes/learn.ts`         | `POST /lessons` (single lesson, no UI caller yet); `GET /lessons/:id`                                                                                                                       |
+| `/api/learn`           | `routes/learn-courses.ts` | `POST /courses`; `GET /courses`; `GET /courses/:id`; `POST /courses/:id/topics/:topicId/lesson`; `PUT /courses/:id/progress`                                                                |
+| `/PRIVACY.md`          | inline                    | serves the policy                                                                                                                                                                           |
+| static                 | `express.static`          | serves `dist/` built client when it exists, else `index.html` fallback                                                                                                                      |
 
 Unknown `/api` paths return a JSON 404. Errors use a shared handler (`errors.ts`). Learn errors use `DiagramError` codes such as `NOT_FOUND`.
 
@@ -46,16 +46,16 @@ Unknown `/api` paths return a JSON 404. Errors use a shared handler (`errors.ts`
 
 Parsed by `src/client/lib/route.ts`. Each route maps to one page in `App.tsx`.
 
-| Hash | Page |
-| --- | --- |
-| `#/` or empty | Drawings list |
-| `#/diagram/<name>` | Editor |
-| `#/architecture` | Architecture maps page (`maps`) |
-| `#/arch/<name>` | One architecture map |
-| `#/learn` | Learn tab |
-| `#/learn/<lessonId>` | Lesson |
-| `#/course/<courseId>` | Course |
-| `#/ai` | AI tools page |
+| Hash                  | Page                            |
+| --------------------- | ------------------------------- |
+| `#/` or empty         | Drawings list                   |
+| `#/diagram/<name>`    | Editor                          |
+| `#/architecture`      | Architecture maps page (`maps`) |
+| `#/arch/<name>`       | One architecture map            |
+| `#/learn`             | Learn tab                       |
+| `#/learn/<lessonId>`  | Lesson                          |
+| `#/course/<courseId>` | Course                          |
+| `#/ai`                | AI tools page                   |
 
 Top-level tabs are **Drawings**, **Learn**, **Architecture**, **AI tools** (`src/client/nav/PageHeader.tsx`, `MAIN_TABS`). Route ids in hashes are validated: lesson and course ids match `^[a-zA-Z0-9_-]{1,64}$`. Diagram names are validated on the server.
 
@@ -65,15 +65,15 @@ Everything lives under the data folders named in configuration. Nothing else is 
 
 `DIAGRAMS_DIR` (default `./data/diagrams`):
 
-| File | Holds |
-| --- | --- |
-| `<name>.excalidraw` | A drawing (Excalidraw JSON) |
-| `<name>.arch.json` | An architecture model (scanned graph) |
-| `<name>.arch-layout.json` | Box positions the owner saved |
-| `<name>.arch-review.json` | The stored AI review of a model |
-| `library.json` | The shape library |
-| `lessons/<id>.json` | One lesson |
-| `courses/<id>.json` | One course with its progress |
+| File                      | Holds                                 |
+| ------------------------- | ------------------------------------- |
+| `<name>.excalidraw`       | A drawing (Excalidraw JSON)           |
+| `<name>.arch.json`        | An architecture model (scanned graph) |
+| `<name>.arch-layout.json` | Box positions the owner saved         |
+| `<name>.arch-review.json` | The stored AI review of a model       |
+| `library.json`            | The shape library                     |
+| `lessons/<id>.json`       | One lesson                            |
+| `courses/<id>.json`       | One course with its progress          |
 
 `PROJECTS_DIR` (default `./data/projects`): one folder per uploaded or imported project, with the kept files and a `manifest.json` written last.
 
@@ -87,18 +87,18 @@ JSON writes go to a temporary file with a random name, then are renamed. A recor
 
 Read once at startup by `src/server/config.ts` (zod). Invalid values stop the server with a readable message. `.env` is loaded when present.
 
-| Variable | Default | Meaning |
-| --- | --- | --- |
-| `PORT` | `4317` | Server port |
-| `DIAGRAMS_DIR` | `./data/diagrams` | Drawings, architecture files, library, lessons, courses |
-| `PROJECTS_DIR` | `./data/projects` | Uploaded and imported code projects |
-| `AI_WORKDIR` | `./data/ai-workdir` | Empty working folder for the CLIs |
-| `ARCH_PROJECTS` | empty | Comma-separated absolute folders architecture scans may read |
-| `AI_PROVIDER` | `claude` | Default tool (`claude` or `codex`) |
-| `CLAUDE_BIN`, `CODEX_BIN` | `claude`, `codex` | CLI names or paths |
-| `CLAUDE_MODEL`, `CODEX_MODEL` | empty | Optional model override; empty uses the CLI default |
-| `AI_TIMEOUT_MS` | `120000` | Time limit for one AI call (minimum 1000) |
-| `AI_SETTINGS_FILE` | `./data/ai-settings.json` | Saved AI choices |
+| Variable                      | Default                   | Meaning                                                      |
+| ----------------------------- | ------------------------- | ------------------------------------------------------------ |
+| `PORT`                        | `4317`                    | Server port                                                  |
+| `DIAGRAMS_DIR`                | `./data/diagrams`         | Drawings, architecture files, library, lessons, courses      |
+| `PROJECTS_DIR`                | `./data/projects`         | Uploaded and imported code projects                          |
+| `AI_WORKDIR`                  | `./data/ai-workdir`       | Empty working folder for the CLIs                            |
+| `ARCH_PROJECTS`               | empty                     | Comma-separated absolute folders architecture scans may read |
+| `AI_PROVIDER`                 | `claude`                  | Default tool (`claude` or `codex`)                           |
+| `CLAUDE_BIN`, `CODEX_BIN`     | `claude`, `codex`         | CLI names or paths                                           |
+| `CLAUDE_MODEL`, `CODEX_MODEL` | empty                     | Optional model override; empty uses the CLI default          |
+| `AI_TIMEOUT_MS`               | `120000`                  | Time limit for one AI call (minimum 1000)                    |
+| `AI_SETTINGS_FILE`            | `./data/ai-settings.json` | Saved AI choices                                             |
 
 There are no API key variables, and none should be added.
 

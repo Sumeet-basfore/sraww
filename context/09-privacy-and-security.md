@@ -21,15 +21,15 @@ The public policy is `PRIVACY.md` at the repo root. The app serves it at `/PRIVA
 
 Only these. If a feature sends something new, add it here and in `PRIVACY.md`.
 
-| Trigger | What is sent | Where |
-| --- | --- | --- |
-| Any AI generation call (assistant, outline, lesson, review, naming) | The prompt, which contains the user's chosen content for that feature | To the chosen CLI, which talks to its provider under the owner's account |
-| Building a course outline | The topic text and fixed outline instructions. No web search. | Through the CLI (Claude or Codex) |
-| Building a lesson | The course title and topic title. Web research is allowed for this one call (Claude only). | Through Claude Code; the tool may search the web and read pages it chooses |
-| Lesson source check | The source address and two HTTP headers (`accept`, and the library's standard headers). No topic, drawing or lesson text. | From the sraww server process, straight to the cited address |
-| GitHub import | The owner's chosen public repository and branch name | To `codeload.github.com`. No token. GitHub sees the request, as any site does |
-| Architecture AI review and naming | Folder names, file base names, links, findings | Through the chosen CLI |
-| Sign-in to a CLI | Whatever the CLI's own login flow sends | Sent by the CLI, not by sraww's code |
+| Trigger                                                             | What is sent                                                                                                              | Where                                                                         |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Any AI generation call (assistant, outline, lesson, review, naming) | The prompt, which contains the user's chosen content for that feature                                                     | To the chosen CLI, which talks to its provider under the owner's account      |
+| Building a course outline                                           | The topic text and fixed outline instructions. No web search.                                                             | Through the CLI (Claude or Codex)                                             |
+| Building a lesson                                                   | The course title and topic title. Web research is allowed for this one call (Claude only).                                | Through Claude Code; the tool may search the web and read pages it chooses    |
+| Lesson source check                                                 | The source address and two HTTP headers (`accept`, and the library's standard headers). No topic, drawing or lesson text. | From the sraww server process, straight to the cited address                  |
+| GitHub import                                                       | The owner's chosen public repository and branch name                                                                      | To `codeload.github.com`. No token. GitHub sees the request, as any site does |
+| Architecture AI review and naming                                   | Folder names, file base names, links, findings                                                                            | Through the chosen CLI                                                        |
+| Sign-in to a CLI                                                    | Whatever the CLI's own login flow sends                                                                                   | Sent by the CLI, not by sraww's code                                          |
 
 Nothing else is sent. The browser talks only to the local server.
 

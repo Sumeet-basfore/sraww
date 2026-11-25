@@ -23,6 +23,7 @@ Model output is validated against schemas and drawn as text. The assistant uses 
 **Where.** `src/client/ai/assistant/`, `src/client/ai/apply-ops.ts`, `src/client/ai/layout.ts`, `src/client/ai/skeleton.ts`, `src/client/ai/toolSummary.ts`. Server: `routes/ai.ts` (`/generate`, `/chat`), `ai/chat.ts`, `ai/prompts.ts`, `shared/chat-schemas.ts`.
 
 **Known limits.**
+
 - Arrows to shapes that already existed are drawn between them but not glued, because Excalidraw binds arrows only to shapes created in the same change. Arrows between new shapes are glued.
 - The chat cannot relabel existing shapes.
 - An arrow to a note is not glued to it, because notes are text.
@@ -67,6 +68,7 @@ Selecting a box opens an inspector: what it depends on, what uses it, its files,
 ## Math
 
 **Does.** In the editor header the owner can insert:
+
 - axes, a number line and a table (`src/client/math/insert-template.ts`, `templates.ts`);
 - LaTeX formulas, through a formula dialog. The server renders LaTeX to a standalone SVG with MathJax (`POST /api/math/render`). The formula is inserted as an image label, and the LaTeX source stays editable.
 

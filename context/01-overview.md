@@ -20,16 +20,16 @@ There are no API keys and no accounts. The AI runs by starting the owner's alrea
 
 ## Stack
 
-| Part | Choice |
-| --- | --- |
-| Editor | `@excalidraw/excalidraw` 0.18.0, pinned exactly |
-| Client | React 19, TypeScript 5.9 (strict), Vite 8 |
-| Server | Node 22.9 or newer, Express 5, zod 4, TypeScript run by `tsx` |
-| Layout | `elkjs` 0.12 (automatic box layout for diagrams and architecture maps) |
-| Formulas | `mathjax` 4 on the server (LaTeX to SVG) |
-| Archives | `fflate` (zip upload and GitHub zip download) |
-| Tests | Vitest 5 with jsdom and Testing Library (unit and component), Playwright (browser), supertest (server routes) |
-| Quality | ESLint 9 (flat config), Prettier 3 |
+| Part     | Choice                                                                                                        |
+| -------- | ------------------------------------------------------------------------------------------------------------- |
+| Editor   | `@excalidraw/excalidraw` 0.18.0, pinned exactly                                                               |
+| Client   | React 19, TypeScript 5.9 (strict), Vite 8                                                                     |
+| Server   | Node 22.9 or newer, Express 5, zod 4, TypeScript run by `tsx`                                                 |
+| Layout   | `elkjs` 0.12 (automatic box layout for diagrams and architecture maps)                                        |
+| Formulas | `mathjax` 4 on the server (LaTeX to SVG)                                                                      |
+| Archives | `fflate` (zip upload and GitHub zip download)                                                                 |
+| Tests    | Vitest 5 with jsdom and Testing Library (unit and component), Playwright (browser), supertest (server routes) |
+| Quality  | ESLint 9 (flat config), Prettier 3                                                                            |
 
 ## Running it
 
@@ -43,20 +43,20 @@ The server binds to `127.0.0.1` only. It rejects requests whose Host or Origin h
 
 ## Current state in one table
 
-| Area | State | Details |
-| --- | --- | --- |
-| Drawings and editor | Done | [03-features.md](03-features.md#drawings-and-editor) |
-| Assistant (edit, new diagram, explain) | Done | [03-features.md](03-features.md#assistant) |
-| AI tools page and sign-in | Done | [03-features.md](03-features.md#ai-tools-page) |
-| Architecture maps, findings, AI review, naming | Done | [03-features.md](03-features.md#architecture-maps) |
-| Architecture AI review with file contents | Blocked (not started) | [07-open-items-and-roadmap.md](07-open-items-and-roadmap.md) |
-| Code projects (upload, GitHub import) | Done | [03-features.md](03-features.md#code-projects) |
-| Math (templates, LaTeX labels, table/axes/number line) | Done | [03-features.md](03-features.md#math) |
-| Shape library | Done | [03-features.md](03-features.md#shape-library) |
-| Tour | Done | [03-features.md](03-features.md#tour) |
-| Learn: courses, lessons, sources, build-up, retry | Phases 0 to 4 done | [04-learn-feature.md](04-learn-feature.md) |
-| Learn: quizzes, bigger courses, plan limits | Future (phases 5 and 6) | [07-open-items-and-roadmap.md](07-open-items-and-roadmap.md) |
-| Hosted subscription | Future track, blocked on provider approval (phase 7) | [07-open-items-and-roadmap.md](07-open-items-and-roadmap.md) |
+| Area                                                   | State                                                | Details                                                      |
+| ------------------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------ |
+| Drawings and editor                                    | Done                                                 | [03-features.md](03-features.md#drawings-and-editor)         |
+| Assistant (edit, new diagram, explain)                 | Done                                                 | [03-features.md](03-features.md#assistant)                   |
+| AI tools page and sign-in                              | Done                                                 | [03-features.md](03-features.md#ai-tools-page)               |
+| Architecture maps, findings, AI review, naming         | Done                                                 | [03-features.md](03-features.md#architecture-maps)           |
+| Architecture AI review with file contents              | Blocked (not started)                                | [07-open-items-and-roadmap.md](07-open-items-and-roadmap.md) |
+| Code projects (upload, GitHub import)                  | Done                                                 | [03-features.md](03-features.md#code-projects)               |
+| Math (templates, LaTeX labels, table/axes/number line) | Done                                                 | [03-features.md](03-features.md#math)                        |
+| Shape library                                          | Done                                                 | [03-features.md](03-features.md#shape-library)               |
+| Tour                                                   | Done                                                 | [03-features.md](03-features.md#tour)                        |
+| Learn: courses, lessons, sources, build-up, retry      | Phases 0 to 4 done                                   | [04-learn-feature.md](04-learn-feature.md)                   |
+| Learn: quizzes, bigger courses, plan limits            | Future (phases 5 and 6)                              | [07-open-items-and-roadmap.md](07-open-items-and-roadmap.md) |
+| Hosted subscription                                    | Future track, blocked on provider approval (phase 7) | [07-open-items-and-roadmap.md](07-open-items-and-roadmap.md) |
 
 ## Vocabulary
 

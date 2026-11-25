@@ -2,15 +2,15 @@
 
 ## Commands
 
-| Command | What it does | Notes |
-| --- | --- | --- |
-| `npm test` | Runs every unit and component test under `tests/` with Vitest (`vitest run`). | Config: `vitest.config.ts`, setup file `tests/setup.ts`, `restoreMocks` on. |
-| `npx vitest run tests/client/<File>.test.tsx` | One file. | Use for fast loops. |
-| `npm run typecheck` | `tsc --noEmit` over the whole project (strict). | Must pass before a commit. |
-| `npm run lint` | ESLint 9 flat config (`eslint.config.js`). | Covers TS, TSX and tests. The stylesheets are not linted. |
-| `npx prettier --check <files>` | Formatting check. | Config: `.prettierrc.json`. `npm run format` rewrites. |
-| `npm run test:e2e` | Playwright, Chromium, all specs in `e2e/`. | Builds the client, then starts the server with `npm start` on port 4390. Takes minutes. |
-| `E2E_DATA_DIR=<throwaway dir> npx playwright test e2e/learn.spec.ts` | One spec, with its data in a folder you choose. | The default data folder is `/tmp/sraww-e2e`. Set `E2E_DATA_DIR` to a scratch folder instead. |
+| Command                                                              | What it does                                                                  | Notes                                                                                        |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `npm test`                                                           | Runs every unit and component test under `tests/` with Vitest (`vitest run`). | Config: `vitest.config.ts`, setup file `tests/setup.ts`, `restoreMocks` on.                  |
+| `npx vitest run tests/client/<File>.test.tsx`                        | One file.                                                                     | Use for fast loops.                                                                          |
+| `npm run typecheck`                                                  | `tsc --noEmit` over the whole project (strict).                               | Must pass before a commit.                                                                   |
+| `npm run lint`                                                       | ESLint 9 flat config (`eslint.config.js`).                                    | Covers TS, TSX and tests. The stylesheets are not linted.                                    |
+| `npx prettier --check <files>`                                       | Formatting check.                                                             | Config: `.prettierrc.json`. `npm run format` rewrites.                                       |
+| `npm run test:e2e`                                                   | Playwright, Chromium, all specs in `e2e/`.                                    | Builds the client, then starts the server with `npm start` on port 4390. Takes minutes.      |
+| `E2E_DATA_DIR=<throwaway dir> npx playwright test e2e/learn.spec.ts` | One spec, with its data in a folder you choose.                               | The default data folder is `/tmp/sraww-e2e`. Set `E2E_DATA_DIR` to a scratch folder instead. |
 
 `npm run build` runs the typecheck and then `vite build`. `npm start` serves the built client and the API.
 

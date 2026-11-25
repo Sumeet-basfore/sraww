@@ -18,20 +18,20 @@ All in `src/shared/learn.ts`. Diagrams reuse the app's graph schema from `src/sh
 
 **Limits (`LEARN_LIMITS`)**
 
-| Limit | Value |
-| --- | --- |
-| Topic text | 300 characters |
-| Lesson title | 120 |
-| Lesson explanation | 1,500 |
-| Key terms | up to 8, 60 characters each |
-| Sources | up to 5; each has a title (160), a URL (200) and up to 6 points (300 each) |
-| Lesson diagram | up to 14 nodes and 20 edges |
-| Course title, module title | 120 |
-| Topic title | 160 |
-| Topic summary | 240 |
-| Modules per course | up to 8 |
-| Topics per course | up to 12 in total |
-| Topics per module | up to 12 |
+| Limit                      | Value                                                                      |
+| -------------------------- | -------------------------------------------------------------------------- |
+| Topic text                 | 300 characters                                                             |
+| Lesson title               | 120                                                                        |
+| Lesson explanation         | 1,500                                                                      |
+| Key terms                  | up to 8, 60 characters each                                                |
+| Sources                    | up to 5; each has a title (160), a URL (200) and up to 6 points (300 each) |
+| Lesson diagram             | up to 14 nodes and 20 edges                                                |
+| Course title, module title | 120                                                                        |
+| Topic title                | 160                                                                        |
+| Topic summary              | 240                                                                        |
+| Modules per course         | up to 8                                                                    |
+| Topics per course          | up to 12 in total                                                          |
+| Topics per module          | up to 12                                                                   |
 
 **Lesson reply** (`lessonReplySchema`, what the model returns): `title`, `explanation`, `keyTerms`, `sources`, `diagram`.
 
@@ -47,15 +47,15 @@ All in `src/shared/learn.ts`. Diagrams reuse the app's graph schema from `src/sh
 
 **Routes** (`src/server/routes/learn-courses.ts`, `learn.ts`):
 
-| Method and path | Result |
-| --- | --- |
-| `POST /api/learn/courses` | Builds an outline with no web search. 201 with the course. |
-| `GET /api/learn/courses` | Summaries, newest first (with a topic count). |
-| `GET /api/learn/courses/:id` | The course and `builtLessons` (topic id to lesson id). 404 if missing. |
+| Method and path                                      | Result                                                                                                                           |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /api/learn/courses`                            | Builds an outline with no web search. 201 with the course.                                                                       |
+| `GET /api/learn/courses`                             | Summaries, newest first (with a topic count).                                                                                    |
+| `GET /api/learn/courses/:id`                         | The course and `builtLessons` (topic id to lesson id). 404 if missing.                                                           |
 | `POST /api/learn/courses/:id/topics/:topicId/lesson` | Returns the saved lesson, or builds one. 201 for the request that built it, 200 for the others. 404 for unknown course or topic. |
-| `PUT /api/learn/courses/:id/progress` | Saves the last topic opened. 400 for a topic not in the course. |
-| `GET /api/learn/lessons/:id` | One lesson. 404 if missing. |
-| `POST /api/learn/lessons` | Builds a standalone lesson for a topic. No UI calls it yet. |
+| `PUT /api/learn/courses/:id/progress`                | Saves the last topic opened. 400 for a topic not in the course.                                                                  |
+| `GET /api/learn/lessons/:id`                         | One lesson. 404 if missing.                                                                                                      |
+| `POST /api/learn/lessons`                            | Builds a standalone lesson for a topic. No UI calls it yet.                                                                      |
 
 **Lesson builder** (`src/server/learn/lesson.ts`): `buildLesson` asks the provider with `{ webSearch: true }`, parses the reply, runs the source checks, drops failing sources, and throws `INVALID_OUTPUT` when no source remains. The prompt puts the topic inside tags and asks for web research.
 

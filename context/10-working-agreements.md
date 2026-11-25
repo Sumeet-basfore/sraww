@@ -21,7 +21,7 @@ These are the rules the owner has set, and the process that has worked. Where a 
 
 ## Delegation to subagents
 
-- Use the `poteto-agent` subagent type for code work, with effort `xhigh`. Its first line must be `Read /home/sumeet/.claude/skills/poteto-mode/worker.md before anything else.` (this rule comes from the owner's skill set). Its model cannot be pinned and runs on Opus. Say so in reports.
+- Use the `poteto-agent` subagent type for code work, with effort `xhigh`. Its first line must be `Read <path>/worker.md before anything else.`, where `<path>` is the absolute path of the poteto-mode skill folder on the owner's machine (`~/.claude/skills/poteto-mode`). (this rule comes from the owner's skill set). Its model cannot be pinned and runs on Opus. Say so in reports.
 - Brief a subagent with the goal, the files to read, the constraints (no commit, no push, files untouched, no co-author line), and the exact verification to run. Ask for a short report with the verification output.
 - Review the subagent's diff yourself and run the checks yourself before committing. Its summary is not evidence.
 - Fresh subagents for each fix round, with the original brief and the reports. Resume an old one only when its working state is needed.
