@@ -28,6 +28,7 @@ export function LearnPage({ onShowTour }: LearnPageProps) {
   const [topic, setTopic] = useState('');
   const [build, setBuild] = useState<BuildState>({ status: 'idle' });
   const [list, setList] = useState<ListState>({ status: 'loading' });
+  const [listAttempt, setListAttempt] = useState(0);
   const building = build.status === 'building';
   const canSubmit = topic.trim() !== '' && !building;
 
@@ -44,7 +45,12 @@ export function LearnPage({ onShowTour }: LearnPageProps) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [listAttempt]);
+
+  function retryList(): void {
+    setList({ status: 'loading' });
+    setListAttempt((count) => count + 1);
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -95,24 +101,28 @@ export function LearnPage({ onShowTour }: LearnPageProps) {
               disabled={building}
             />
             <button type="submit" className="button primary" disabled={!canSubmit}>
-              Build course
+              {build.status === 'failed' ? 'Try again' : 'Build course'}
             </button>
           </form>
+          <p className="muted">
+            Building a course outline can take a minute or more. Building a lesson uses web
+            research, which can take longer.
+          </p>
 
           {building && (
             <p className="muted" role="status">
-              Building the course outline. This takes about a minute. Keep this tab open.
+              Building the course outline. Keep this tab open.
             </p>
           )}
 
-          <CourseList state={list} />
+          <CourseList state={list} onRetry={retryList} />
         </section>
       </main>
     </div>
   );
 }
 
-function CourseList({ state }: { state: ListState }) {
+function CourseList({ state, onRetry }: { state: ListState; onRetry: () => void }) {
   if (state.status === 'loading') {
     return (
       <p className="muted" role="status">
@@ -122,9 +132,14 @@ function CourseList({ state }: { state: ListState }) {
   }
   if (state.status === 'failed') {
     return (
-      <p role="alert" className="banner error">
-        {state.message}
-      </p>
+      <>
+        <p role="alert" className="banner error">
+          {state.message}
+        </p>
+        <button type="button" className="button" onClick={onRetry}>
+          Try again
+        </button>
+      </>
     );
   }
   if (state.courses.length === 0) {

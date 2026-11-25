@@ -197,8 +197,76 @@ describe('CoursePage', () => {
     expect(window.location.hash).toBe('');
     expect(callsTo('/progress')).toHaveLength(0);
     expect(
-      within(await topicRow('Freshness')).getByRole('button', { name: 'Open lesson' }),
+      within(await topicRow('Freshness')).getByRole('button', { name: 'Try again' }),
     ).toBeEnabled();
+    expect(
+      within(await topicRow('What a cache is')).getByRole('button', { name: 'Open lesson' }),
+    ).toBeEnabled();
+  });
+
+  it('a failed topic is retried by its Try again button, which calls the lesson endpoint again', async () => {
+    let opens = 0;
+    serve({
+      open: () => {
+        opens += 1;
+        return Promise.resolve(
+          opens === 1
+            ? json(502, { error: 'The AI tool did not answer.' })
+            : json(201, { lesson: { id: 'lesson-1' }, skippedSources: 0 }),
+        );
+      },
+    });
+    renderCourse();
+    const user = userEvent.setup();
+    await user.click(
+      within(await topicRow('Freshness')).getByRole('button', { name: 'Open lesson' }),
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent('The AI tool did not answer.');
+
+    await user.click(
+      within(await topicRow('Freshness')).getByRole('button', { name: 'Try again' }),
+    );
+
+    await waitFor(() => expect(window.location.hash).toBe('#/learn/lesson-1'));
+    expect(callsTo('/topics/topic-2/lesson')).toHaveLength(2);
+    expect(callsTo('/progress')).toHaveLength(1);
+  });
+
+  it('a course that fails to load can be tried again without reloading the page', async () => {
+    let loads = 0;
+    const ready = { course: { ...COURSE, progress: { topicId: null } }, builtLessons: {} };
+    serve({
+      load: () => {
+        loads += 1;
+        return Promise.resolve(
+          loads === 1
+            ? json(500, { error: 'The course file could not be read.' })
+            : json(200, ready),
+        );
+      },
+    });
+    renderCourse();
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'The course file could not be read.',
+    );
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+
+    expect(
+      await screen.findByRole('heading', { name: 'HTTP caching', level: 1 }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(loads).toBe(2);
+  });
+
+  it('a topic whose lesson is not built says that building one can take longer', async () => {
+    serve({ builtLessons: { 'topic-1': 'lesson-7' } });
+    renderCourse();
+
+    const note = 'Building a lesson uses web research, which can take longer.';
+    expect(within(await topicRow('Freshness')).getByText(note)).toBeInTheDocument();
+    expect(within(await topicRow('What a cache is')).queryByText(note)).toBeNull();
   });
 
   it('shows that a missing course could not be found', async () => {

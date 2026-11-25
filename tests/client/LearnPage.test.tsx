@@ -104,12 +104,20 @@ describe('LearnPage', () => {
     await user.click(screen.getByRole('button', { name: 'Build course' }));
 
     expect(
-      await screen.findByText(
-        'Building the course outline. This takes about a minute. Keep this tab open.',
-      ),
+      await screen.findByText('Building the course outline. Keep this tab open.'),
     ).toBeInTheDocument();
     expect(screen.getByLabelText('Topic')).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Build course' })).toBeDisabled();
+  });
+
+  it('says a course outline can take a minute or more, and that lessons take longer', () => {
+    render(<LearnPage onShowTour={() => undefined} />);
+
+    expect(
+      screen.getByText(
+        'Building a course outline can take a minute or more. Building a lesson uses web research, which can take longer.',
+      ),
+    ).toBeInTheDocument();
   });
 
   it('lists saved courses with their titles and creation dates', async () => {
@@ -141,7 +149,56 @@ describe('LearnPage', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('The AI tool did not answer.');
     expect(screen.getByLabelText('Topic')).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Build course' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeEnabled();
     expect(window.location.hash).toBe('');
+  });
+
+  it('Try again posts the same topic again after a failed build, and moves to the course', async () => {
+    let posts = 0;
+    serve([], () => {
+      posts += 1;
+      return Promise.resolve(
+        posts === 1
+          ? json(502, { error: 'The AI tool did not answer.' })
+          : json(201, { course: { id: 'course-9' } }),
+      );
+    });
+    render(<LearnPage onShowTour={() => undefined} />);
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText('Topic'), 'HTTP caching');
+    await user.click(screen.getByRole('button', { name: 'Build course' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('The AI tool did not answer.');
+
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+
+    await waitFor(() => expect(window.location.hash).toBe('#/course/course-9'));
+    expect(postRequests()).toHaveLength(2);
+    expect(postRequests()[1]).toEqual([
+      '/api/learn/courses',
+      expect.objectContaining({ method: 'POST', body: '{"topic":"HTTP caching"}' }),
+    ]);
+  });
+
+  it('a course list that fails to load can be tried again without reloading the page', async () => {
+    let listings = 0;
+    fetchMock.mockImplementation((_url: string, init?: RequestInit) => {
+      if (init?.method === 'POST') return Promise.resolve(json(201, {}));
+      listings += 1;
+      return Promise.resolve(
+        listings === 1
+          ? json(500, { error: 'The course list could not be read.' })
+          : json(200, { courses: SAVED }),
+      );
+    });
+    render(<LearnPage onShowTour={() => undefined} />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'The course list could not be read.',
+    );
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Try again' }));
+
+    expect(await screen.findByRole('link', { name: 'HTTP caching' })).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(listings).toBe(2);
   });
 });

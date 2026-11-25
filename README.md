@@ -7,7 +7,7 @@
 
 A local, single-user whiteboard in the style of Excalidraw. Drawings are plain `.excalidraw` files on your disk. It adds AI help that uses your existing Claude Pro and ChatGPT Plus subscriptions through their command-line tools, and an architecture map that draws how the folders of a project depend on each other.
 
-Nothing is sent anywhere except through the Claude Code and Codex CLIs you already run. The app holds no API keys and no accounts.
+Nothing is sent anywhere except through the Claude Code and Codex CLIs you already run and the few website requests that [PRIVACY.md](PRIVACY.md) lists. The app holds no API keys and no accounts.
 
 ## Requirements
 
@@ -82,6 +82,15 @@ The server listens on `127.0.0.1` only and rejects requests whose Host or Origin
 5. Move boxes as you like, then **Save layout** so the next scan keeps them. **Re-scan** reads the project again and lists what changed since the last scan. **Reset layout** returns to the automatic arrangement.
 6. **Name with AI** gives folders short names and one-line descriptions. It sends folder names, file base names and links, never file contents. It changes names and descriptions only, never the links.
 
+## Learn
+
+The **Learn** tab turns a topic into a course: a short outline of modules and topics. Opening a topic builds its lesson, with a diagram, an explanation, key terms and the web pages it used. Courses and lessons are saved as plain files under `DIAGRAMS_DIR`.
+
+- Building a lesson is the only time an AI tool reads web pages. It uses Claude Code's web search and page reading. Codex cannot build lessons, because its shell tool cannot be turned off for a web call.
+- The sraww server checks each source address a lesson cites: one https request, at most three redirects, public addresses only. Sources that fail the check are dropped from the lesson.
+- Playing the build-up draws in your browser and sends nothing.
+- [PRIVACY.md](PRIVACY.md#lesson-sources) sets out exactly what is sent and checked.
+
 ## Tests
 
 ```bash
@@ -110,7 +119,7 @@ The full privacy policy is in [PRIVACY.md](PRIVACY.md). In short: nothing is sen
 
 - The server only answers local requests (Host and Origin checks), and sends a strict content security policy with no framing.
 - Diagram and model names are validated and can never leave the data folder.
-- The AI CLIs run without a shell, with only `PATH` and `HOME` in their environment, in an empty working folder, with tools disabled (Claude) or a read-only sandbox (Codex).
+- The AI CLIs run with only `PATH` and `HOME` in their environment, in the working folder set by `AI_WORKDIR`. Claude gets no tools, except web search and page reading for a lesson. Codex runs in a read-only sandbox, but its shell tool stays available, so it can read files during a call. [PRIVACY.md](PRIVACY.md) explains both.
 - Model output is validated against schemas, capped in size, and drawn as text only. Project content is passed to the model as quoted data.
 - The architecture scanner reads only folders listed in `ARCH_PROJECTS` and uploaded projects, skips `node_modules`, build and hidden folders, and never follows packages.
 - Uploaded projects are checked on the server as well as in the browser. Credential, key, lock and binary files are never kept, and text that matches known credential formats is left out. Plain-text passwords are not detected.

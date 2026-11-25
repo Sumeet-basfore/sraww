@@ -6,7 +6,14 @@ interface CourseOutlineProps {
   lastOpenedId: string | null;
   /** The topic whose lesson is being built, or null. Every open button waits while one is building. */
   opening: string | null;
+  /** The topic whose last open failed, or null. Its button reads Try again. */
+  failedId: string | null;
   onOpen: (topicId: string) => void;
+}
+
+function openLabel(topicId: string, opening: string | null, failedId: string | null): string {
+  if (opening === topicId) return 'Building the lesson…';
+  return failedId === topicId ? 'Try again' : 'Open lesson';
 }
 
 export function CourseOutline({
@@ -14,6 +21,7 @@ export function CourseOutline({
   builtLessons,
   lastOpenedId,
   opening,
+  failedId,
   onOpen,
 }: CourseOutlineProps) {
   return (
@@ -32,13 +40,18 @@ export function CourseOutline({
                     <span className="course-topic-tag">Last opened</span>
                   )}
                 </div>
+                {!builtLessons[topic.id] && (
+                  <p className="course-topic-note">
+                    Building a lesson uses web research, which can take longer.
+                  </p>
+                )}
                 <button
                   type="button"
                   className="button course-topic-open"
                   disabled={opening !== null}
                   onClick={() => onOpen(topic.id)}
                 >
-                  {opening === topic.id ? 'Building the lesson…' : 'Open lesson'}
+                  {openLabel(topic.id, opening, failedId)}
                 </button>
               </li>
             ))}

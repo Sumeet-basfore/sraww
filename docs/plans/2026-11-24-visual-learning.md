@@ -208,7 +208,7 @@ Input: a graph (nodes, edges, groups). Output: an ordered list of steps, each on
 - **Done when:** the build-up plays in order for the sample lessons, can be paused and resumed, and Next
   works at any point.
 
-### Phase 4 — Polish, privacy and tests (3 days)
+### Phase 4 — Polish, privacy and tests (3 days) — done
 
 - Key terms, failure states (a failed topic can be retried), the time estimate before a course is built.
 - Mobile layout: explanation below the canvas at phone width.
@@ -216,6 +216,10 @@ Input: a graph (nodes, edges, groups). Output: an ordered list of steps, each on
 - E2E spec with a stubbed AI and stubbed source pages: create a course, play one build-up, move on, reload
   and resume.
 - **Done when:** the e2e spec passes, and the layout works at 390px and 1440px in light and dark themes.
+- **Status:** done on `feat/polish-and-privacy`. Landed: retry for a failed course, outline or topic, the
+  time line, faint-text contrast fix, e2e at 390px (light and dark) and 1440px, resume after reload, and
+  the PRIVACY and README updates. **Deferred:** a lesson page that fails to load still has no retry button,
+  and reduced motion at phone and desktop width is not covered by e2e.
 
 ### Phase 5 — Quizzes (future)
 
