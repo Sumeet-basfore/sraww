@@ -251,7 +251,8 @@ describe('CoursePage', () => {
     );
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: 'Try again' }));
+    await user.click(screen.getByRole('button', { name: 'Try again: load this course' }));
+    expect(screen.getByRole('heading', { level: 1 })).toHaveFocus();
 
     expect(
       await screen.findByRole('heading', { name: 'HTTP caching', level: 1 }),
@@ -265,8 +266,7 @@ describe('CoursePage', () => {
     renderCourse();
 
     const note = 'Building a lesson uses web research, which can take longer.';
-    expect(within(await topicRow('Freshness')).getByText(note)).toBeInTheDocument();
-    expect(within(await topicRow('What a cache is')).queryByText(note)).toBeNull();
+    expect(await screen.findAllByText(note)).toHaveLength(1);
   });
 
   it('shows that a missing course could not be found', async () => {

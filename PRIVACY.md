@@ -85,7 +85,7 @@ Lessons are the only feature where an AI tool reads web pages. After a lesson is
 - sraww reads only the status code and content type of the answer. It does not keep the page.
 - A source that fails the check is dropped from the lesson. The reply to the request says how many were dropped. The saved lesson does not keep that count.
 
-Apart from the GitHub import above, these requests are the only ones the sraww server makes to other websites. They do not pass through your browser, so the browser's network panel will not show them. The code is in `src/server/learn/sources.ts`.
+Apart from the GitHub import below, these requests are the only ones the sraww server makes to other websites. They do not pass through your browser, so the browser's network panel will not show them. The code is in `src/server/learn/sources.ts`.
 
 ## Code upload
 

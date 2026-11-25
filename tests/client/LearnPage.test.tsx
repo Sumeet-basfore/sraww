@@ -149,7 +149,9 @@ describe('LearnPage', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('The AI tool did not answer.');
     expect(screen.getByLabelText('Topic')).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Try again' })).toBeEnabled();
+    expect(
+      screen.getByRole('button', { name: 'Try again: build the course outline' }),
+    ).toBeEnabled();
     expect(window.location.hash).toBe('');
   });
 
@@ -169,7 +171,7 @@ describe('LearnPage', () => {
     await user.click(screen.getByRole('button', { name: 'Build course' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('The AI tool did not answer.');
 
-    await user.click(screen.getByRole('button', { name: 'Try again' }));
+    await user.click(screen.getByRole('button', { name: 'Try again: build the course outline' }));
 
     await waitFor(() => expect(window.location.hash).toBe('#/course/course-9'));
     expect(postRequests()).toHaveLength(2);
@@ -195,7 +197,9 @@ describe('LearnPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'The course list could not be read.',
     );
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Try again' }));
+    await userEvent
+      .setup()
+      .click(screen.getByRole('button', { name: 'Try again: load your courses' }));
 
     expect(await screen.findByRole('link', { name: 'HTTP caching' })).toBeInTheDocument();
     expect(screen.queryByRole('alert')).toBeNull();

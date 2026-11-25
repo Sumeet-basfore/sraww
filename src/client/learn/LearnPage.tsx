@@ -50,6 +50,12 @@ export function LearnPage({ onShowTour }: LearnPageProps) {
   function retryList(): void {
     setList({ status: 'loading' });
     setListAttempt((count) => count + 1);
+    document.getElementById('learn-title')?.focus();
+  }
+
+  function changeTopic(value: string): void {
+    setTopic(value);
+    if (build.status === 'failed') setBuild({ status: 'idle' });
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
@@ -75,7 +81,9 @@ export function LearnPage({ onShowTour }: LearnPageProps) {
           </PageHeader>
 
           <div className="intro">
-            <h1 id="learn-title">Learn</h1>
+            <h1 id="learn-title" tabIndex={-1}>
+              Learn
+            </h1>
           </div>
           <p className="muted">
             Type a topic and sraww drafts a course of modules and topics. Open a topic to build its
@@ -96,11 +104,18 @@ export function LearnPage({ onShowTour }: LearnPageProps) {
               id="learn-topic"
               value={topic}
               maxLength={LEARN_LIMITS.maxTopic}
-              onChange={(e) => setTopic(e.target.value)}
+              onChange={(e) => changeTopic(e.target.value)}
               placeholder="For example: How HTTP caching works"
               disabled={building}
             />
-            <button type="submit" className="button primary" disabled={!canSubmit}>
+            <button
+              type="submit"
+              className="button primary"
+              disabled={!canSubmit}
+              aria-label={
+                build.status === 'failed' ? 'Try again: build the course outline' : undefined
+              }
+            >
               {build.status === 'failed' ? 'Try again' : 'Build course'}
             </button>
           </form>
@@ -136,7 +151,12 @@ function CourseList({ state, onRetry }: { state: ListState; onRetry: () => void 
         <p role="alert" className="banner error">
           {state.message}
         </p>
-        <button type="button" className="button" onClick={onRetry}>
+        <button
+          type="button"
+          className="button"
+          aria-label="Try again: load your courses"
+          onClick={onRetry}
+        >
           Try again
         </button>
       </>

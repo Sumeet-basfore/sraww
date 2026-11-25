@@ -48,6 +48,7 @@ export function CoursePage({ id, onShowTour }: CoursePageProps) {
   function retryLoad(): void {
     setLoad({ status: 'loading' });
     setAttempt((count) => count + 1);
+    document.getElementById('course-title')?.focus();
   }
 
   async function openTopic(topicId: string): Promise<void> {
@@ -79,7 +80,9 @@ export function CoursePage({ id, onShowTour }: CoursePageProps) {
             <a className="lesson-back" href={learnHash()}>
               ← Learn
             </a>
-            <h1 id="course-title">{title}</h1>
+            <h1 id="course-title" tabIndex={-1}>
+              {title}
+            </h1>
           </div>
 
           <CourseBody
@@ -129,7 +132,12 @@ function CourseBody({ load, opening, openError, onOpen, onRetry }: CourseBodyPro
         <p role="alert" className="banner error">
           {load.message}
         </p>
-        <button type="button" className="button" onClick={onRetry}>
+        <button
+          type="button"
+          className="button"
+          aria-label="Try again: load this course"
+          onClick={onRetry}
+        >
           Try again
         </button>
       </>
@@ -138,9 +146,9 @@ function CourseBody({ load, opening, openError, onOpen, onRetry }: CourseBodyPro
 
   const { course, builtLessons } = load.detail;
   const lastOpenedId = course.progress.topicId;
-  const continueTopic = course.modules
-    .flatMap((module) => module.topics)
-    .find((topic) => topic.id === lastOpenedId);
+  const topics = course.modules.flatMap((module) => module.topics);
+  const continueTopic = topics.find((topic) => topic.id === lastOpenedId);
+  const anyUnbuilt = topics.some((topic) => !builtLessons[topic.id]);
 
   return (
     <>
@@ -158,6 +166,11 @@ function CourseBody({ load, opening, openError, onOpen, onRetry }: CourseBodyPro
         >
           Continue
         </button>
+      )}
+      {anyUnbuilt && (
+        <p className="course-topic-note">
+          Building a lesson uses web research, which can take longer.
+        </p>
       )}
       <CourseOutline
         modules={course.modules}

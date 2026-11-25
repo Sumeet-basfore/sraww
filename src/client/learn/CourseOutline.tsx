@@ -40,11 +40,6 @@ export function CourseOutline({
                     <span className="course-topic-tag">Last opened</span>
                   )}
                 </div>
-                {!builtLessons[topic.id] && (
-                  <p className="course-topic-note">
-                    Building a lesson uses web research, which can take longer.
-                  </p>
-                )}
                 <button
                   type="button"
                   className="button course-topic-open"

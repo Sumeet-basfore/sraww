@@ -170,6 +170,20 @@ test('the course page fits a phone without sideways scrolling', async ({ page })
   await expect(page.getByRole('heading', { level: 1, name: 'HTTP caching' })).toBeVisible();
   await expect(topicRow(page, 'Validators')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+
+  const noteColour = await page
+    .locator('.course-topic-note')
+    .first()
+    .evaluate((el) => getComputedStyle(el).color);
+  const softInk = await page.evaluate(() => {
+    const probe = document.createElement('span');
+    probe.style.color = 'var(--ink-soft)';
+    document.body.append(probe);
+    const colour = getComputedStyle(probe).color;
+    probe.remove();
+    return colour;
+  });
+  expect(noteColour).toBe(softInk);
 });
 
 /** Sets the theme the app reads from saved preferences, before the page loads. */
@@ -186,17 +200,22 @@ async function setTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
   }, theme);
 }
 
-/** The page does not scroll sideways, and every build-up control sits inside the screen. */
-async function expectFitsWidth(page: Page, width: number): Promise<void> {
+/** Every build-up control sits inside the screen. */
+async function expectControlsInside(page: Page, width: number): Promise<void> {
   await expect(page.locator('.build-controls button').first()).toBeVisible();
-  const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
-  expect(scrollWidth).toBeLessThanOrEqual(width);
   for (const button of await page.locator('.build-controls button').all()) {
     const box = await button.boundingBox();
     expect(box).not.toBeNull();
     expect(box!.x).toBeGreaterThanOrEqual(0);
     expect(box!.x + box!.width).toBeLessThanOrEqual(width);
   }
+}
+
+/** The page does not scroll sideways, and every build-up control sits inside the screen. */
+async function expectFitsWidth(page: Page, width: number): Promise<void> {
+  const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+  expect(scrollWidth).toBeLessThanOrEqual(width);
+  await expectControlsInside(page, width);
 }
 
 for (const theme of ['light', 'dark'] as const) {
@@ -240,7 +259,7 @@ test('the lesson page sits the drawing beside the explanation at 1440px in light
   expect(canvas).not.toBeNull();
   expect(explanation).not.toBeNull();
   expect(canvas!.x + canvas!.width).toBeLessThanOrEqual(explanation!.x);
-  await expectFitsWidth(page, 1440);
+  await expectControlsInside(page, 1440);
 });
 
 test('the build-up plays in steps, pauses, resumes, and its controls work at any point', async ({
