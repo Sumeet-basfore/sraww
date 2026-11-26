@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LessonReply } from '../../src/shared/learn.ts';
 import { layoutGraph, type Layout } from '../../src/client/ai/layout.ts';
 import { LessonCanvas } from '../../src/client/learn/LessonCanvas.tsx';
-import { canvasProps } from '../mocks/excalidraw.tsx';
+import { canvasProps, type FakeCanvasApi } from '../mocks/excalidraw.tsx';
 
 vi.mock('@excalidraw/excalidraw', () => import('../mocks/excalidraw.tsx'));
 vi.mock('../../src/client/ai/layout.ts', () => ({ layoutGraph: vi.fn() }));
@@ -25,6 +25,20 @@ const LAYOUT: Layout = {
   ]),
   frames: new Map(),
 };
+
+function fakeCanvasApi(overrides: Partial<FakeCanvasApi> = {}): FakeCanvasApi {
+  return {
+    getAppState: () =>
+      ({ zoom: { value: 1 }, width: 800, height: 600, scrollX: 0, scrollY: 0 }) as ReturnType<
+        FakeCanvasApi['getAppState']
+      >,
+    getSceneElements: () => [],
+    onScrollChange: () => () => undefined,
+    scrollToContent: vi.fn<FakeCanvasApi['scrollToContent']>(),
+    updateScene: vi.fn<FakeCanvasApi['updateScene']>(),
+    ...overrides,
+  };
+}
 
 beforeEach(() => {
   vi.mocked(layoutGraph).mockReset();
@@ -73,7 +87,7 @@ describe('LessonCanvas', () => {
     const { unmount } = render(<LessonCanvas diagram={DIAGRAM} />);
     await act(async () => undefined);
     await act(async () => {
-      canvasProps.current?.excalidrawAPI?.({ scrollToContent });
+      canvasProps.current?.excalidrawAPI?.(fakeCanvasApi({ scrollToContent }));
     });
 
     unmount();
@@ -87,8 +101,12 @@ describe('LessonCanvas', () => {
     vi.mocked(layoutGraph).mockResolvedValue(LAYOUT);
     render(<LessonCanvas diagram={DIAGRAM} />);
     await waitFor(() => expect(screen.getByTestId('excalidraw-canvas')).toBeInTheDocument());
-    const updateScene = vi.fn<(scene: { elements: unknown[] }) => void>();
-    act(() => canvasProps.current?.excalidrawAPI?.({ scrollToContent: vi.fn(), updateScene }));
+    const updateScene = vi.fn<FakeCanvasApi['updateScene']>();
+    act(() =>
+      canvasProps.current?.excalidrawAPI?.(
+        fakeCanvasApi({ scrollToContent: vi.fn(), updateScene }),
+      ),
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Pause' }));
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
@@ -96,7 +114,9 @@ describe('LessonCanvas', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Skip to end' }));
     expect(updateScene).toHaveBeenCalledTimes(2);
-    const [partial = 0, whole = 0] = updateScene.mock.calls.map(([scene]) => scene.elements.length);
+    const [partial = 0, whole = 0] = updateScene.mock.calls.map(
+      ([scene]) => scene.elements?.length ?? 0,
+    );
 
     expect(partial).toBeGreaterThan(0);
     expect(partial).toBeLessThan(whole);

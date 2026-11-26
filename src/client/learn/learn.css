@@ -52,6 +52,69 @@
   height: 100%;
 }
 
+.lesson-canvas .zoom-actions {
+  display: none;
+}
+
+.lesson-canvas-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.lesson-canvas-actions .build-controls {
+  flex: 1 1 420px;
+  min-width: 0;
+  margin-top: 0;
+}
+
+.lesson-zoom-controls {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sheet);
+}
+
+.lesson-zoom-controls .button[aria-disabled='true'] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.lesson-zoom-controls .button[aria-disabled='true']:hover {
+  border-color: var(--line);
+}
+
+.lesson-zoom-controls .button[aria-disabled='true']:active {
+  transform: none;
+}
+
+.lesson-zoom-controls .button.small {
+  min-width: 42px;
+  min-height: 42px;
+  padding: 0 10px;
+  font-size: 17px;
+}
+
+.lesson-zoom-level {
+  min-width: 48px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.lesson-zoom-controls .button.lesson-zoom-fit {
+  min-width: 48px;
+  font-size: 13px;
+}
+
 .lesson-canvas-status {
   margin: 0;
   padding: 24px;

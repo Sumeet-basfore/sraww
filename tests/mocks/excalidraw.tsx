@@ -1,11 +1,22 @@
 // Test double for the Excalidraw canvas. The real canvas needs a browser layout engine,
 // so unit tests replace it and exercise our wrapper code around it.
 import type { ReactNode } from 'react';
+import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types';
+
+type UpdateSceneData = Parameters<ExcalidrawImperativeAPI['updateScene']>[0];
+
+export type FakeCanvasApi = Omit<
+  Pick<
+    ExcalidrawImperativeAPI,
+    'getAppState' | 'getSceneElements' | 'onScrollChange' | 'scrollToContent' | 'updateScene'
+  >,
+  'updateScene'
+> & { updateScene: (scene: UpdateSceneData) => void };
 
 export interface FakeExcalidrawProps {
   initialData?: unknown;
   onChange?: (elements: readonly object[], appState: object, files: object) => void;
-  excalidrawAPI?: (api: object) => void;
+  excalidrawAPI?: (api: FakeCanvasApi) => void;
   theme?: string;
   viewModeEnabled?: boolean;
   aiEnabled?: boolean;
@@ -66,7 +77,7 @@ export function serializeAsJSON(elements: unknown, appState: unknown, files: unk
   return JSON.stringify({ type: 'excalidraw', elements, appState, files });
 }
 
-export const CaptureUpdateAction = { IMMEDIATELY: 'IMMEDIATELY' } as const;
+export const CaptureUpdateAction = { IMMEDIATELY: 'IMMEDIATELY', NEVER: 'NEVER' } as const;
 
 export function convertToExcalidrawElements(skeleton: unknown[] | null): unknown[] {
   return (skeleton ?? []).map((el) => ({ ...(el as object), converted: true }));
