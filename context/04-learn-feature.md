@@ -94,7 +94,7 @@ Quiz generation requests for the same module share one in-flight provider call. 
 - `src/client/learn/ModuleQuiz.tsx`: local answer draft, sample answer reveal, self-rating, result retry and keyboard focus on the active question or saved result. The API receives only the aggregate count.
 - `src/client/learn/LessonView.tsx`: loading, ready, missing (404) and failed states. A failed load shows **Try again**, which asks the server again and moves focus to the lesson heading. Back link goes to the course when the lesson belongs to one, otherwise to the Learn tab. The diagram is described in plain words for screen readers (`describe-diagram.ts`).
 - `src/client/learn/LessonPanel.tsx`: explanation paragraphs, key terms, sources. Only `https` links are made clickable; a malformed or unsafe address is shown as plain text. Links open in a new tab with `noopener noreferrer`.
-- `src/client/learn/LessonCanvas.tsx`: a read-only Excalidraw canvas (`viewModeEnabled`), lazy-loaded. Uses the editor's menu and drawing options. Fits the full drawing to the canvas once.
+- `src/client/learn/LessonCanvas.tsx`: a read-only Excalidraw canvas (`viewModeEnabled`), lazy-loaded. Uses the editor's menu and drawing options. The initial view fits the full drawing so later playback steps stay in frame. Zoom and playback controls sit below the canvas. **Fit step** frames the currently visible playback step. Zoom buttons and Ctrl+wheel announce zoom changes to screen readers; a plain wheel scrolls the page, and dragging pans the drawing.
 - `src/client/lib/learn-api.ts`: the calls the pages use.
 - `src/client/lib/route.ts`: `#/learn`, `#/learn/<id>`, `#/course/<id>` with id validation.
 
